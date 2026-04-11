@@ -1,0 +1,68 @@
+[
+  {
+    "id": 1,
+    "name": "Инклюзивный Алматы",
+    "nameKaz": "Инклюзивті Алматы",
+    "platform": "telegram",
+    "icon": "telegram",
+    "url": "https://t.me/inclusive_almaty",
+    "description": "Главный Telegram-канал для людей с инвалидностью в Алматы. Новости, события, поддержка.",
+    "descriptionKaz": "Алматыдағы мүгедектігі бар адамдарға арналған негізгі Telegram-канал. Жаңалықтар, іс-шаралар, қолдау.",
+    "members": 4200
+  },
+  {
+    "id": 2,
+    "name": "Мамалар клубы — дети с ДЦП",
+    "nameKaz": "Аналар клубы — ДЦП балалар",
+    "platform": "whatsapp",
+    "icon": "whatsapp",
+    "url": "https://wa.me/group/almaty-dcp",
+    "description": "WhatsApp-группа для мам детей с ДЦП в Алматы. Советы, опыт, взаимопомощь.",
+    "descriptionKaz": "Алматыдағы ДЦП балалардың аналарына арналған WhatsApp тобы. Кеңестер, тәжірибе, өзара көмек.",
+    "members": 850
+  },
+  {
+    "id": 3,
+    "name": "SenimdiQAdam Community",
+    "nameKaz": "SenimdiQAdam қоғамдастығы",
+    "platform": "instagram",
+    "icon": "instagram",
+    "url": "https://instagram.com/senimdi_qadam",
+    "description": "Официальный Instagram SenimdiQAdam. Истории людей, новости организаций, полезные советы.",
+    "descriptionKaz": "SenimdiQAdam ресми Instagram парақшасы. Адамдардың тарихтары, ұйымдар жаңалықтары, пайдалы кеңестер.",
+    "members": 3100
+  },
+  {
+    "id": 4,
+    "name": "Работа для людей с инвалидностью — Алматы",
+    "nameKaz": "Мүгедектігі бар адамдарға жұмыс — Алматы",
+    "platform": "telegram",
+    "icon": "telegram",
+    "url": "https://t.me/work_inclusive_almaty",
+    "description": "Вакансии и возможности трудоустройства для людей с ограниченными возможностями в Алматы.",
+    "descriptionKaz": "Алматыдағы мүмкіндігі шектеулі адамдарға арналған бос жұмыс орындары мен жұмысқа орналасу мүмкіндіктері.",
+    "members": 2700
+  },
+  {
+    "id": 5,
+    "name": "Права инвалидов KZ",
+    "nameKaz": "KZ мүгедектер құқықтары",
+    "platform": "telegram",
+    "icon": "telegram",
+    "url": "https://t.me/disability_rights_kz",
+    "description": "Юридические консультации, информация о льготах и правах людей с инвалидностью в Казахстане.",
+    "descriptionKaz": "Қазақстандағы мүгедектігі бар адамдардың заңдық кеңестері, жеңілдіктер мен құқықтары туралы ақпарат.",
+    "members": 5600
+  },
+  {
+    "id": 6,
+    "name": "Аутизм — поддержка родителей",
+    "nameKaz": "Аутизм — ата-аналарды қолдау",
+    "platform": "whatsapp",
+    "icon": "whatsapp",
+    "url": "https://wa.me/group/autism-parents-almaty",
+    "description": "Группа поддержки для родителей детей с аутизмом. Обмен опытом, ресурсы, встречи.",
+    "descriptionKaz": "Аутизмі бар балалардың ата-аналарына қолдау тобы. Тәжірибе алмасу, ресурстар, кездесулер.",
+    "members": 1200
+  }
+]
