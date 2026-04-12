@@ -163,7 +163,8 @@
             class="news-card"
           >
             <div class="news-card-image">
-              <div class="news-image-placeholder">
+              <img v-if="article.image" :src="article.image" :alt="article.title" class="news-img" loading="lazy" />
+              <div v-else class="news-image-placeholder">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               </div>
               <div class="news-cat-badge">
@@ -529,6 +530,13 @@ const formatDate = (d) => {
   position: relative;
   overflow: hidden;
 }
+.news-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease;
+}
+.news-card:hover .news-img { transform: scale(1.05); }
 .news-image-placeholder { display: flex; align-items: center; justify-content: center; }
 .news-cat-badge {
   position: absolute; bottom: 12px; left: 12px;

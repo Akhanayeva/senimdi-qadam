@@ -26,7 +26,8 @@
             class="news-card-full"
           >
             <div class="news-card-img">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <img v-if="article.image" :src="article.image" :alt="article.title" class="news-img" loading="lazy" />
+              <svg v-else width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               <span class="news-badge-cat">
                 {{ article.category === 'event' ? '📅' : article.category === 'announcement' ? '📢' : '📰' }}
               </span>
@@ -95,8 +96,10 @@ const toggleLike = (article) => {
 .news-card-img {
   height: 200px; background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%);
   display: flex; align-items: center; justify-content: center;
-  position: relative;
+  position: relative; overflow: hidden;
 }
+.news-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+.news-card-full:hover .news-img { transform: scale(1.05); }
 .news-badge-cat { position: absolute; bottom: 12px; left: 12px; font-size: 18px; }
 .news-v { position: absolute; top: 12px; right: 12px; background: var(--success); color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
 .news-card-body { padding: 20px; display: flex; flex-direction: column; gap: 8px; flex: 1; }

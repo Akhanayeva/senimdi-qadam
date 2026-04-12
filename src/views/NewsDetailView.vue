@@ -31,7 +31,8 @@
           {{ article.author }}
         </div>
         <div class="news-article-image">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <img v-if="article.image" :src="article.image" :alt="article.title" class="news-detail-img" />
+          <svg v-else width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         </div>
         <div class="news-article-body">
           <p class="news-lead">{{ a11y.lang === 'kaz' ? article.excerptKaz : article.excerpt }}</p>
@@ -76,7 +77,8 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString('ru-RU', { year: 'n
 .news-article-title { font-size: var(--fs-3xl); font-weight: 800; color: var(--black); line-height: 1.2; margin-bottom: 20px; }
 .news-article-author { display: flex; align-items: center; gap: 10px; font-size: var(--fs-sm); color: var(--gray-500); font-weight: 600; margin-bottom: 24px; }
 .author-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary-pale); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: var(--fs-sm); }
-.news-article-image { background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%); border-radius: var(--radius-lg); height: 280px; display: flex; align-items: center; justify-content: center; margin-bottom: 28px; }
+.news-article-image { background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%); border-radius: var(--radius-lg); height: 280px; display: flex; align-items: center; justify-content: center; margin-bottom: 28px; overflow: hidden; position: relative; }
+.news-detail-img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-lg); }
 .news-article-body { font-size: var(--fs-md); line-height: 1.8; color: var(--gray-700); }
 .news-lead { font-weight: 600; color: var(--black); font-size: var(--fs-lg); margin-bottom: 16px; }
 .news-article-footer { display: flex; align-items: center; gap: 20px; margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--gray-200); }
