@@ -48,25 +48,16 @@ const routes = [
     component: () => import('../views/CommunityView.vue')
   },
 
-  // InvaTaxi
+  // InvaTaxi — unified page (order, my rides, drivers, manager panel)
   {
-    path: '/inva-taxi/order',
-    name: 'taxi-order',
-    component: () => import('../views/PlaceholderView.vue'),
-    props: { title: 'ИнваТакси — Заказать поездку', icon: '🚕' }
+    path: '/inva-taxi',
+    name: 'inva-taxi',
+    component: () => import('../views/InvaTaxiView.vue')
   },
-  {
-    path: '/inva-taxi/my-rides',
-    name: 'taxi-rides',
-    component: () => import('../views/PlaceholderView.vue'),
-    props: { title: 'ИнваТакси — Мои заявки', icon: '📋' }
-  },
-  {
-    path: '/inva-taxi/chat',
-    name: 'taxi-chat',
-    component: () => import('../views/PlaceholderView.vue'),
-    props: { title: 'ИнваТакси — Чат с менеджером', icon: '💬' }
-  },
+  // Legacy redirects for old deep links
+  { path: '/inva-taxi/order', redirect: '/inva-taxi' },
+  { path: '/inva-taxi/my-rides', redirect: '/inva-taxi' },
+  { path: '/inva-taxi/chat', redirect: '/inva-taxi' },
 
   // News
   {

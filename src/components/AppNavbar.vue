@@ -56,17 +56,17 @@
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <div v-if="active === 'taxi'" class="dropdown-menu nav-dropdown">
-          <RouterLink to="/inva-taxi/order" class="dropdown-item" @click="close('taxi')">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-            Заказать поездку
+          <RouterLink to="/inva-taxi" class="dropdown-item" @click="close('taxi')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            {{ a11y.lang === 'kaz' ? 'Тапсырыс беру' : 'Заказать поездку' }}
           </RouterLink>
-          <RouterLink to="/inva-taxi/my-rides" class="dropdown-item" @click="close('taxi')">
+          <RouterLink to="/inva-taxi" class="dropdown-item" @click="close('taxi')">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
-            Мои заявки
+            {{ a11y.lang === 'kaz' ? 'Менің сапарларым' : 'Мои поездки' }}
           </RouterLink>
-          <RouterLink to="/inva-taxi/chat" class="dropdown-item" @click="close('taxi')">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            Чат с менеджером
+          <RouterLink to="/inva-taxi" class="dropdown-item" @click="close('taxi')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            {{ a11y.lang === 'kaz' ? 'Жүргізушілер' : 'Водители' }}
           </RouterLink>
         </div>
       </div>
@@ -120,7 +120,7 @@
         <RouterLink to="/projects/community" class="mobile-nav-item" @click="mobileOpen=false">{{ t('community') }}</RouterLink>
       </div>
       <div class="mobile-nav-section">
-        <RouterLink to="/inva-taxi/order" class="mobile-nav-item" @click="mobileOpen=false">{{ t('invaTaxi') }} 🚕</RouterLink>
+        <RouterLink to="/inva-taxi" class="mobile-nav-item" @click="mobileOpen=false">{{ t('invaTaxi') }} 🚕</RouterLink>
         <RouterLink to="/news" class="mobile-nav-item" @click="mobileOpen=false">{{ t('news') }}</RouterLink>
         <RouterLink to="/info" class="mobile-nav-item" @click="mobileOpen=false">{{ t('moreInfo') }}</RouterLink>
       </div>
