@@ -98,12 +98,18 @@ const routes = [
     component: () => import('../views/RegisterView.vue')
   },
 
+  // Auth callback (Google OAuth)
+  {
+    path: '/auth/callback',
+    name: 'auth-callback',
+    component: () => import('../views/LoginView.vue')
+  },
+
   // Profile
   {
     path: '/profile',
     name: 'profile',
-    component: () => import('../views/PlaceholderView.vue'),
-    props: { title: 'Мой профиль', icon: '👤' }
+    component: () => import('../views/ProfileView.vue')
   },
   {
     path: '/favorites',
