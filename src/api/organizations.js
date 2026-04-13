@@ -227,6 +227,21 @@ export const addOrgReview = async (accessToken, orgId, rating, comment) => {
 }
 
 /**
+ * GET /api/core/organizations/saved — list of organizations the user has saved/bookmarked
+ * Real API: returns { items: [...], total: N } — full org objects
+ * Mock: reads saved IDs from in-memory list (passed from auth store) and returns matching orgs
+ * @param {string} accessToken
+ * @param {string[]} savedIds - IDs to look up (mock-only, real API resolves from JWT)
+ * @returns {{ items: Array, total: number }}
+ */
+export const getSavedOrganizations = async (accessToken, savedIds = []) => {
+  await delay(400)
+  if (!savedIds.length) return { items: [], total: 0 }
+  const items = mockData.filter(o => savedIds.includes(o.id))
+  return { items, total: items.length }
+}
+
+/**
  * Get featured organizations (top verified ones for homepage)
  * @returns {Array}
  */

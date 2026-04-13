@@ -41,7 +41,7 @@
         </div>
 
         <div class="news-article-image">
-          <img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.titleRu" class="news-detail-img" />
+          <img v-if="article.imageUrl" :src="newsImageUrl(article.imageUrl)" :alt="article.titleRu" class="news-detail-img" />
           <svg v-else width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         </div>
 
@@ -127,7 +127,7 @@
               class="comment-item"
             >
               <div class="comment-avatar">
-                <img v-if="c.author?.profile?.avatarUrl" :src="c.author.profile.avatarUrl" />
+                <img v-if="c.author?.profile?.avatarUrl" :src="avatarUrl(c.author.profile.avatarUrl)" />
                 <span v-else>{{ (c.author?.profile?.firstName || '?').charAt(0) }}</span>
               </div>
               <div class="comment-body">
@@ -156,6 +156,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import { useAccessibilityStore } from '../stores/accessibility.js'
 import { useAuthStore } from '../stores/auth.js'
 import { getNewsById, likeNews, getNewsComments, addNewsComment } from '../api/news.js'
+import { newsImageUrl, avatarUrl } from '../api/apiClient.js'
 
 const a11y = useAccessibilityStore()
 const authStore = useAuthStore()
@@ -197,7 +198,8 @@ onMounted(async () => {
 async function loadComments() {
   commentsLoading.value = true
   try {
-    comments.value = await getNewsComments(route.params.id)
+    const res = await getNewsComments(route.params.id)
+    comments.value = res.items ?? res   // real API returns {items, total}
   } catch {}
   finally { commentsLoading.value = false }
 }

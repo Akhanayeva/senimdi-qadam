@@ -194,14 +194,14 @@ const roles = [
   { value: 'RELATIVE', icon: '👪', nameKaz: 'Жақын туыс / Қамқоршы', nameRus: 'Родственник / Опекун', descKaz: 'Опекаемыйға көмектеседі', descRus: 'Помогает подопечному' }
 ]
 
+// Profile disabilityType per API: VISUAL | HEARING | MOBILITY | COGNITIVE | SPEECH | OTHER
 const disabilityTypes = [
-  { value: 'WHEELCHAIR', icon: '♿', nameKaz: 'Арба', nameRus: 'Колясочник' },
-  { value: 'VISUAL', icon: '👁', nameKaz: 'Көру', nameRus: 'Зрение' },
-  { value: 'HEARING', icon: '👂', nameKaz: 'Есту', nameRus: 'Слух' },
-  { value: 'MENTAL', icon: '🧠', nameKaz: 'Психикалық', nameRus: 'Ментальное' },
-  { value: 'SPEECH', icon: '🗣', nameKaz: 'Сөйлеу', nameRus: 'Речь' },
-  { value: 'MUSCULOSKELETAL', icon: '🦽', nameKaz: 'ОДА', nameRus: 'ОДА' },
-  { value: 'OTHER', icon: '📋', nameKaz: 'Басқа', nameRus: 'Другое' }
+  { value: 'VISUAL',    icon: '👁',  nameKaz: 'Көру қабілеті',    nameRus: 'Нарушение зрения' },
+  { value: 'HEARING',   icon: '👂',  nameKaz: 'Есту қабілеті',    nameRus: 'Нарушение слуха' },
+  { value: 'MOBILITY',  icon: '♿',  nameKaz: 'Қозғалыс',         nameRus: 'Нарушение подвижности' },
+  { value: 'COGNITIVE', icon: '🧠',  nameKaz: 'Когнитивті',       nameRus: 'Когнитивные особенности' },
+  { value: 'SPEECH',    icon: '🗣',  nameKaz: 'Сөйлеу',           nameRus: 'Нарушение речи' },
+  { value: 'OTHER',     icon: '📋',  nameKaz: 'Басқа',             nameRus: 'Другое' }
 ]
 
 const passStrength = computed(() => {

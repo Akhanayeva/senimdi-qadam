@@ -60,10 +60,13 @@ export const getNewsById = async (id) => {
   return { ...item, liked: likedSet.has(item.id) }
 }
 
-/** 6 latest for the homepage widget */
+/** 6 latest for the homepage widget
+ *  Real API: GET /api/core/news?sort=latest&limit=6 → { items, total }
+ */
 export const getLatestNews = async () => {
   await delay(300)
-  return mockData.filter(n => n.status === 'PUBLISHED').slice(0, 6)
+  const items = mockData.filter(n => n.status === 'PUBLISHED').slice(0, 6)
+  return { items, total: items.length }
 }
 
 /** POST /api/core/news/:id/like  — toggle; returns { liked, likesCount } */
@@ -96,12 +99,13 @@ const commentsStore = {
 }
 
 /** GET /api/core/news/:id/comments?limit=20&offset=0
- *  Returns array of PUBLISHED comments (real API paginates; mock returns array directly)
+ *  Real API returns { items: [...], total: N }
  */
 export const getNewsComments = async (newsId, limit = 20, offset = 0) => {
   await delay(400)
   const all = (commentsStore[newsId] || []).filter(c => c.status === 'PUBLISHED')
-  return all.slice(offset, offset + limit)
+  const items = all.slice(offset, offset + limit)
+  return { items, total: all.length }
 }
 
 /** DELETE /api/core/news/:id/comments/:commentId */
@@ -161,8 +165,8 @@ export const deleteNews = async (accessToken, id) => {
   return { success: true }
 }
 
-/** GET /api/core/news/my/list — own articles (all statuses) */
-export const getMyNews = async () => {
+/** GET /api/core/news/my/list — own articles (all statuses) — requires auth */
+export const getMyNews = async (accessToken) => {
   await delay(500)
   return {
     items: mockData.slice(0, 2).map(n => ({ ...n })),

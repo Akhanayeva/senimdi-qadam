@@ -26,7 +26,7 @@
             class="news-card-full"
           >
             <div class="news-card-img">
-              <img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.titleRu" class="news-img" loading="lazy" />
+              <img v-if="article.imageUrl" :src="newsImageUrl(article.imageUrl)" :alt="article.titleRu" class="news-img" loading="lazy" />
               <svg v-else width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               <span class="news-badge-cat">
                 {{ article.category === 'event' ? '📅' : article.category === 'announcement' ? '📢' : '📰' }}
@@ -64,6 +64,7 @@ import { RouterLink } from 'vue-router'
 import { useAccessibilityStore } from '../stores/accessibility.js'
 import { useI18n } from '../i18n.js'
 import { getNews } from '../api/news.js'
+import { newsImageUrl } from '../api/apiClient.js'
 
 const a11y = useAccessibilityStore()
 const t = computed(() => useI18n(a11y.lang))

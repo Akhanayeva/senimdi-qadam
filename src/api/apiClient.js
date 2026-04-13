@@ -20,7 +20,7 @@
  * Auth:
  *   - accessToken lives 15 min, refreshToken lives 7 days
  *   - On 401 → POST /api/core/auth/refresh → new tokens → retry original request
- *   - Tokens stored in localStorage (key: 'accessToken', 'refreshToken')
+ *   - Tokens stored in localStorage (key: 'sqAccessToken', 'sqRefreshToken')
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -45,21 +45,21 @@ export function newsImageUrl(filename) {
 // ── Token helpers ─────────────────────────────────────────────────────────────
 
 export function getAccessToken() {
-  return localStorage.getItem('accessToken')
+  return localStorage.getItem('sqAccessToken')
 }
 
 export function getRefreshToken() {
-  return localStorage.getItem('refreshToken')
+  return localStorage.getItem('sqRefreshToken')
 }
 
 export function saveTokens(accessToken, refreshToken) {
-  if (accessToken)  localStorage.setItem('accessToken', accessToken)
-  if (refreshToken) localStorage.setItem('refreshToken', refreshToken)
+  if (accessToken)  localStorage.setItem('sqAccessToken', accessToken)
+  if (refreshToken) localStorage.setItem('sqRefreshToken', refreshToken)
 }
 
 export function clearTokens() {
-  localStorage.removeItem('accessToken')
-  localStorage.removeItem('refreshToken')
+  localStorage.removeItem('sqAccessToken')
+  localStorage.removeItem('sqRefreshToken')
 }
 
 // ── Core request function ─────────────────────────────────────────────────────

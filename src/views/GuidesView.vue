@@ -4,8 +4,8 @@
     <!-- Hero -->
     <section class="guides-hero">
       <div class="hero-content">
-        <h1>{{ lang === 'kk' ? 'Нұсқаулықтар' : 'Руководства' }}</h1>
-        <p>{{ lang === 'kk'
+        <h1>{{ lang === 'kaz' ? 'Нұсқаулықтар' : 'Руководства' }}</h1>
+        <p>{{ lang === 'kaz'
           ? 'Мүгедектігі бар адамдарға арналған пайдалы ақпарат пен нұсқаулықтар'
           : 'Полезная информация и практические руководства для людей с инвалидностью' }}</p>
 
@@ -15,7 +15,7 @@
           <input
             v-model="searchQuery"
             type="text"
-            :placeholder="lang === 'kk' ? 'Іздеу...' : 'Поиск...'"
+            :placeholder="lang === 'kaz' ? 'Іздеу...' : 'Поиск...'"
             @input="onSearch"
           />
           <button v-if="searchQuery" class="clear-btn" @click="searchQuery = ''; loadGuides()">✕</button>
@@ -34,7 +34,7 @@
           @click="selectCategory(cat.value)"
         >
           <span class="cat-icon">{{ cat.icon }}</span>
-          {{ lang === 'kk' ? cat.labelKk : cat.labelRu }}
+          {{ lang === 'kaz' ? cat.labelKk : cat.labelRu }}
         </button>
       </div>
     </section>
@@ -46,13 +46,13 @@
         <!-- Loading -->
         <div v-if="loading" class="loading-state">
           <div class="spinner"></div>
-          <p>{{ lang === 'kk' ? 'Жүктелуде...' : 'Загрузка...' }}</p>
+          <p>{{ lang === 'kaz' ? 'Жүктелуде...' : 'Загрузка...' }}</p>
         </div>
 
         <!-- Empty -->
         <div v-else-if="guides.length === 0" class="empty-state">
           <span class="empty-icon">📋</span>
-          <p>{{ lang === 'kk' ? 'Нұсқаулықтар табылмады' : 'Руководства не найдены' }}</p>
+          <p>{{ lang === 'kaz' ? 'Нұсқаулықтар табылмады' : 'Руководства не найдены' }}</p>
         </div>
 
         <!-- Grid -->
@@ -80,11 +80,11 @@
             </div>
 
             <h3 class="card-title">
-              {{ lang === 'kk' ? guide.titleKk : guide.titleRu }}
+              {{ lang === 'kaz' ? guide.titleKk : guide.titleRu }}
             </h3>
 
             <p class="card-excerpt">
-              {{ excerpt(lang === 'kk' ? guide.bodyKk : guide.bodyRu) }}
+              {{ excerpt(lang === 'kaz' ? guide.bodyKk : guide.bodyRu) }}
             </p>
 
             <div class="card-footer">
@@ -93,7 +93,7 @@
                 <span v-for="tag in (guide.tags || []).slice(0, 2)" :key="tag" class="tag">{{ tag }}</span>
               </span>
               <span class="read-more">
-                {{ lang === 'kk' ? 'Толығырақ →' : 'Читать →' }}
+                {{ lang === 'kaz' ? 'Толығырақ →' : 'Читать →' }}
               </span>
             </div>
           </article>
@@ -101,7 +101,7 @@
 
         <!-- Total -->
         <p v-if="total > 0 && !loading" class="total-count">
-          {{ lang === 'kk' ? `Барлығы: ${total} нұсқаулық` : `Всего: ${total} руководств` }}
+          {{ lang === 'kaz' ? `Барлығы: ${total} нұсқаулық` : `Всего: ${total} руководств` }}
         </p>
       </div>
     </section>
@@ -118,7 +118,7 @@
           </div>
 
           <h2 class="modal-title">
-            {{ lang === 'kk' ? selectedGuide.titleKk : selectedGuide.titleRu }}
+            {{ lang === 'kaz' ? selectedGuide.titleKk : selectedGuide.titleRu }}
           </h2>
 
           <div class="modal-meta">
@@ -135,7 +135,7 @@
             </span>
           </div>
 
-          <div class="modal-body" v-html="renderMarkdown(lang === 'kk' ? selectedGuide.bodyKk : selectedGuide.bodyRu)"></div>
+          <div class="modal-body" v-html="renderMarkdown(lang === 'kaz' ? selectedGuide.bodyKk : selectedGuide.bodyRu)"></div>
 
           <div class="modal-tags">
             <span v-for="tag in (selectedGuide.tags || [])" :key="tag" class="tag">{{ tag }}</span>
@@ -153,7 +153,7 @@ import { useAccessibilityStore } from '../stores/accessibility'
 import { getGuides, likeGuide, getLikedGuideIds } from '../api/guides'
 
 const accessStore = useAccessibilityStore()
-const lang = computed(() => accessStore.language)
+const lang = computed(() => accessStore.lang)
 const isDark = computed(() => accessStore.darkMode)
 
 // State
@@ -181,7 +181,7 @@ const categories = [
 function getCatLabel(catValue) {
   const cat = categories.find(c => c.value === catValue)
   if (!cat) return catValue
-  return lang.value === 'kk' ? cat.labelKk : cat.labelRu
+  return lang.value === 'kaz' ? cat.labelKk : cat.labelRu
 }
 
 async function loadGuides() {
@@ -268,7 +268,7 @@ function excerpt(text, len = 150) {
 
 function formatDate(iso) {
   if (!iso) return ''
-  return new Date(iso).toLocaleDateString(lang.value === 'kk' ? 'kk-KZ' : 'ru-RU', {
+  return new Date(iso).toLocaleDateString(lang.value === 'kaz' ? 'kk-KZ' : 'ru-RU', {
     year: 'numeric', month: 'long', day: 'numeric'
   })
 }

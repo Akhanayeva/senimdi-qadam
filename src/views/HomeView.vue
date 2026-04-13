@@ -113,13 +113,13 @@
             :key="org.id"
             class="org-circle-btn"
             @click="selectedOrg = org"
-            :title="lang === 'kaz' ? org.nameKaz : org.nameRus"
+            :title="lang === 'kaz' ? org.nameKk : org.nameRu"
           >
-            <div class="org-circle-avatar" :class="{ verified: org.verified }">
-              <span class="org-circle-letter">{{ org.name.charAt(0) }}</span>
-              <span v-if="org.verified" class="org-circle-check">✓</span>
+            <div class="org-circle-avatar" :class="{ verified: org.status === 'VERIFIED' }">
+              <span class="org-circle-letter">{{ (org.nameRu || '').charAt(0) }}</span>
+              <span v-if="org.status === 'VERIFIED'" class="org-circle-check">✓</span>
             </div>
-            <div class="org-circle-name">{{ (lang === 'kaz' ? org.nameKaz : org.nameRus).slice(0, 24) }}{{ (lang === 'kaz' ? org.nameKaz : org.nameRus).length > 24 ? '…' : '' }}</div>
+            <div class="org-circle-name">{{ (lang === 'kaz' ? (org.nameKk || org.nameRu) : org.nameRu).slice(0, 24) }}{{ (lang === 'kaz' ? (org.nameKk || org.nameRu) : org.nameRu).length > 24 ? '…' : '' }}</div>
           </button>
         </div>
 
@@ -163,24 +163,24 @@
             class="news-card"
           >
             <div class="news-card-image">
-              <img v-if="article.image" :src="article.image" :alt="article.title" class="news-img" loading="lazy" />
+              <img v-if="article.imageUrl" :src="newsImageUrl(article.imageUrl)" :alt="article.titleRu" class="news-img" loading="lazy" />
               <div v-else class="news-image-placeholder">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               </div>
               <div class="news-cat-badge">
                 {{ article.category === 'event' ? '📅 Событие' : article.category === 'announcement' ? '📢 Анонс' : '📰 Новость' }}
               </div>
-              <span v-if="article.verified" class="news-verified">✓</span>
+              <span v-if="article.status === 'PUBLISHED'" class="news-verified">✓</span>
             </div>
             <div class="news-card-body">
-              <div class="news-date">{{ formatDate(article.date) }}</div>
-              <h3 class="news-title">{{ lang === 'kaz' ? article.titleKaz : article.title }}</h3>
-              <p class="news-excerpt">{{ lang === 'kaz' ? article.excerptKaz : article.excerpt }}</p>
+              <div class="news-date">{{ formatDate(article.publishedAt) }}</div>
+              <h3 class="news-title">{{ lang === 'kaz' ? article.titleKk : article.titleRu }}</h3>
+              <p class="news-excerpt">{{ homeExcerpt(article) }}</p>
               <div class="news-card-footer">
-                <span class="news-author">{{ article.author }}</span>
+                <span class="news-author">{{ article.author?.profile?.firstName || '' }}</span>
                 <div class="news-stats">
-                  <span>❤️ {{ article.likes }}</span>
-                  <span>💬 {{ article.comments }}</span>
+                  <span>❤️ {{ article.likesCount }}</span>
+                  <span>💬 {{ article.commentsCount }}</span>
                 </div>
               </div>
             </div>
@@ -242,6 +242,7 @@ import { useAccessibilityStore } from '../stores/accessibility.js'
 import { useI18n } from '../i18n.js'
 import { getFeaturedOrganizations } from '../api/organizations.js'
 import { getLatestNews as fetchLatestNews } from '../api/news.js'
+import { newsImageUrl } from '../api/apiClient.js'
 import OrganizationCard from '../components/OrganizationCard.vue'
 import OrgModal from '../components/OrgModal.vue'
 
@@ -307,7 +308,8 @@ onMounted(async () => {
     featuredOrgs.value = await getFeaturedOrganizations()
   } finally { orgsLoading.value = false }
   try {
-    latestNews.value = await fetchLatestNews()
+    const newsRes = await fetchLatestNews()
+    latestNews.value = newsRes.items ?? newsRes
   } catch (e) { newsError.value = e.message }
   finally { newsLoading.value = false }
 })
@@ -322,6 +324,10 @@ const submitAiQuestion = () => {
 const formatDate = (d) => {
   if (!d) return ''
   return new Date(d).toLocaleDateString(lang.value === 'kaz' ? 'kk-KZ' : 'ru-RU', { year: 'numeric', month: 'long', day: 'numeric' })
+}
+const homeExcerpt = (article) => {
+  const body = lang.value === 'kaz' ? article.bodyKk : article.bodyRu
+  return body ? body.slice(0, 120) + (body.length > 120 ? '…' : '') : ''
 }
 </script>
 

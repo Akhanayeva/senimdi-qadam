@@ -6,10 +6,11 @@ const delay = (ms = 400) => new Promise(r => setTimeout(r, ms))
 const guidesStore = guidesData.map(g => ({ ...g }))
 const likedSet = new Set(['guide-001', 'guide-002']) // pre-liked for demo
 
-// GET /api/core/guides?category=&search=&page=1&limit=10
+// GET /api/core/guides?category=&search=&limit=20&offset=0
+// Real API uses offset-based pagination (not page-based)
 export async function getGuides(filters = {}) {
   await delay()
-  const { category, search, page = 1, limit = 20 } = filters
+  const { category, search, offset = 0, limit = 20 } = filters
 
   let items = guidesStore.filter(g => g.isPublished)
 
@@ -28,8 +29,7 @@ export async function getGuides(filters = {}) {
   }
 
   const total = items.length
-  const start = (page - 1) * limit
-  const pageItems = items.slice(start, start + limit)
+  const pageItems = items.slice(offset, offset + limit)
 
   return { items: pageItems, total }
 }

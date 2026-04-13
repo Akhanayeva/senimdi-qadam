@@ -20,7 +20,7 @@
           <!-- Avatar -->
           <div class="avatar-wrap">
             <div class="avatar-circle">
-              <img v-if="profile.avatarUrl" :src="profile.avatarUrl" class="avatar-img" alt="avatar" />
+              <img v-if="profile.avatarUrl" :src="buildAvatarUrl(profile.avatarUrl)" class="avatar-img" alt="avatar" />
               <span v-else class="avatar-initials">{{ initials }}</span>
             </div>
             <label class="avatar-upload-btn" :title="lang==='kaz' ? 'Фото өзгерту' : 'Сменить фото'">
@@ -237,22 +237,26 @@
           <div class="tab-section-header">
             <h2 class="info-box-title">{{ lang==='kaz' ? 'Сақталған ұйымдар' : 'Сохранённые организации' }}</h2>
           </div>
-          <div v-if="savedOrgsList.length === 0" class="empty-tab">
+          <div v-if="savedOrgsLoading" class="empty-tab">
+            <div class="spinner-sm" style="margin:0 auto 8px"></div>
+            <p style="color:var(--gray-400)">{{ lang==='kaz' ? 'Жүктелуде...' : 'Загрузка...' }}</p>
+          </div>
+          <div v-else-if="savedOrgsList.length === 0" class="empty-tab">
             <div class="empty-tab-icon">🏢</div>
             <p>{{ lang==='kaz' ? 'Сақталған ұйымдар жоқ' : 'Нет сохранённых организаций' }}</p>
             <RouterLink to="/organizations" class="btn btn-primary btn-sm">{{ lang==='kaz' ? 'Ұйымдарды шолу' : 'Найти организации' }}</RouterLink>
           </div>
           <div v-else class="saved-orgs-grid">
             <div v-for="org in savedOrgsList" :key="org.id" class="saved-org-card" @click="openOrg(org)">
-              <div class="saved-org-avatar">{{ org.name.charAt(0) }}</div>
+              <div class="saved-org-avatar">{{ (org.nameRu || '').charAt(0) }}</div>
               <div class="saved-org-info">
-                <div class="saved-org-name">{{ lang==='kaz' ? org.nameKaz : org.nameRus }}</div>
-                <div class="saved-org-cat">{{ lang==='kaz' ? org.categoryLabel?.kaz : org.categoryLabel?.rus }}</div>
+                <div class="saved-org-name">{{ lang==='kaz' ? (org.nameKk || org.nameRu) : org.nameRu }}</div>
+                <div class="saved-org-cat">{{ org.category }}</div>
                 <div class="saved-org-addr">📍 {{ org.address }}</div>
               </div>
               <div class="saved-org-actions">
-                <span v-if="org.verified" class="mini-verified">✓</span>
-                <button class="unsave-btn" @click.stop="authStore.toggleSaveOrg(org.id)">
+                <span v-if="org.status === 'VERIFIED'" class="mini-verified">✓</span>
+                <button class="unsave-btn" @click.stop="handleUnsaveOrg(org.id)">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="#EF4444" stroke="#EF4444" stroke-width="1"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                 </button>
               </div>
@@ -278,7 +282,7 @@
               </div>
               <div v-else class="liked-news-list">
                 <RouterLink v-for="n in likedNewsList" :key="n.id" :to="`/news/${n.id}`" class="liked-news-item">
-                  <img v-if="n.imageUrl" :src="n.imageUrl" class="liked-news-img" />
+                  <img v-if="n.imageUrl" :src="newsImageUrl(n.imageUrl)" class="liked-news-img" />
                   <div class="liked-news-placeholder" v-else>📰</div>
                   <div class="liked-news-info">
                     <div class="liked-news-title">{{ lang==='kaz' ? n.titleKk : n.titleRu }}</div>
@@ -455,7 +459,7 @@
               :key="n.id"
               class="mynews-item"
             >
-              <img v-if="n.imageUrl" :src="n.imageUrl" class="mynews-img" :alt="n.titleRu" />
+              <img v-if="n.imageUrl" :src="newsImageUrl(n.imageUrl)" class="mynews-img" :alt="n.titleRu" />
               <div class="mynews-placeholder" v-else>📰</div>
               <div class="mynews-info">
                 <div class="mynews-title">{{ lang==='kaz' ? n.titleKk : n.titleRu }}</div>
@@ -493,7 +497,8 @@ import { useAccessibilityStore } from '../stores/accessibility.js'
 import { getMyProfile, updateMyProfile, uploadAvatar, getLikedNews, getMyLinks, requestRelativeLink, acceptRelativeLink, deleteRelativeLink } from '../api/profile.js'
 import { getMyBookings } from '../api/taxi.js'
 import { getNews, getMyNews } from '../api/news.js'
-import orgData from '../mock/organizations.json'
+import { newsImageUrl, avatarUrl as buildAvatarUrl } from '../api/apiClient.js'
+import { getSavedOrganizations } from '../api/organizations.js'
 import OrgModal from '../components/OrgModal.vue'
 
 const authStore = useAuthStore()
@@ -572,10 +577,28 @@ const profileTabs = computed(() => [
 
 // ── Saved orgs ────────────────────────────────────────────────────────────────
 const selectedOrg = ref(null)
-const savedOrgsList = computed(() =>
-  orgData.filter(o => authStore.savedOrgs.includes(o.id))
-)
+// savedOrgsList is loaded from the API (not from local mock JSON)
+// so it works correctly when real org IDs (UUIDs) are used
+const savedOrgsList = ref([])
+const savedOrgsLoading = ref(false)
+
+async function loadSavedOrgs() {
+  if (!authStore.isAuthenticated) return
+  savedOrgsLoading.value = true
+  try {
+    const res = await getSavedOrganizations(authStore.accessToken, authStore.savedOrgs)
+    savedOrgsList.value = res.items ?? []
+  } catch { savedOrgsList.value = [] }
+  finally { savedOrgsLoading.value = false }
+}
+
 function openOrg(org) { selectedOrg.value = org }
+
+async function handleUnsaveOrg(orgId) {
+  await authStore.toggleSaveOrg(orgId)
+  // Reload saved orgs list so the removed org disappears immediately
+  await loadSavedOrgs()
+}
 
 // ── Liked news ────────────────────────────────────────────────────────────────
 const allNews = ref([])
@@ -637,13 +660,14 @@ onMounted(async () => {
       getMyProfile(authStore.accessToken).catch(() => authStore.user),
       getNews(),
       getMyBookings().catch(() => []),
-      getLikedNews().catch(() => [])
+      getLikedNews(authStore.accessToken).catch(() => [])
     ])
     profile.value = fullProfile || authStore.user
     allNews.value = (news?.items ?? news) || []
     taxiBookings.value = Array.isArray(bookings) ? bookings : []
     likedNewsIds.value = Array.isArray(likedIds) ? likedIds : []
     loadLinks()
+    loadSavedOrgs()
   }
 })
 
@@ -741,7 +765,7 @@ function newsStatusLabel(status) {
 async function loadMyNews() {
   myNewsLoading.value = true
   try {
-    const res = await getMyNews()
+    const res = await getMyNews(authStore.accessToken)
     myNewsList.value = res.items || []
   } catch {}
   finally { myNewsLoading.value = false }
