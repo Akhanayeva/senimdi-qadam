@@ -84,7 +84,7 @@
             <div class="msg msg-user" v-if="msg.role === 'user'">
               <div class="msg-bubble msg-bubble-user">{{ msg.content }}</div>
               <div class="msg-avatar msg-avatar-user">
-                {{ authStore.user?.name?.charAt(0) || 'У' }}
+                {{ authStore.user?.firstName?.charAt(0) || 'У' }}
               </div>
             </div>
 

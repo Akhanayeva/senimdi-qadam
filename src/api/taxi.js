@@ -47,7 +47,10 @@ export async function createBooking(payload) {
   return newBooking
 }
 
-/** PATCH /api/taxi/bookings/:id/cancel */
+/** PATCH /api/taxi/bookings/:id/cancel?reason=<reason>
+ *  NOTE: In the real API `reason` is a QUERY PARAMETER, not a request body field.
+ *  Real fetch: PATCH `/api/taxi/bookings/${id}/cancel?reason=${encodeURIComponent(reason)}`
+ */
 export async function cancelBooking(id, reason = '') {
   await delay(500)
   const booking = taxiData.bookings.find(b => b.id === id)

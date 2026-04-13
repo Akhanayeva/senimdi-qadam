@@ -22,8 +22,8 @@
             </div>
             <div class="org-type-status">
               <div class="org-type-row">
-                <span class="detail-label">{{ lang === 'kaz' ? 'Түрі:' : 'Тип:' }}</span>
-                <span class="detail-value">{{ lang === 'kaz' ? org.type?.kaz : org.type?.rus }}</span>
+                <span class="detail-label">{{ lang === 'kaz' ? 'Санат:' : 'Категория:' }}</span>
+                <span class="detail-value">{{ orgCategoryLabel }}</span>
               </div>
               <div class="org-status-row">
                 <span class="detail-label">{{ lang === 'kaz' ? 'Мәртебесі:' : 'Статус:' }}</span>
@@ -48,11 +48,11 @@
             <div class="section-body">
               <div class="info-field">
                 <span class="info-field-label">{{ lang === 'kaz' ? 'Көмек санаты:' : 'Категория помощи:' }}</span>
-                <span class="info-field-value">{{ lang === 'kaz' ? org.categoryLabel?.kaz : org.categoryLabel?.rus }}</span>
+                <span class="info-field-value">{{ orgCategoryLabel }}</span>
               </div>
-              <div class="info-field">
+              <div v-if="org.targetAudience || org.tags?.length" class="info-field">
                 <span class="info-field-label">{{ lang === 'kaz' ? 'Мақсатты аудитория:' : 'Целевая аудитория:' }}</span>
-                <span class="info-field-value">{{ lang === 'kaz' ? org.targetAudience?.kaz : org.targetAudience?.rus }}</span>
+                <span class="info-field-value">{{ org.targetAudience || org.tags?.join(', ') }}</span>
               </div>
               <div class="info-field">
                 <span class="info-field-label">{{ lang === 'kaz' ? 'Қысқаша сипаттама:' : 'Краткое описание:' }}</span>
@@ -62,14 +62,15 @@
           </div>
 
           <!-- ── BASIC SERVICES ── -->
-          <div v-if="org.services" class="org-section">
+          <!-- services: mock has { kaz: [], rus: [] }; real API may return a plain string[] or nothing -->
+          <div v-if="orgServicesList.length" class="org-section">
             <div class="section-heading">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
               {{ lang === 'kaz' ? 'Негізгі қызметтер' : 'Основные услуги' }}
             </div>
             <div class="section-body">
               <ul class="services-list">
-                <li v-for="(service, i) in (lang === 'kaz' ? org.services.kaz : org.services.rus)" :key="i" class="service-item">
+                <li v-for="(service, i) in orgServicesList" :key="i" class="service-item">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                   {{ service }}
                 </li>
@@ -353,6 +354,7 @@ import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
 import { useAccessibilityStore } from '../stores/accessibility.js'
 import { useI18n } from '../i18n.js'
+import { getOrgReviews, addOrgReview } from '../api/organizations.js'
 
 const props = defineProps({ org: Object })
 const emit = defineEmits(['close'])
@@ -367,6 +369,29 @@ const orgName = computed(() =>
   props.org ? (lang.value === 'kaz' ? props.org.nameKk : props.org.nameRu) : ''
 )
 
+// ── Category label map (real API returns org.category as an enum) ────────────
+const CATEGORY_LABELS = {
+  MEDICAL:       { rus: 'Медицина',             kaz: 'Медицина' },
+  LEGAL:         { rus: 'Юридическая помощь',   kaz: 'Заңдық көмек' },
+  SOCIAL:        { rus: 'Социальная поддержка', kaz: 'Әлеуметтік қолдау' },
+  REHABILITATION:{ rus: 'Реабилитация',          kaz: 'Оңалту' },
+  EDUCATION:     { rus: 'Образование',           kaz: 'Білім' },
+  EMPLOYMENT:    { rus: 'Трудоустройство',       kaz: 'Жұмысқа орналасу' },
+  PSYCHOLOGICAL: { rus: 'Психологическая',       kaz: 'Психологиялық' },
+  TRANSPORT:     { rus: 'Транспорт',             kaz: 'Көлік' },
+  OTHER:         { rus: 'Прочее',                kaz: 'Басқа' },
+}
+
+// Human-readable category — works with real API `org.category` enum
+const orgCategoryLabel = computed(() => {
+  if (!props.org) return ''
+  const cat = props.org.category
+  if (!cat) return ''
+  const entry = CATEGORY_LABELS[cat]
+  if (!entry) return cat
+  return lang.value === 'kaz' ? entry.kaz : entry.rus
+})
+
 function askAI() {
   emit('close')
   const orgN = orgName.value
@@ -379,18 +404,50 @@ function askAI() {
   })
 }
 
-// ── Reviews ──────────────────────────────────────────────────────────────────
-// In-memory mock review store (per org)
-const allReviews = ref({})
-
-const orgReviews = computed(() => {
+// ── Services list ─────────────────────────────────────────────────────────────
+// Mock: org.services = { kaz: [...], rus: [...] }
+// Real API: org.services may be a plain string[] or absent
+const orgServicesList = computed(() => {
   if (!props.org) return []
-  return allReviews.value[props.org.id] || []
+  const s = props.org.services
+  if (!s) return []
+  // Mock nested format
+  if (typeof s === 'object' && !Array.isArray(s)) {
+    return (lang.value === 'kaz' ? s.kaz : s.rus) || []
+  }
+  // Real API plain array
+  if (Array.isArray(s)) return s
+  return []
 })
+
+// ── Reviews ──────────────────────────────────────────────────────────────────
+// Reviews loaded from GET /api/core/organizations/:id/reviews
+// Real API shape: { id, organizationId, userId, rating, comment, isVerified, createdAt }
+const orgReviews = ref([])
+const reviewsLoading = ref(false)
+
+async function loadReviews(orgId) {
+  if (!orgId) return
+  reviewsLoading.value = true
+  try {
+    const res = await getOrgReviews(orgId)
+    // Normalise: real API returns userId; build a display name from it
+    orgReviews.value = (res.items || []).map(r => ({
+      ...r,
+      // Use authorName if mock provided it; fall back to shortened userId
+      authorName: r.authorName || (r.userId ? r.userId.slice(0, 8) : '?')
+    }))
+  } catch (e) {
+    console.warn('[OrgModal] loadReviews failed:', e.message)
+    orgReviews.value = []
+  } finally {
+    reviewsLoading.value = false
+  }
+}
 
 const hasReviewed = computed(() => {
   if (!authStore.isAuthenticated) return false
-  return orgReviews.value.some(r => r.authorId === authStore.user?.id)
+  return orgReviews.value.some(r => r.userId === authStore.user?.id || r.authorId === authStore.user?.id)
 })
 
 const reviewForm = ref({ rating: 0, comment: '' })
@@ -409,29 +466,38 @@ async function submitReview() {
     return
   }
   reviewLoading.value = true
-  await new Promise(r => setTimeout(r, 500)) // mock delay
-  const orgId = props.org.id
-  if (!allReviews.value[orgId]) allReviews.value[orgId] = []
-  allReviews.value[orgId].push({
-    id: `rev-${Date.now()}`,
-    authorId: authStore.user?.id,
-    authorName: `${authStore.user?.firstName || ''} ${authStore.user?.lastName || ''}`.trim() || 'Пользователь',
-    rating: reviewForm.value.rating,
-    comment: reviewForm.value.comment.trim(),
-    createdAt: new Date().toISOString()
-  })
-  reviewForm.value = { rating: 0, comment: '' }
-  reviewSuccess.value = true
-  reviewLoading.value = false
-  setTimeout(() => { reviewSuccess.value = false }, 3000)
+  try {
+    const review = await addOrgReview(
+      authStore.accessToken,
+      props.org.id,
+      reviewForm.value.rating,
+      reviewForm.value.comment.trim()
+    )
+    // Add to local list immediately (optimistic display)
+    orgReviews.value.push({
+      ...review,
+      authorName: `${authStore.user?.firstName || ''} ${authStore.user?.lastName || ''}`.trim() || 'Пользователь',
+      authorId: authStore.user?.id,
+      userId: authStore.user?.id
+    })
+    reviewForm.value = { rating: 0, comment: '' }
+    reviewSuccess.value = true
+    setTimeout(() => { reviewSuccess.value = false }, 3000)
+  } catch (e) {
+    reviewError.value = e.message || (lang.value === 'kaz' ? 'Қате орын алды' : 'Произошла ошибка')
+  } finally {
+    reviewLoading.value = false
+  }
 }
 
-// Reset form when org changes
-watch(() => props.org?.id, () => {
+// Load reviews and reset form when org changes
+watch(() => props.org?.id, (newId) => {
+  orgReviews.value = []
   reviewForm.value = { rating: 0, comment: '' }
   reviewError.value = ''
   reviewSuccess.value = false
-})
+  if (newId) loadReviews(newId)
+}, { immediate: true })
 
 function formatDate(iso) {
   if (!iso) return ''

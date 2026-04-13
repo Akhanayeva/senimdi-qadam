@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>OAuth Redirect</title>
+  <script>
+    /**
+     * OAuth callback redirect shim for hash-router (createWebHashHistory).
+     *
+     * The real backend redirects to:
+     *   http://localhost:5173/auth/callback?accessToken=...&refreshToken=...
+     *
+     * But Vue Router with createWebHashHistory expects:
+     *   http://localhost:5173/#/auth/callback?accessToken=...&refreshToken=...
+     *
+     * This static HTML page bridges the gap: it reads the query params from the
+     * non-hash URL and immediately redirects to the hash-based equivalent.
+     */
+    (function () {
+      var search = window.location.search; // "?accessToken=...&refreshToken=..."
+      var hashPath = '/#/auth/callback' + search;
+      window.location.replace(hashPath);
+    })();
+  </script>
+</head>
+<body>
+  <p>Redirecting...</p>
+</body>
+</html>
