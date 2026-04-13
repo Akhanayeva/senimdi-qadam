@@ -151,11 +151,13 @@ export async function assignDriver(bookingId, driverId) {
     booking.driverId = driverId
     booking.driver = {
       id: driver.id,
-      name: driver.name,
-      vehicle: driver.vehicle,
+      firstName: driver.firstName,
+      lastName: driver.lastName,
+      vehicleModel: driver.vehicleModel,
+      vehicleType: driver.vehicleType,
       phone: driver.phone,
-      whatsappLink: driver.whatsappLink,
-      rating: driver.rating
+      whatsapp: driver.whatsapp,
+      ratingAvg: driver.ratingAvg
     }
     // Remove from queue
     const qi = taxiData.managerQueue.findIndex(b => b.id === bookingId)
@@ -182,22 +184,160 @@ export async function updateBookingStatus(bookingId, status, reason = '') {
 /** POST /api/taxi/drivers (add driver - manager/admin) */
 export async function addDriver(payload) {
   await delay(700)
+  const nameParts = (payload.name || '').trim().split(' ')
   const driver = {
     id: 'drv-' + Date.now(),
-    name: payload.name,
+    firstName: nameParts[0] || '',
+    lastName: nameParts.slice(1).join(' ') || '',
     phone: payload.phone,
-    whatsappLink: `https://wa.me/${payload.phone.replace(/\D/g, '')}`,
-    vehicle: payload.vehicle,
-    licensePlate: payload.licensePlate,
+    whatsapp: `https://wa.me/${payload.phone.replace(/\D/g, '')}`,
+    vehicleType: payload.vehicleType || 'OTHER',
+    vehicleModel: payload.vehicleModel || payload.vehicle || '',
+    licensePlate: payload.licensePlate || '',
     status: 'ACTIVE',
-    rating: 5.0,
-    totalRides: 0,
+    ratingAvg: 5.0,
+    ratingCount: 0,
+    totalTrips: 0,
     avatar: null,
-    disabilityEquipment: [],
+    equipment: [],
     bio: '',
-    bioKaz: '',
+    bioKk: '',
     joinedAt: new Date().toISOString().split('T')[0]
   }
   taxiData.drivers.push(driver)
   return driver
+}
+
+/** PATCH /api/taxi/drivers/:id/status (MANAGER/ADMIN)
+ *  Body: { status: "ACTIVE"|"INACTIVE"|"BUSY" }
+ */
+export async function updateDriverStatus(driverId, status) {
+  await delay(400)
+  const driver = taxiData.drivers.find(d => d.id === driverId)
+  if (!driver) throw new Error('Водитель не найден')
+  driver.status = status
+  return { ...driver }
+}
+
+// ─── Manager Chat ────────────────────────────────────────────────────────────
+
+/** GET /api/taxi/chat/manager/bookings/:bookingId/messages (MANAGER) */
+export async function getManagerChatMessages(bookingId) {
+  await delay(400)
+  const booking = taxiData.bookings.find(b => b.id === bookingId)
+    || taxiData.managerQueue.find(b => b.id === bookingId)
+  return booking ? [...(booking.messages || [])] : []
+}
+
+/** POST /api/taxi/chat/manager/bookings/:bookingId/messages (MANAGER) */
+export async function sendManagerChatMessage(bookingId, text) {
+  await delay(300)
+  const booking = taxiData.bookings.find(b => b.id === bookingId)
+    || taxiData.managerQueue.find(b => b.id === bookingId)
+  if (!booking) return null
+  const msg = {
+    id: 'msg-' + Date.now(),
+    role: 'manager',
+    senderName: 'Менеджер',
+    text,
+    createdAt: new Date().toISOString()
+  }
+  if (!booking.messages) booking.messages = []
+  booking.messages.push(msg)
+  return msg
+}
+
+/** GET /api/taxi/chat/unread — unread message count for current user
+ *  Response: { count: N }
+ */
+export async function getUnreadChatCount() {
+  await delay(200)
+  // Mock: random 0-3 unread
+  return { count: Math.floor(Math.random() * 3) }
+}
+
+/** GET /api/taxi/chat/manager/unread — unread count for manager
+ *  Response: { count: N }
+ */
+export async function getManagerUnreadChatCount() {
+  await delay(200)
+  return { count: Math.floor(Math.random() * 5) }
+}
+
+// ─── Manager Bookings ────────────────────────────────────────────────────────
+
+/** GET /api/taxi/manager/bookings — all bookings with optional status filter
+ *  Query: { status?: string, limit?: number, offset?: number }
+ *  Response: { items: [...], total: N }
+ */
+export async function getManagerBookings(status = null, limit = 20, offset = 0) {
+  await delay(500)
+  let items = [...taxiData.bookings]
+  if (status) items = items.filter(b => b.status === status)
+  const total = items.length
+  return { items: items.slice(offset, offset + limit), total }
+}
+
+/** GET /api/taxi/manager/bookings/:id — booking detail with messages (MANAGER)
+ *  Response: booking object with messages array
+ */
+export async function getManagerBookingById(id) {
+  await delay(300)
+  const booking = taxiData.bookings.find(b => b.id === id)
+    || taxiData.managerQueue.find(b => b.id === id)
+  if (!booking) throw new Error('Заявка не найдена')
+  return { ...booking, messages: booking.messages || [] }
+}
+
+// ─── Manager Auth ─────────────────────────────────────────────────────────────
+
+// In-memory manager store
+const managerAccounts = []
+
+/** POST /api/taxi/manager-auth/register — register with invite code
+ *  Body: { inviteCode: string, firstName: string, lastName: string, email: string, password: string, phone: string }
+ *  Response: { accessToken, refreshToken, manager: {...} }
+ */
+export async function registerManager({ inviteCode, firstName, lastName, email, password, phone }) {
+  await delay(800)
+  // Mock: accept any 8-char invite code starting with 'INV-'
+  if (!inviteCode || !inviteCode.startsWith('INV-')) {
+    throw new Error('Недействительный код приглашения')
+  }
+  if (managerAccounts.find(m => m.email === email)) {
+    throw new Error('Email уже зарегистрирован')
+  }
+  const manager = {
+    id: 'mgr-' + Date.now(),
+    firstName,
+    lastName,
+    email,
+    phone,
+    role: 'TAXI_MANAGER',
+    createdAt: new Date().toISOString()
+  }
+  managerAccounts.push(manager)
+  const fakeToken = 'mock.manager.' + btoa(JSON.stringify({ sub: manager.id, role: 'TAXI_MANAGER' }))
+  return {
+    accessToken: fakeToken,
+    refreshToken: fakeToken + '.refresh',
+    manager
+  }
+}
+
+/** GET /api/taxi/manager-auth/me — current manager profile
+ *  Response: manager object
+ */
+export async function getManagerMe(accessToken) {
+  await delay(300)
+  // Mock: return first manager or a default one
+  return managerAccounts[0] || {
+    id: 'mgr-001',
+    firstName: 'Сейткали',
+    lastName: 'Ахметов',
+    email: 'manager@senimdi.kz',
+    phone: '+7 700 555 0011',
+    role: 'TAXI_MANAGER',
+    createdAt: '2025-01-10T00:00:00.000Z'
+  }
 }

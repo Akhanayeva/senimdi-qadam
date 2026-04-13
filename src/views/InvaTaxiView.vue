@@ -87,13 +87,11 @@
                   </label>
                   <select v-model="form.disabilityType" class="form-input form-select" required>
                     <option value="">{{ lang === 'kaz' ? 'Таңдаңыз' : 'Выберите...' }}</option>
-                    <option value="WHEELCHAIR">{{ lang === 'kaz' ? 'Арба пайдаланушы' : 'Колясочник (WHEELCHAIR)' }}</option>
-                    <option value="VISUAL">{{ lang === 'kaz' ? 'Көру қабілеті нашар' : 'Нарушение зрения (VISUAL)' }}</option>
-                    <option value="HEARING">{{ lang === 'kaz' ? 'Есту қабілеті нашар' : 'Нарушение слуха (HEARING)' }}</option>
-                    <option value="MENTAL">{{ lang === 'kaz' ? 'Психикалық ерекшеліктер' : 'Ментальные особенности (MENTAL)' }}</option>
-                    <option value="SPEECH">{{ lang === 'kaz' ? 'Сөйлеу мүмкіндігі шектеулі' : 'Нарушение речи (SPEECH)' }}</option>
-                    <option value="MUSCULOSKELETAL">{{ lang === 'kaz' ? 'Тірек-қимыл жүйесі' : 'ОДА (MUSCULOSKELETAL)' }}</option>
-                    <option value="OTHER">{{ lang === 'kaz' ? 'Басқа' : 'Другое (OTHER)' }}</option>
+                    <option value="WHEELCHAIR">{{ lang === 'kaz' ? '♿ Арба пайдаланушы' : '♿ Колясочник' }}</option>
+                    <option value="VISUAL">{{ lang === 'kaz' ? '👁 Көру қабілеті нашар' : '👁 Нарушение зрения' }}</option>
+                    <option value="HEARING">{{ lang === 'kaz' ? '👂 Есту қабілеті нашар' : '👂 Нарушение слуха' }}</option>
+                    <option value="MOBILITY">{{ lang === 'kaz' ? '🦽 Қозғалыс мүмкіндігі шектеулі' : '🦽 Нарушение подвижности' }}</option>
+                    <option value="OTHER">{{ lang === 'kaz' ? '📋 Басқа' : '📋 Другое' }}</option>
                   </select>
                 </div>
               </div>
@@ -201,9 +199,9 @@
               </div>
             </div>
             <div v-if="booking.driver" class="booking-driver-row">
-              <div class="driver-mini-avatar">{{ booking.driver.name.charAt(0) }}</div>
-              <span class="driver-mini-name">{{ booking.driver.name }}</span>
-              <span class="driver-mini-vehicle">· {{ booking.driver.vehicle }}</span>
+              <div class="driver-mini-avatar">{{ (booking.driver.firstName || '?').charAt(0) }}</div>
+              <span class="driver-mini-name">{{ booking.driver.firstName }} {{ booking.driver.lastName }}</span>
+              <span class="driver-mini-vehicle">· {{ booking.driver.vehicleModel }}</span>
             </div>
             <div class="booking-card-footer">
               <span class="disability-chip">{{ disabilityLabel(booking.disabilityType, lang) }}</span>
@@ -252,28 +250,28 @@
             :class="{ 'driver-card--inactive': driver.status !== 'ACTIVE' }"
           >
             <div class="driver-avatar-wrap">
-              <div class="driver-avatar">{{ driver.name.charAt(0) }}</div>
+              <div class="driver-avatar">{{ (driver.firstName || '?').charAt(0) }}</div>
               <span class="driver-status-dot" :class="driver.status === 'ACTIVE' ? 'dot-active' : 'dot-inactive'"></span>
             </div>
-            <h3 class="driver-name">{{ driver.name }}</h3>
+            <h3 class="driver-name">{{ driver.firstName }} {{ driver.lastName }}</h3>
             <div class="driver-rating">
-              <span class="stars">{{ '★'.repeat(Math.round(driver.rating)) }}{{ '☆'.repeat(5 - Math.round(driver.rating)) }}</span>
-              <span class="rating-num">{{ driver.rating.toFixed(1) }}</span>
-              <span class="rating-rides">· {{ driver.totalRides }} {{ lang === 'kaz' ? 'сапар' : 'поездок' }}</span>
+              <span class="stars">{{ '★'.repeat(Math.round(driver.ratingAvg)) }}{{ '☆'.repeat(5 - Math.round(driver.ratingAvg)) }}</span>
+              <span class="rating-num">{{ driver.ratingAvg.toFixed(1) }}</span>
+              <span class="rating-rides">· {{ driver.totalTrips }} {{ lang === 'kaz' ? 'сапар' : 'поездок' }}</span>
             </div>
             <div class="driver-vehicle">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-              {{ driver.vehicle }} · {{ driver.licensePlate }}
+              {{ driver.vehicleModel }} · {{ driver.licensePlate }}
             </div>
-            <p class="driver-bio">{{ lang === 'kaz' ? (driver.bioKaz || driver.bio) : driver.bio }}</p>
+            <p class="driver-bio">{{ lang === 'kaz' ? (driver.bioKk || driver.bio) : driver.bio }}</p>
             <div class="driver-equipment">
-              <span v-for="eq in driver.disabilityEquipment" :key="eq" class="equipment-tag">
+              <span v-for="eq in driver.equipment" :key="eq" class="equipment-tag">
                 {{ equipmentLabel(eq, lang) }}
               </span>
             </div>
             <div class="driver-actions">
               <span v-if="driver.status !== 'ACTIVE'" class="driver-unavailable">{{ lang === 'kaz' ? 'Қолжетімді емес' : 'Недоступен' }}</span>
-              <a v-else :href="driver.whatsappLink" target="_blank" class="btn btn-whatsapp">
+              <a v-else :href="driver.whatsapp" target="_blank" class="btn btn-whatsapp">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12.003 2.003C6.476 2.003 2 6.478 2 12.003c0 1.992.578 3.854 1.59 5.43L2 22l4.65-1.574A9.957 9.957 0 0 0 12.003 22C17.53 22 22 17.525 22 12 22 6.476 17.53 2.003 12.003 2.003zm0 18.197a8.157 8.157 0 0 1-4.164-1.14l-.298-.179-3.088 1.046 1.056-3.019-.199-.316A8.16 8.16 0 0 1 3.8 12c0-4.519 3.678-8.197 8.203-8.197 4.524 0 8.197 3.678 8.197 8.197 0 4.524-3.673 8.197-8.197 8.197z"/></svg>
                 WhatsApp
               </a>
@@ -346,7 +344,7 @@
               <select v-model="assignMap[item.id]" class="assign-select">
                 <option value="">{{ lang === 'kaz' ? 'Жүргізуші таңдаңыз...' : 'Выбрать водителя...' }}</option>
                 <option v-for="d in availableDriversList" :key="d.id" :value="d.id">
-                  {{ d.name }} · {{ d.vehicle }}
+                  {{ d.firstName }} {{ d.lastName }} · {{ d.vehicleModel }}
                 </option>
               </select>
               <button
@@ -441,15 +439,15 @@
             <div v-if="selectedBooking.driver" class="modal-section">
               <h4 class="modal-section-title">{{ lang === 'kaz' ? 'Жүргізуші' : 'Водитель' }}</h4>
               <div class="modal-driver-card">
-                <div class="modal-driver-avatar">{{ selectedBooking.driver.name.charAt(0) }}</div>
+                <div class="modal-driver-avatar">{{ (selectedBooking.driver.firstName || '?').charAt(0) }}</div>
                 <div class="modal-driver-info">
-                  <div class="modal-driver-name">{{ selectedBooking.driver.name }}</div>
-                  <div class="modal-driver-vehicle">{{ selectedBooking.driver.vehicle }}</div>
-                  <div class="modal-driver-rating">⭐ {{ selectedBooking.driver.rating }}</div>
+                  <div class="modal-driver-name">{{ selectedBooking.driver.firstName }} {{ selectedBooking.driver.lastName }}</div>
+                  <div class="modal-driver-vehicle">{{ selectedBooking.driver.vehicleModel }}</div>
+                  <div class="modal-driver-rating">⭐ {{ selectedBooking.driver.ratingAvg }}</div>
                 </div>
                 <div class="modal-driver-actions">
                   <a :href="'tel:' + selectedBooking.driver.phone" class="btn btn-outline btn-sm">📞</a>
-                  <a :href="selectedBooking.driver.whatsappLink" target="_blank" class="btn btn-whatsapp btn-sm">💬</a>
+                  <a :href="selectedBooking.driver.whatsapp" target="_blank" class="btn btn-whatsapp btn-sm">💬</a>
                 </div>
               </div>
             </div>
@@ -524,7 +522,8 @@ const lang = computed(() => a11y.lang)
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
 const activeTab = ref('book')
-const isManager = computed(() => authStore.isAdmin || authStore.isModerator)
+// Manager tab: only TAXI_MANAGER + ADMIN (isTaxiManager already covers both)
+const isManager = computed(() => authStore.isTaxiManager)
 
 const allTabs = [
   { id: 'book', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>', labelKaz: 'Тапсырыс беру', labelRus: 'Заказать' },
@@ -703,15 +702,14 @@ function statusLabel(status, l) {
   return map[status]?.[l === 'kaz' ? 'kaz' : 'rus'] || status
 }
 
+// Taxi booking disabilityType: WHEELCHAIR | VISUAL | HEARING | MOBILITY | OTHER
 function disabilityLabel(type, l) {
   const map = {
     WHEELCHAIR: { kaz: '♿ Арба', rus: '♿ Колясочник' },
-    VISUAL: { kaz: '👁 Көру', rus: '👁 Зрение' },
-    HEARING: { kaz: '👂 Есту', rus: '👂 Слух' },
-    MENTAL: { kaz: '🧠 Психикалық', rus: '🧠 Ментальное' },
-    SPEECH: { kaz: '🗣 Сөйлеу', rus: '🗣 Речь' },
-    MUSCULOSKELETAL: { kaz: '🦽 ОДА', rus: '🦽 ОДА' },
-    OTHER: { kaz: '📋 Басқа', rus: '📋 Другое' }
+    VISUAL:     { kaz: '👁 Көру', rus: '👁 Зрение' },
+    HEARING:    { kaz: '👂 Есту', rus: '👂 Слух' },
+    MOBILITY:   { kaz: '🦽 Қозғалыс', rus: '🦽 Подвижность' },
+    OTHER:      { kaz: '📋 Басқа', rus: '📋 Другое' }
   }
   return map[type]?.[l === 'kaz' ? 'kaz' : 'rus'] || type
 }

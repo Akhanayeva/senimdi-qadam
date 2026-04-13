@@ -20,7 +20,7 @@
           <!-- Avatar -->
           <div class="avatar-wrap">
             <div class="avatar-circle">
-              <img v-if="profile.avatar" :src="profile.avatar" class="avatar-img" alt="avatar" />
+              <img v-if="profile.avatarUrl" :src="profile.avatarUrl" class="avatar-img" alt="avatar" />
               <span v-else class="avatar-initials">{{ initials }}</span>
             </div>
             <label class="avatar-upload-btn" :title="lang==='kaz' ? 'Фото өзгерту' : 'Сменить фото'">
@@ -46,7 +46,7 @@
                 {{ lang==='kaz' ? 'Тіркелді:' : 'С нами с' }} {{ formatDate(profile.createdAt) }}
               </span>
             </div>
-            <p v-if="profile.bio" class="profile-bio">{{ lang==='kaz' && profile.bioKaz ? profile.bioKaz : profile.bio }}</p>
+            <p v-if="profile.bio || profile.bioKk" class="profile-bio">{{ lang==='kaz' && profile.bioKk ? profile.bioKk : profile.bio }}</p>
           </div>
           <!-- Quick stats -->
           <div class="profile-stats">
@@ -117,9 +117,21 @@
                   <span class="ifl">{{ lang==='kaz' ? 'Мүгедектік түрі' : 'Тип инвалидности' }}</span>
                   <span class="ifv">{{ disabilityIcon(profile.disabilityType) }} {{ disabilityLabelLocal(profile.disabilityType) }}</span>
                 </div>
+                <div v-if="profile.city" class="info-field-row">
+                  <span class="ifl">{{ lang==='kaz' ? 'Қала' : 'Город' }}</span>
+                  <span class="ifv">{{ profile.city }}</span>
+                </div>
+                <div v-if="profile.birthDate" class="info-field-row">
+                  <span class="ifl">{{ lang==='kaz' ? 'Туған күні' : 'Дата рождения' }}</span>
+                  <span class="ifv">{{ formatDate(profile.birthDate) }}</span>
+                </div>
+                <div v-if="profile.disabilityNote" class="info-field-row">
+                  <span class="ifl">{{ lang==='kaz' ? 'Ескертпе' : 'Примечание' }}</span>
+                  <span class="ifv">{{ profile.disabilityNote }}</span>
+                </div>
                 <div class="info-field-row">
                   <span class="ifl">{{ lang==='kaz' ? 'Туралы' : 'О себе' }}</span>
-                  <span class="ifv">{{ (lang==='kaz' && profile.bioKaz ? profile.bioKaz : profile.bio) || '—' }}</span>
+                  <span class="ifv">{{ (lang==='kaz' && profile.bioKk ? profile.bioKk : profile.bio) || '—' }}</span>
                 </div>
               </div>
 
@@ -139,12 +151,26 @@
                   <label class="form-label">{{ lang==='kaz' ? 'Телефон' : 'Телефон' }}</label>
                   <input v-model="editForm.phone" type="tel" class="form-input" placeholder="+7 701 123 4567" />
                 </div>
-                <div v-if="profile.role === 'USER'" class="form-group">
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label">{{ lang==='kaz' ? 'Қала' : 'Город' }}</label>
+                    <input v-model="editForm.city" type="text" class="form-input" placeholder="Алматы" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">{{ lang==='kaz' ? 'Туған күні' : 'Дата рождения' }}</label>
+                    <input v-model="editForm.birthDate" type="date" class="form-input" />
+                  </div>
+                </div>
+                <div v-if="['USER','RELATIVE'].includes(profile.role)" class="form-group">
                   <label class="form-label">{{ lang==='kaz' ? 'Мүгедектік түрі' : 'Тип инвалидности' }}</label>
                   <select v-model="editForm.disabilityType" class="form-input form-select">
                     <option value="">{{ lang==='kaz' ? 'Таңдалмаған' : 'Не указано' }}</option>
                     <option v-for="d in disabilityTypes" :key="d.value" :value="d.value">{{ d.icon }} {{ lang==='kaz' ? d.nameKaz : d.nameRus }}</option>
                   </select>
+                </div>
+                <div v-if="editForm.disabilityType" class="form-group">
+                  <label class="form-label">{{ lang==='kaz' ? 'Мүгедектік ескертпесі' : 'Примечание об инвалидности' }}</label>
+                  <input v-model="editForm.disabilityNote" type="text" class="form-input" :placeholder="lang==='kaz' ? 'Мысалы: Инвалидті арба' : 'Например: Использую инвалидную коляску'" />
                 </div>
                 <div class="form-group">
                   <label class="form-label">{{ lang==='kaz' ? 'Туралы' : 'О себе' }}</label>
@@ -252,11 +278,11 @@
               </div>
               <div v-else class="liked-news-list">
                 <RouterLink v-for="n in likedNewsList" :key="n.id" :to="`/news/${n.id}`" class="liked-news-item">
-                  <img v-if="n.image" :src="n.image" class="liked-news-img" />
+                  <img v-if="n.imageUrl" :src="n.imageUrl" class="liked-news-img" />
                   <div class="liked-news-placeholder" v-else>📰</div>
                   <div class="liked-news-info">
-                    <div class="liked-news-title">{{ lang==='kaz' ? n.titleKaz : n.title }}</div>
-                    <div class="liked-news-date">{{ formatDate(n.date) }}</div>
+                    <div class="liked-news-title">{{ lang==='kaz' ? n.titleKk : n.titleRu }}</div>
+                    <div class="liked-news-date">{{ formatDate(n.publishedAt) }}</div>
                   </div>
                 </RouterLink>
               </div>
@@ -317,6 +343,140 @@
             </RouterLink>
           </div>
         </div>
+
+        <!-- ── TAB: Relative Links ── -->
+        <div v-else-if="activeTab === 'links'" class="tab-content">
+          <div class="tab-section-header">
+            <h2 class="info-box-title">{{ lang==='kaz' ? 'Туысқан / қамқоршы байланыстары' : 'Связи с родственниками / опекунами' }}</h2>
+          </div>
+          <p class="links-description">
+            {{ lang==='kaz'
+              ? 'Сізді туысқандарыңызбен немесе қамқоршыларыңызбен байланыстырады. Олар сіздің профиліңізді қарай алады және қажет болса көмек бере алады.'
+              : 'Позволяет связать ваш профиль с профилями родственников или опекунов. Они смогут видеть вашу основную информацию и при необходимости помогать вам.' }}
+          </p>
+
+          <!-- Request new link -->
+          <div class="link-request-form">
+            <h3 class="link-form-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              {{ lang==='kaz' ? 'Байланыс сұрату' : 'Запросить связь' }}
+            </h3>
+            <div class="link-form-row">
+              <input
+                v-model="linkEmail"
+                type="email"
+                class="form-input"
+                :placeholder="lang==='kaz' ? 'Пайдаланушының email мекенжайы' : 'Email адрес пользователя'"
+                @keydown.enter="handleRequestLink"
+              />
+              <button
+                class="btn btn-primary btn-sm"
+                :disabled="!linkEmail.trim() || linkRequestLoading"
+                @click="handleRequestLink"
+              >
+                <span v-if="linkRequestLoading" class="spinner-sm"></span>
+                {{ lang==='kaz' ? 'Жіберу' : 'Отправить' }}
+              </button>
+            </div>
+            <Transition name="fade">
+              <div v-if="linkRequestSuccess" class="save-success">
+                ✅ {{ lang==='kaz' ? 'Сұраныс жіберілді!' : 'Запрос отправлен!' }}
+              </div>
+            </Transition>
+            <div v-if="linkRequestError" class="field-error">{{ linkRequestError }}</div>
+          </div>
+
+          <!-- Links list -->
+          <div v-if="linksLoading" class="links-loading">
+            <span class="spinner-sm"></span>
+          </div>
+          <div v-else-if="relativeLinks.length === 0" class="empty-tab">
+            <div class="empty-tab-icon">🤝</div>
+            <p>{{ lang==='kaz' ? 'Байланыстар жоқ' : 'Нет связей' }}</p>
+          </div>
+          <div v-else class="links-list">
+            <div
+              v-for="link in relativeLinks"
+              :key="link.id"
+              class="link-item"
+            >
+              <div class="link-avatar">{{ (link.relatedUser?.firstName || '?').charAt(0) }}</div>
+              <div class="link-info">
+                <div class="link-name">
+                  {{ link.relatedUser?.firstName }} {{ link.relatedUser?.lastName }}
+                  <span v-if="link.relatedUser?.city" class="link-city">· {{ link.relatedUser.city }}</span>
+                </div>
+                <div class="link-email">{{ link.relatedUser?.email }}</div>
+                <div class="link-role">{{ roleLabelLocal(link.relatedUser?.role) }}</div>
+              </div>
+              <div class="link-actions">
+                <span class="link-status-badge" :class="'link-status-' + link.status.toLowerCase()">
+                  {{ linkStatusLabel(link.status) }}
+                </span>
+                <button
+                  v-if="link.status === 'PENDING' && link.direction === 'incoming'"
+                  class="btn btn-primary btn-sm"
+                  @click="handleAcceptLink(link.id)"
+                >
+                  {{ lang==='kaz' ? 'Қабылдау' : 'Принять' }}
+                </button>
+                <button class="btn-danger-sm" @click="handleDeleteLink(link.id)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── TAB: My News ── -->
+        <div v-else-if="activeTab === 'mynews'" class="tab-content">
+          <div class="tab-section-header">
+            <h2 class="info-box-title">{{ lang==='kaz' ? 'Менің жаңалықтарым' : 'Мои новости' }}</h2>
+            <div class="mynews-filter">
+              <button
+                v-for="f in newsFilters"
+                :key="f.value"
+                class="mynews-filter-btn"
+                :class="{ active: myNewsFilter === f.value }"
+                @click="myNewsFilter = f.value"
+              >{{ lang==='kaz' ? f.labelKk : f.labelRu }}</button>
+            </div>
+          </div>
+          <div v-if="myNewsLoading" class="empty-tab">
+            <span class="spinner-sm" style="margin:0 auto"></span>
+          </div>
+          <div v-else-if="myNewsFiltered.length === 0" class="empty-tab">
+            <div class="empty-tab-icon">📰</div>
+            <p>{{ lang==='kaz' ? 'Жаңалықтар жоқ' : 'Нет новостей' }}</p>
+          </div>
+          <div v-else class="mynews-list">
+            <div
+              v-for="n in myNewsFiltered"
+              :key="n.id"
+              class="mynews-item"
+            >
+              <img v-if="n.imageUrl" :src="n.imageUrl" class="mynews-img" :alt="n.titleRu" />
+              <div class="mynews-placeholder" v-else>📰</div>
+              <div class="mynews-info">
+                <div class="mynews-title">{{ lang==='kaz' ? n.titleKk : n.titleRu }}</div>
+                <div class="mynews-meta">
+                  <span class="mynews-date">{{ formatDate(n.publishedAt || n.createdAt) }}</span>
+                  <span class="mynews-stat">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="#EF4444" stroke="#EF4444" stroke-width="1"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    {{ n.likesCount || 0 }}
+                  </span>
+                  <span class="mynews-stat">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    {{ n.commentsCount || 0 }}
+                  </span>
+                </div>
+              </div>
+              <span class="mynews-status-badge" :class="'mynews-status-' + (n.status||'').toLowerCase()">
+                {{ newsStatusLabel(n.status) }}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
     </template>
 
@@ -326,13 +486,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
 import { useAccessibilityStore } from '../stores/accessibility.js'
-import { getMyProfile, updateMyProfile, uploadAvatar } from '../api/profile.js'
+import { getMyProfile, updateMyProfile, uploadAvatar, getLikedNews, getMyLinks, requestRelativeLink, acceptRelativeLink, deleteRelativeLink } from '../api/profile.js'
 import { getMyBookings } from '../api/taxi.js'
-import { getNews } from '../api/news.js'
+import { getNews, getMyNews } from '../api/news.js'
 import orgData from '../mock/organizations.json'
 import OrgModal from '../components/OrgModal.vue'
 
@@ -349,7 +509,8 @@ const avatarLoading = ref(false)
 
 const editForm = ref({
   firstName: '', lastName: '', phone: '',
-  bio: '', bioKaz: '', disabilityType: ''
+  city: '', birthDate: '', disabilityType: '', disabilityNote: '',
+  bio: '', bioKk: ''
 })
 
 const initials = computed(() => {
@@ -363,9 +524,12 @@ function startEdit() {
     firstName: profile.value.firstName || '',
     lastName: profile.value.lastName || '',
     phone: profile.value.phone || '',
+    city: profile.value.city || '',
+    birthDate: profile.value.birthDate || '',
+    disabilityType: profile.value.disabilityType || '',
+    disabilityNote: profile.value.disabilityNote || '',
     bio: profile.value.bio || '',
-    bioKaz: profile.value.bioKaz || '',
-    disabilityType: profile.value.disabilityType || ''
+    bioKk: profile.value.bioKk || ''
   }
   editMode.value = true
 }
@@ -390,8 +554,8 @@ const handleAvatarUpload = async (e) => {
   avatarLoading.value = true
   try {
     const result = await uploadAvatar(authStore.accessToken, file)
-    profile.value = { ...profile.value, avatar: result.avatar }
-    authStore.updateLocalUser({ avatar: result.avatar })
+    profile.value = { ...profile.value, avatarUrl: result.avatarUrl }
+    authStore.updateLocalUser({ avatarUrl: result.avatarUrl })
   } finally { avatarLoading.value = false }
 }
 
@@ -401,7 +565,9 @@ const profileTabs = computed(() => [
   { id: 'info', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>', label: lang.value==='kaz' ? 'Профиль' : 'Профиль' },
   { id: 'saved', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>', label: lang.value==='kaz' ? 'Сақталған' : 'Избранное' },
   { id: 'activity', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>', label: lang.value==='kaz' ? 'Белсенділік' : 'Активность' },
-  { id: 'rides', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>', label: 'ИнваТакси' }
+  { id: 'rides', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>', label: 'ИнваТакси' },
+  { id: 'links', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>', label: lang.value==='kaz' ? 'Байланыстар' : 'Связи' },
+  { id: 'mynews', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>', label: lang.value==='kaz' ? 'Менің жаңалықтарым' : 'Мои новости' }
 ])
 
 // ── Saved orgs ────────────────────────────────────────────────────────────────
@@ -413,21 +579,71 @@ function openOrg(org) { selectedOrg.value = org }
 
 // ── Liked news ────────────────────────────────────────────────────────────────
 const allNews = ref([])
-const likedNewsList = computed(() => allNews.value.filter((_, i) => i < 3))
+const likedNewsIds = ref([])
+const likedNewsList = computed(() =>
+  allNews.value.filter(n => likedNewsIds.value.includes(n.id))
+)
+
+// ── Relative links ────────────────────────────────────────────────────────────
+const relativeLinks = ref([])
+const linksLoading = ref(false)
+const linkEmail = ref('')
+const linkRequestLoading = ref(false)
+const linkRequestSuccess = ref(false)
+const linkRequestError = ref('')
+
+async function loadLinks() {
+  linksLoading.value = true
+  try {
+    const res = await getMyLinks(authStore.accessToken)
+    // Merge asGuardian + asDependent into one flat list for display
+    relativeLinks.value = [...(res.asGuardian || []), ...(res.asDependent || [])]
+  } catch {}
+  finally { linksLoading.value = false }
+}
+async function handleRequestLink() {
+  if (!linkEmail.value.trim()) return
+  linkRequestLoading.value = true
+  linkRequestError.value = ''
+  try {
+    await requestRelativeLink(authStore.accessToken, linkEmail.value.trim())
+    linkEmail.value = ''
+    linkRequestSuccess.value = true
+    setTimeout(() => { linkRequestSuccess.value = false }, 3000)
+    loadLinks()
+  } catch (e) {
+    linkRequestError.value = e.message || (lang.value==='kaz' ? 'Қате' : 'Ошибка')
+  } finally { linkRequestLoading.value = false }
+}
+async function handleAcceptLink(linkId) {
+  try { await acceptRelativeLink(authStore.accessToken, linkId); loadLinks() } catch {}
+}
+async function handleDeleteLink(linkId) {
+  const msg = lang.value==='kaz' ? 'Байланысты жоюды растаңыз' : 'Подтвердите удаление связи'
+  if (!confirm(msg)) return
+  try { await deleteRelativeLink(authStore.accessToken, linkId); loadLinks() } catch {}
+}
+function linkStatusLabel(status) {
+  const m = { PENDING: lang.value==='kaz'?'Күтуде':'Ожидает', ACCEPTED: lang.value==='kaz'?'Қабылданды':'Принята', REJECTED: lang.value==='kaz'?'Бас тартылды':'Отклонена' }
+  return m[status] || status
+}
 
 // ── Taxi bookings ─────────────────────────────────────────────────────────────
 const taxiBookings = ref([])
 
 onMounted(async () => {
   if (authStore.isAuthenticated) {
-    const [fullProfile, news, bookings] = await Promise.all([
+    const [fullProfile, news, bookings, likedIds] = await Promise.all([
       getMyProfile(authStore.accessToken).catch(() => authStore.user),
       getNews(),
-      getMyBookings().catch(() => [])
+      getMyBookings().catch(() => []),
+      getLikedNews().catch(() => [])
     ])
     profile.value = fullProfile || authStore.user
-    allNews.value = news
-    taxiBookings.value = bookings
+    allNews.value = (news?.items ?? news) || []
+    taxiBookings.value = Array.isArray(bookings) ? bookings : []
+    likedNewsIds.value = Array.isArray(likedIds) ? likedIds : []
+    loadLinks()
   }
 })
 
@@ -456,14 +672,15 @@ function confirmDeactivate() {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+// Profile disabilityType (per API): VISUAL | HEARING | MOBILITY | COGNITIVE | SPEECH | OTHER
+// (different from taxi booking types which also include WHEELCHAIR)
 const disabilityTypes = [
-  { value: 'WHEELCHAIR', icon: '♿', nameKaz: 'Арба', nameRus: 'Колясочник' },
-  { value: 'VISUAL', icon: '👁', nameKaz: 'Көру', nameRus: 'Зрение' },
-  { value: 'HEARING', icon: '👂', nameKaz: 'Есту', nameRus: 'Слух' },
-  { value: 'MENTAL', icon: '🧠', nameKaz: 'Психикалық', nameRus: 'Ментальное' },
-  { value: 'SPEECH', icon: '🗣', nameKaz: 'Сөйлеу', nameRus: 'Речь' },
-  { value: 'MUSCULOSKELETAL', icon: '🦽', nameKaz: 'ОДА', nameRus: 'ОДА' },
-  { value: 'OTHER', icon: '📋', nameKaz: 'Басқа', nameRus: 'Другое' }
+  { value: 'VISUAL',    icon: '👁',  nameKaz: 'Көру',           nameRus: 'Нарушение зрения' },
+  { value: 'HEARING',   icon: '👂',  nameKaz: 'Есту',           nameRus: 'Нарушение слуха' },
+  { value: 'MOBILITY',  icon: '♿',  nameKaz: 'Қозғалыс',       nameRus: 'Нарушение подвижности' },
+  { value: 'COGNITIVE', icon: '🧠',  nameKaz: 'Когнитивті',     nameRus: 'Когнитивные особенности' },
+  { value: 'SPEECH',    icon: '🗣',  nameKaz: 'Сөйлеу',         nameRus: 'Нарушение речи' },
+  { value: 'OTHER',     icon: '📋',  nameKaz: 'Басқа',          nameRus: 'Другое' }
 ]
 
 function disabilityLabelLocal(type) {
@@ -474,7 +691,15 @@ function disabilityIcon(type) {
   return disabilityTypes.find(d => d.value === type)?.icon || ''
 }
 function roleLabelLocal(role) {
-  const map = { ADMIN: 'Администратор', MODERATOR: 'Модератор', TAXI_MANAGER: 'Менеджер ИнваТакси', USER: lang.value==='kaz' ? 'Пайдаланушы' : 'Пользователь', RELATIVE: lang.value==='kaz' ? 'Қамқоршы' : 'Опекун' }
+  const l = lang.value
+  const map = {
+    ADMIN:        'Администратор',
+    MODERATOR:    'Модератор',
+    TAXI_MANAGER: 'Менеджер ИнваТакси',
+    ORG_MANAGER:  'Менеджер организации',
+    USER:         l === 'kaz' ? 'Пайдаланушы' : 'Пользователь',
+    RELATIVE:     l === 'kaz' ? 'Қамқоршы / Туысқан' : 'Опекун / Родственник'
+  }
   return map[role] || role
 }
 function statusLabel(s) {
@@ -486,7 +711,46 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('ru-RU', { day:'2-digit', month:'short', year:'numeric' })
 }
 
-import { watch } from 'vue'
+// ── My News ───────────────────────────────────────────────────────────────────
+const myNewsList = ref([])
+const myNewsLoading = ref(false)
+const myNewsFilter = ref('ALL')
+
+const newsFilters = [
+  { value: 'ALL',       labelRu: 'Все',           labelKk: 'Барлығы' },
+  { value: 'PUBLISHED', labelRu: 'Опубликованные', labelKk: 'Жарияланған' },
+  { value: 'PENDING',   labelRu: 'На проверке',    labelKk: 'Тексерілуде' },
+  { value: 'REJECTED',  labelRu: 'Отклонённые',    labelKk: 'Қабылданбаған' }
+]
+
+const myNewsFiltered = computed(() => {
+  if (myNewsFilter.value === 'ALL') return myNewsList.value
+  return myNewsList.value.filter(n => n.status === myNewsFilter.value)
+})
+
+function newsStatusLabel(status) {
+  const m = {
+    PUBLISHED: lang.value === 'kaz' ? 'Жарияланды'      : 'Опубликовано',
+    PENDING:   lang.value === 'kaz' ? 'Тексерілуде'      : 'На проверке',
+    REJECTED:  lang.value === 'kaz' ? 'Қабылданбады'     : 'Отклонено',
+    DRAFT:     lang.value === 'kaz' ? 'Жоба'             : 'Черновик'
+  }
+  return m[status] || status
+}
+
+async function loadMyNews() {
+  myNewsLoading.value = true
+  try {
+    const res = await getMyNews()
+    myNewsList.value = res.items || []
+  } catch {}
+  finally { myNewsLoading.value = false }
+}
+
+// Watch tab switch to lazy-load my news
+watch(activeTab, (tab) => {
+  if (tab === 'mynews' && myNewsList.value.length === 0) loadMyNews()
+})
 </script>
 
 <style scoped>
@@ -634,10 +898,52 @@ import { watch } from 'vue'
 .ride-date { font-size: var(--fs-xs); color: var(--gray-400); white-space: nowrap; }
 
 /* Spinner */
-.spinner-sm { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+.spinner-sm { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* Fade */
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/* ── Relative Links tab ── */
+.links-description { font-size: var(--fs-sm); color: var(--gray-500); margin-bottom: 24px; max-width: 600px; line-height: 1.6; }
+.link-request-form { background: white; border-radius: var(--radius-xl); padding: 20px 24px; box-shadow: var(--shadow); margin-bottom: 24px; }
+.link-form-title { font-size: var(--fs-md); font-weight: 700; color: var(--black); display: flex; align-items: center; gap: 6px; margin-bottom: 14px; }
+.link-form-row { display: flex; gap: 10px; align-items: center; }
+.link-form-row .form-input { flex: 1; }
+.links-loading { display: flex; justify-content: center; padding: 32px; }
+.links-list { display: flex; flex-direction: column; gap: 12px; }
+.link-item { display: flex; align-items: center; gap: 14px; background: white; border-radius: var(--radius-lg); padding: 14px 18px; box-shadow: var(--shadow); flex-wrap: wrap; }
+.link-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #7C3AED); color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; flex-shrink: 0; }
+.link-info { flex: 1; min-width: 150px; }
+.link-name { font-size: var(--fs-sm); font-weight: 700; color: var(--black); }
+.link-city { color: var(--gray-400); font-weight: 400; font-size: var(--fs-xs); }
+.link-email { font-size: var(--fs-xs); color: var(--gray-400); margin-top: 2px; }
+.link-role { font-size: var(--fs-xs); color: var(--primary); font-weight: 600; margin-top: 2px; }
+.link-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.link-status-badge { padding: 3px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; }
+.link-status-pending  { background: #FEF3C7; color: #92400E; }
+.link-status-accepted { background: #D1FAE5; color: #065F46; }
+.link-status-rejected { background: #FEE2E2; color: #991B1B; }
+.btn-danger-sm { display: flex; align-items: center; padding: 5px 8px; border-radius: var(--radius-sm); background: #FEE2E2; border: none; color: #DC2626; cursor: pointer; transition: background var(--transition); }
+.btn-danger-sm:hover { background: #DC2626; color: white; }
+
+/* ── My News tab ── */
+.mynews-filter { display: flex; gap: 6px; flex-wrap: wrap; }
+.mynews-filter-btn { padding: 5px 12px; border-radius: var(--radius-full); font-size: var(--fs-xs); font-weight: 600; color: var(--gray-500); border: 1.5px solid var(--gray-200); background: white; cursor: pointer; transition: all var(--transition); }
+.mynews-filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+.mynews-list { display: flex; flex-direction: column; gap: 10px; }
+.mynews-item { display: flex; align-items: center; gap: 14px; background: white; border-radius: var(--radius-lg); padding: 12px 16px; box-shadow: var(--shadow); }
+.mynews-img { width: 64px; height: 48px; object-fit: cover; border-radius: var(--radius-sm); flex-shrink: 0; }
+.mynews-placeholder { width: 64px; height: 48px; background: var(--gray-100); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.mynews-info { flex: 1; min-width: 0; }
+.mynews-title { font-size: var(--fs-sm); font-weight: 700; color: var(--black); line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mynews-meta { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+.mynews-date { font-size: 11px; color: var(--gray-400); }
+.mynews-stat { display: flex; align-items: center; gap: 3px; font-size: 11px; color: var(--gray-500); }
+.mynews-status-badge { padding: 3px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+.mynews-status-published { background: #D1FAE5; color: #065F46; }
+.mynews-status-pending   { background: #FEF3C7; color: #92400E; }
+.mynews-status-rejected  { background: #FEE2E2; color: #991B1B; }
+.mynews-status-draft     { background: var(--gray-100); color: var(--gray-500); }
 </style>

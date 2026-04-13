@@ -71,6 +71,13 @@ const routes = [
     component: () => import('../views/NewsDetailView.vue')
   },
 
+  // Guides
+  {
+    path: '/guides',
+    name: 'guides',
+    component: () => import('../views/GuidesView.vue')
+  },
+
   // Info
   {
     path: '/info',

@@ -74,9 +74,9 @@
             <div class="demo-hint-title">{{ lang==='kaz' ? 'Демо аккаунттар:' : 'Демо-аккаунты:' }}</div>
             <div class="demo-hints-grid">
               <button type="button" class="demo-hint" @click="fillDemo('admin@senimdi.kz','admin123')">🔑 {{ lang==='kaz' ? 'Әкімші' : 'Администратор' }}</button>
-              <button type="button" class="demo-hint" @click="fillDemo('user@senimdi.kz','user123')">👤 {{ lang==='kaz' ? 'Пайдаланушы' : 'Пользователь' }}</button>
-              <button type="button" class="demo-hint" @click="fillDemo('mod@senimdi.kz','mod123')">🛡 {{ lang==='kaz' ? 'Модератор' : 'Модератор' }}</button>
-              <button type="button" class="demo-hint" @click="fillDemo('manager@senimdi.kz','manager123')">🚕 {{ lang==='kaz' ? 'Менеджер' : 'Менеджер' }}</button>
+              <button type="button" class="demo-hint" @click="fillDemo('user@senimdi.kz','User1234')">👤 {{ lang==='kaz' ? 'Пайдаланушы' : 'Пользователь' }}</button>
+              <button type="button" class="demo-hint" @click="fillDemo('mod@senimdi.kz','Mod12345')">🛡 {{ lang==='kaz' ? 'Модератор' : 'Модератор' }}</button>
+              <button type="button" class="demo-hint" @click="fillDemo('manager@senimdi.kz','Manager1')">🚕 {{ lang==='kaz' ? 'Менеджер' : 'Менеджер' }}</button>
             </div>
           </div>
 
@@ -104,15 +104,17 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
 import { useAccessibilityStore } from '../stores/accessibility.js'
 import { forgotPassword } from '../api/auth.js'
+import { saveTokens } from '../api/apiClient.js'
 
 const authStore = useAuthStore()
 const a11y = useAccessibilityStore()
 const router = useRouter()
+const route = useRoute()
 const lang = computed(() => a11y.lang)
 
 const email = ref(''), password = ref(''), error = ref(''), loading = ref(false), showPass = ref(false)
@@ -144,6 +146,31 @@ const handleForgot = async () => {
     forgotLoading.value = false
   }
 }
+
+// ── Google OAuth callback (/auth/callback?accessToken=...&refreshToken=...) ──
+// Real API redirects here after Google OAuth with tokens as query params.
+// Mock: if tokens are present in URL, store them and redirect to profile.
+onMounted(async () => {
+  if (route.name === 'auth-callback') {
+    const { accessToken, refreshToken } = route.query
+    if (accessToken && refreshToken) {
+      saveTokens(accessToken, refreshToken)
+      // Load user profile using the token (real API: GET /api/core/auth/me)
+      try {
+        await authStore.loginWithTokens(accessToken, refreshToken)
+        router.replace('/profile')
+      } catch {
+        // Token invalid — show normal login page
+        error.value = lang.value === 'kaz' ? 'OAuth кіру қатесі' : 'Ошибка OAuth авторизации'
+      }
+    } else if (route.query.error) {
+      // OAuth provider returned an error
+      error.value = lang.value === 'kaz'
+        ? 'Google арқылы кіру мүмкін болмады'
+        : 'Не удалось войти через Google'
+    }
+  }
+})
 </script>
 
 <style scoped>

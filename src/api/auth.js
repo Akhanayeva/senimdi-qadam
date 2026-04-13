@@ -13,71 +13,119 @@
 
 const delay = (ms = 500) => new Promise(r => setTimeout(r, ms))
 
-// Simulated user DB
+/**
+ * Simulated user DB.
+ * Each user has both auth fields (id, email, role) and profile fields
+ * (firstName, lastName, phone, city, birthDate, disabilityType, disabilityNote, avatarUrl).
+ *
+ * In the real API:
+ *  - GET /api/core/auth/me  → returns id, email, role (auth-level data)
+ *  - GET /api/core/profile/me → returns full profile with all fields below
+ *
+ * For the mock we keep them in one object for simplicity.
+ *
+ * disabilityType for profile: VISUAL | HEARING | MOBILITY | COGNITIVE | SPEECH | OTHER | null
+ * (differs from taxi booking disabilityType: WHEELCHAIR | VISUAL | HEARING | MOBILITY | OTHER)
+ */
 const fakeUsers = [
   {
     id: 'usr-001',
     email: 'admin@senimdi.kz',
     password: 'admin123',
+    role: 'ADMIN',
     firstName: 'Аружан',
     lastName: 'Акханаева',
-    phone: '+7 777 001 0001',
-    role: 'ADMIN',
+    phone: '+77770010001',
+    city: 'Алматы',
+    birthDate: '1990-03-15',
     disabilityType: null,
-    avatar: null,
+    disabilityNote: null,
+    avatarUrl: null,
     bio: 'Администратор платформы SenimdiQAdam',
-    bioKaz: 'SenimdiQAdam платформасының әкімшісі',
-    createdAt: '2025-09-01T00:00:00Z',
-    location: { lat: 43.238, lon: 76.945 }
+    bioKk: 'SenimdiQAdam платформасының әкімшісі',
+    createdAt: '2025-09-01T00:00:00.000Z',
+    lat: 43.238,
+    lon: 76.945
   },
   {
     id: 'usr-002',
     email: 'user@senimdi.kz',
-    password: 'user123',
+    password: 'User1234',
+    role: 'USER',
     firstName: 'Асель',
     lastName: 'Нурланова',
-    phone: '+7 777 002 0002',
-    role: 'USER',
-    disabilityType: 'WHEELCHAIR',
-    avatar: null,
+    phone: '+77770020002',
+    city: 'Алматы',
+    birthDate: '1995-07-22',
+    disabilityType: 'MOBILITY',
+    disabilityNote: 'Использую инвалидную коляску',
+    avatarUrl: null,
     bio: 'Пользователь платформы',
-    bioKaz: 'Платформа пайдаланушысы',
-    createdAt: '2025-10-15T00:00:00Z',
-    location: null
+    bioKk: 'Платформа пайдаланушысы',
+    createdAt: '2025-10-15T00:00:00.000Z',
+    lat: null,
+    lon: null
   },
   {
     id: 'usr-003',
     email: 'mod@senimdi.kz',
-    password: 'mod123',
+    password: 'Mod12345',
+    role: 'MODERATOR',
     firstName: 'Берік',
     lastName: 'Сейтқали',
-    phone: '+7 777 003 0003',
-    role: 'MODERATOR',
+    phone: '+77770030003',
+    city: 'Алматы',
+    birthDate: '1988-11-30',
     disabilityType: null,
-    avatar: null,
-    bio: 'Модератор',
-    bioKaz: 'Модератор',
-    createdAt: '2025-11-01T00:00:00Z',
-    location: null
+    disabilityNote: null,
+    avatarUrl: null,
+    bio: 'Модератор платформы',
+    bioKk: 'Платформа модераторы',
+    createdAt: '2025-11-01T00:00:00.000Z',
+    lat: null,
+    lon: null
   },
   {
     id: 'usr-004',
     email: 'manager@senimdi.kz',
-    password: 'manager123',
+    password: 'Manager1',
+    role: 'TAXI_MANAGER',
     firstName: 'Жанибек',
     lastName: 'Абенов',
-    phone: '+7 777 004 0004',
-    role: 'TAXI_MANAGER',
+    phone: '+77770040004',
+    city: 'Алматы',
+    birthDate: '1985-04-10',
     disabilityType: null,
-    avatar: null,
+    disabilityNote: null,
+    avatarUrl: null,
     bio: 'Менеджер ИнваТакси',
-    bioKaz: 'ИнваТакси менеджері',
-    createdAt: '2025-12-01T00:00:00Z',
-    location: null
+    bioKk: 'ИнваТакси менеджері',
+    createdAt: '2025-12-01T00:00:00.000Z',
+    lat: null,
+    lon: null
+  },
+  {
+    id: 'usr-005',
+    email: 'relative@senimdi.kz',
+    password: 'Relat123',
+    role: 'RELATIVE',
+    firstName: 'Гүлнар',
+    lastName: 'Нұрланова',
+    phone: '+77770050005',
+    city: 'Алматы',
+    birthDate: '1965-09-20',
+    disabilityType: null,
+    disabilityNote: null,
+    avatarUrl: null,
+    bio: 'Опекун — мама Асель',
+    bioKk: 'Қамқоршы — Асельдің анасы',
+    createdAt: '2025-10-20T00:00:00.000Z',
+    lat: null,
+    lon: null
   }
 ]
 
-// Simulate JWT payload encode (base64 of JSON)
+// Simulate JWT (base64-encoded payload)
 function makeToken(userId) {
   const payload = btoa(JSON.stringify({ sub: userId, iat: Date.now(), exp: Date.now() + 3600000 }))
   return `mock.${payload}.signature`
@@ -88,7 +136,7 @@ function makeRefreshToken(userId) {
   return `refresh.${payload}.signature`
 }
 
-function userWithoutPassword(user) {
+function safeUser(user) {
   const { password, ...safe } = user
   return safe
 }
@@ -101,18 +149,20 @@ export async function login(email, password) {
   return {
     accessToken: makeToken(user.id),
     refreshToken: makeRefreshToken(user.id),
-    user: userWithoutPassword(user)
+    user: safeUser(user)
   }
 }
 
-/** POST /api/core/auth/register */
+/** POST /api/core/auth/register
+ *  Body: { email, password, role: 'USER'|'RELATIVE', firstName?, lastName?, phone?, disabilityType? }
+ *  Returns: { accessToken, refreshToken, user }
+ */
 export async function register(payload) {
   await delay(900)
   if (fakeUsers.find(u => u.email === payload.email)) {
     throw new Error('Пользователь с таким email уже существует')
   }
-  // Validate password
-  if (payload.password.length < 8) throw new Error('Пароль должен содержать минимум 8 символов')
+  if ((payload.password || '').length < 8) throw new Error('Пароль должен содержать минимум 8 символов')
   if (!/[A-Z]/.test(payload.password)) throw new Error('Пароль должен содержать заглавную букву')
   if (!/[0-9]/.test(payload.password)) throw new Error('Пароль должен содержать цифру')
 
@@ -120,22 +170,26 @@ export async function register(payload) {
     id: 'usr-' + Date.now(),
     email: payload.email,
     password: payload.password,
-    firstName: payload.firstName,
-    lastName: payload.lastName,
-    phone: payload.phone || '',
     role: payload.role || 'USER',
+    firstName: payload.firstName || '',
+    lastName: payload.lastName || '',
+    phone: payload.phone || '',
+    city: payload.city || 'Алматы',
+    birthDate: payload.birthDate || null,
     disabilityType: payload.role === 'USER' ? (payload.disabilityType || null) : null,
-    avatar: null,
+    disabilityNote: null,
+    avatarUrl: null,
     bio: '',
-    bioKaz: '',
+    bioKk: '',
     createdAt: new Date().toISOString(),
-    location: null
+    lat: null,
+    lon: null
   }
   fakeUsers.push(newUser)
   return {
     accessToken: makeToken(newUser.id),
     refreshToken: makeRefreshToken(newUser.id),
-    user: userWithoutPassword(newUser)
+    user: safeUser(newUser)
   }
 }
 
@@ -145,14 +199,14 @@ export async function logout() {
   return { success: true }
 }
 
-/** GET /api/core/auth/me — decode token and return user */
+/** GET /api/core/auth/me — decode token → find user */
 export async function getMe(accessToken) {
   await delay(300)
   try {
     const payload = JSON.parse(atob(accessToken.split('.')[1]))
     const user = fakeUsers.find(u => u.id === payload.sub)
     if (!user) throw new Error('Unauthorized')
-    return userWithoutPassword(user)
+    return safeUser(user)
   } catch {
     throw new Error('Unauthorized')
   }
@@ -161,28 +215,40 @@ export async function getMe(accessToken) {
 /** POST /api/core/auth/forgot-password */
 export async function forgotPassword(email) {
   await delay(800)
-  const exists = fakeUsers.find(u => u.email === email)
-  // Always return success (don't leak whether email exists)
+  // Always respond with success (don't leak whether email exists)
   return { message: 'Если указанный email зарегистрирован, вы получите письмо с инструкциями.' }
 }
 
-/** POST /api/core/auth/reset-password */
-export async function resetPassword(code, newPassword) {
+/** POST /api/core/auth/reset-password
+ *  Body: { email, code, newPassword }
+ */
+export async function resetPassword(email, code, newPassword) {
   await delay(600)
-  // Mock: accept any 6-digit code
   if (!code || code.length < 4) throw new Error('Неверный код сброса')
+  if ((newPassword || '').length < 8) throw new Error('Пароль должен содержать минимум 8 символов')
+  // Mock: find user and update password
+  const user = fakeUsers.find(u => u.email === email)
+  if (user) user.password = newPassword
   return { success: true }
 }
 
-/** POST /api/core/auth/refresh */
+/** POST /api/core/auth/refresh
+ *  Returns both new tokens (real API refreshes both)
+ */
 export async function refreshToken(token) {
   await delay(300)
   try {
     const payload = JSON.parse(atob(token.split('.')[1]))
     const user = fakeUsers.find(u => u.id === payload.sub)
     if (!user) throw new Error('Invalid refresh token')
-    return { accessToken: makeToken(user.id) }
+    return {
+      accessToken: makeToken(user.id),
+      refreshToken: makeRefreshToken(user.id)
+    }
   } catch {
     throw new Error('Invalid refresh token')
   }
 }
+
+// Expose fakeUsers for profile mock (internal use only)
+export { fakeUsers }

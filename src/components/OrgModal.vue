@@ -27,7 +27,7 @@
               </div>
               <div class="org-status-row">
                 <span class="detail-label">{{ lang === 'kaz' ? 'Мәртебесі:' : 'Статус:' }}</span>
-                <span v-if="org.verified" class="status-verified">
+                <span v-if="org.status === 'VERIFIED'" class="status-verified">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                   {{ lang === 'kaz' ? 'Верификацияланған' : 'Верифицировано' }}
                 </span>
@@ -56,7 +56,7 @@
               </div>
               <div class="info-field">
                 <span class="info-field-label">{{ lang === 'kaz' ? 'Қысқаша сипаттама:' : 'Краткое описание:' }}</span>
-                <span class="info-field-value org-desc-text">{{ lang === 'kaz' ? org.descriptionKaz : org.description }}</span>
+                <span class="info-field-value org-desc-text">{{ lang === 'kaz' ? org.descriptionKk : org.description }}</span>
               </div>
             </div>
           </div>
@@ -124,11 +124,11 @@
                   <a :href="org.website" target="_blank" rel="noopener" class="contact-link">{{ org.website }}</a>
                 </div>
               </div>
-              <div v-if="org.hours" class="contact-row">
+              <div v-if="org.workingHours || org.hours" class="contact-row">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 <div>
                   <div class="contact-label">{{ lang === 'kaz' ? 'Жұмыс уақыты:' : 'Режим работы:' }}</div>
-                  <div class="contact-value">{{ org.hours }}</div>
+                  <div class="contact-value">{{ org.workingHours || org.hours }}</div>
                 </div>
               </div>
             </div>
@@ -224,14 +224,90 @@
             </div>
           </div>
 
+          <!-- ── REVIEWS ── -->
+          <div class="org-section">
+            <div class="section-heading">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              {{ lang === 'kaz' ? 'Пікірлер' : 'Отзывы' }}
+            </div>
+            <div class="section-body">
+              <!-- Existing reviews -->
+              <div v-if="orgReviews.length" class="reviews-list">
+                <div v-for="r in orgReviews" :key="r.id" class="review-item">
+                  <div class="review-header">
+                    <div class="review-avatar">{{ (r.authorName || '?').charAt(0) }}</div>
+                    <div class="review-meta">
+                      <span class="review-author">{{ r.authorName }}</span>
+                      <span class="review-date">{{ formatDate(r.createdAt) }}</span>
+                    </div>
+                    <div class="review-stars">
+                      <span v-for="i in 5" :key="i" class="star" :class="i <= r.rating ? 'star-on' : 'star-off'">★</span>
+                    </div>
+                  </div>
+                  <p class="review-text">{{ r.comment }}</p>
+                </div>
+              </div>
+              <div v-else class="reviews-empty">
+                <p>{{ lang === 'kaz' ? 'Пікірлер жоқ. Бірінші болыңыз!' : 'Отзывов пока нет. Будьте первым!' }}</p>
+              </div>
+
+              <!-- Add review form (logged in, not yet reviewed) -->
+              <div v-if="authStore.isAuthenticated && !hasReviewed" class="add-review-form">
+                <div class="add-review-title">
+                  {{ lang === 'kaz' ? 'Пікір қалдыру' : 'Оставить отзыв' }}
+                </div>
+                <!-- Star picker -->
+                <div class="star-picker">
+                  <button
+                    v-for="i in 5"
+                    :key="i"
+                    class="star-pick-btn"
+                    :class="i <= reviewForm.rating ? 'star-on' : 'star-off'"
+                    @click="reviewForm.rating = i"
+                  >★</button>
+                </div>
+                <textarea
+                  v-model="reviewForm.comment"
+                  class="review-textarea form-input"
+                  rows="2"
+                  :placeholder="lang === 'kaz' ? 'Пікіріңізді жазыңыз...' : 'Напишите ваш отзыв...'"
+                />
+                <Transition name="rfade">
+                  <div v-if="reviewError" class="field-error">{{ reviewError }}</div>
+                </Transition>
+                <Transition name="rfade">
+                  <div v-if="reviewSuccess" class="save-success">
+                    ✅ {{ lang === 'kaz' ? 'Пікіріңіз жіберілді!' : 'Ваш отзыв отправлен!' }}
+                  </div>
+                </Transition>
+                <button
+                  class="btn btn-primary btn-sm"
+                  :disabled="!reviewForm.comment.trim() || !reviewForm.rating || reviewLoading"
+                  @click="submitReview"
+                >
+                  <span v-if="reviewLoading" class="spinner-sm-dark"></span>
+                  {{ lang === 'kaz' ? 'Жіберу' : 'Отправить' }}
+                </button>
+              </div>
+              <div v-else-if="!authStore.isAuthenticated" class="review-login-hint">
+                <RouterLink to="/login" class="btn btn-outline btn-sm" @click="$emit('close')">
+                  {{ lang === 'kaz' ? 'Пікір қалдыру үшін кіріңіз' : 'Войдите, чтобы оставить отзыв' }}
+                </RouterLink>
+              </div>
+              <div v-else-if="hasReviewed" class="review-done-hint">
+                ✅ {{ lang === 'kaz' ? 'Сіз пікір қалдырдыңыз' : 'Вы уже оставили отзыв' }}
+              </div>
+            </div>
+          </div>
+
           <!-- ── FOOTER ACTIONS ── -->
           <div class="org-modal-footer">
             <!-- Rating -->
             <div class="org-rating">
               <span v-for="i in 5" :key="i">
-                <svg width="14" height="14" viewBox="0 0 24 24" :fill="i <= Math.round(org.rating) ? '#F59E0B' : 'none'" stroke="#F59E0B" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" :fill="i <= Math.round(org.ratingAvg) ? '#F59E0B' : 'none'" stroke="#F59E0B" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
               </span>
-              <strong class="rating-num">{{ org.rating }}</strong>
+              <strong class="rating-num">{{ org.ratingAvg }}</strong>
               <span class="rating-sep">/</span>
               <span class="rating-max">5.0</span>
             </div>
@@ -272,8 +348,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref, watch } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
 import { useAccessibilityStore } from '../stores/accessibility.js'
 import { useI18n } from '../i18n.js'
@@ -288,7 +364,7 @@ const lang = computed(() => a11y.lang)
 const t = computed(() => useI18n(lang.value))
 
 const orgName = computed(() =>
-  props.org ? (lang.value === 'kaz' ? props.org.nameKaz : props.org.nameRus) : ''
+  props.org ? (lang.value === 'kaz' ? props.org.nameKk : props.org.nameRu) : ''
 )
 
 function askAI() {
@@ -301,6 +377,65 @@ function askAI() {
       : `Как получить помощь в организации "${orgN}"?`
     }
   })
+}
+
+// ── Reviews ──────────────────────────────────────────────────────────────────
+// In-memory mock review store (per org)
+const allReviews = ref({})
+
+const orgReviews = computed(() => {
+  if (!props.org) return []
+  return allReviews.value[props.org.id] || []
+})
+
+const hasReviewed = computed(() => {
+  if (!authStore.isAuthenticated) return false
+  return orgReviews.value.some(r => r.authorId === authStore.user?.id)
+})
+
+const reviewForm = ref({ rating: 0, comment: '' })
+const reviewLoading = ref(false)
+const reviewSuccess = ref(false)
+const reviewError = ref('')
+
+async function submitReview() {
+  reviewError.value = ''
+  if (!reviewForm.value.rating) {
+    reviewError.value = lang.value === 'kaz' ? 'Бағалауды таңдаңыз' : 'Выберите оценку'
+    return
+  }
+  if (!reviewForm.value.comment.trim()) {
+    reviewError.value = lang.value === 'kaz' ? 'Пікір мәтінін жазыңыз' : 'Напишите текст отзыва'
+    return
+  }
+  reviewLoading.value = true
+  await new Promise(r => setTimeout(r, 500)) // mock delay
+  const orgId = props.org.id
+  if (!allReviews.value[orgId]) allReviews.value[orgId] = []
+  allReviews.value[orgId].push({
+    id: `rev-${Date.now()}`,
+    authorId: authStore.user?.id,
+    authorName: `${authStore.user?.firstName || ''} ${authStore.user?.lastName || ''}`.trim() || 'Пользователь',
+    rating: reviewForm.value.rating,
+    comment: reviewForm.value.comment.trim(),
+    createdAt: new Date().toISOString()
+  })
+  reviewForm.value = { rating: 0, comment: '' }
+  reviewSuccess.value = true
+  reviewLoading.value = false
+  setTimeout(() => { reviewSuccess.value = false }, 3000)
+}
+
+// Reset form when org changes
+watch(() => props.org?.id, () => {
+  reviewForm.value = { rating: 0, comment: '' }
+  reviewError.value = ''
+  reviewSuccess.value = false
+})
+
+function formatDate(iso) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 </script>
 
@@ -439,6 +574,38 @@ function askAI() {
 .footer-btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .btn-whatsapp { background: #22C55E; color: white; display: inline-flex; align-items: center; gap: 6px; border-radius: var(--radius-full); font-size: var(--fs-sm); font-weight: 700; padding: 8px 16px; text-decoration: none; }
 .btn-whatsapp:hover { background: #16A34A; }
+
+/* ── Reviews ── */
+.reviews-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px; }
+.review-item { background: var(--gray-50); border-radius: var(--radius-md); padding: 12px 14px; }
+.review-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+.review-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary-pale); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: var(--fs-xs); flex-shrink: 0; }
+.review-meta { flex: 1; display: flex; flex-direction: column; gap: 1px; }
+.review-author { font-size: var(--fs-sm); font-weight: 700; color: var(--black); }
+.review-date { font-size: 11px; color: var(--gray-400); }
+.review-stars { display: flex; gap: 1px; }
+.star { font-size: 14px; }
+.star-on { color: #F59E0B; }
+.star-off { color: var(--gray-300); }
+.review-text { font-size: var(--fs-sm); color: var(--gray-700); line-height: 1.55; margin: 0; }
+.reviews-empty { color: var(--gray-400); font-size: var(--fs-sm); margin-bottom: 12px; }
+
+.add-review-form { background: #F0F9FF; border: 1px solid #BAE6FD; border-radius: var(--radius-md); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.add-review-title { font-size: var(--fs-sm); font-weight: 700; color: var(--black); }
+.star-picker { display: flex; gap: 4px; }
+.star-pick-btn { font-size: 22px; cursor: pointer; background: none; border: none; padding: 0; line-height: 1; transition: transform 0.1s; }
+.star-pick-btn:hover { transform: scale(1.2); }
+.star-pick-btn.star-on { color: #F59E0B; }
+.star-pick-btn.star-off { color: var(--gray-300); }
+.review-textarea { resize: none; min-height: 56px; width: 100%; font-family: inherit; }
+.review-login-hint, .review-done-hint { font-size: var(--fs-sm); color: var(--gray-500); margin-top: 8px; }
+.review-done-hint { color: #065F46; font-weight: 600; }
+.field-error { font-size: var(--fs-xs); color: #EF4444; }
+.save-success { background: #DCFCE7; color: #166534; padding: 7px 12px; border-radius: var(--radius-sm); font-size: var(--fs-xs); font-weight: 600; }
+.spinner-sm-dark { width: 13px; height: 13px; border: 2px solid rgba(0,0,0,0.1); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; margin-right: 4px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.rfade-enter-active, .rfade-leave-active { transition: opacity 0.2s; }
+.rfade-enter-from, .rfade-leave-to { opacity: 0; }
 
 /* ── Transition ── */
 .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }

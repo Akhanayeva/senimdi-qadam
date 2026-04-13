@@ -170,11 +170,11 @@ const formData = ref({ nameRus: '', nameKaz: '', address: '', phone: '', verifie
 
 const categories = computed(() => [
   { value: 'all', label: t.value('filterAll') },
-  { value: 'state', label: t.value('filterState') },
-  { value: 'ngo', label: t.value('filterNGO') },
-  { value: 'rehabilitation', label: t.value('filterRehab') },
-  { value: 'legal', label: t.value('filterLegal') },
-  { value: 'psychological', label: t.value('filterPsych') },
+  { value: 'SOCIAL', label: t.value('filterState') },
+  { value: 'SOCIAL', label: t.value('filterNGO') },
+  { value: 'REHABILITATION', label: t.value('filterRehab') },
+  { value: 'LEGAL', label: t.value('filterLegal') },
+  { value: 'MEDICAL', label: t.value('filterPsych') },
 ])
 
 const districts = computed(() => [...new Set(allOrgs.value.map(o => o.district).filter(Boolean))])
@@ -182,7 +182,8 @@ const districts = computed(() => [...new Set(allOrgs.value.map(o => o.district).
 const loadOrgs = async () => {
   loading.value = true; error.value = null
   try {
-    allOrgs.value = await getOrganizations()
+    const res = await getOrganizations()
+    allOrgs.value = res.items ?? res
     applyFilters()
   } catch (e) { error.value = e.message }
   finally { loading.value = false }
@@ -193,17 +194,16 @@ const applyFilters = () => {
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase()
     data = data.filter(o =>
-      o.name.toLowerCase().includes(q) ||
-      o.nameRus.toLowerCase().includes(q) ||
-      o.nameKaz.toLowerCase().includes(q) ||
-      o.description.toLowerCase().includes(q) ||
-      o.descriptionKaz.toLowerCase().includes(q) ||
+      (o.nameRu || '').toLowerCase().includes(q) ||
+      (o.nameKk || '').toLowerCase().includes(q) ||
+      (o.description || '').toLowerCase().includes(q) ||
+      (o.descriptionKk || '').toLowerCase().includes(q) ||
       (o.tags || []).some(t => t.toLowerCase().includes(q))
     )
   }
   if (activeCategory.value !== 'all') data = data.filter(o => o.category === activeCategory.value)
   if (activeDistrict.value !== 'all') data = data.filter(o => o.district === activeDistrict.value)
-  if (onlyVerified.value) data = data.filter(o => o.verified)
+  if (onlyVerified.value) data = data.filter(o => o.status === 'VERIFIED')
   filteredOrgs.value = data
 }
 

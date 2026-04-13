@@ -1,12 +1,12 @@
 <template>
-  <div class="org-card" :class="{ 'org-card--verified': org.verified }">
+  <div class="org-card" :class="{ 'org-card--verified': org.status === 'VERIFIED' }">
     <!-- Verified badge -->
     <div class="org-card-header">
       <div class="org-avatar">
-        <span>{{ org.name.charAt(0) }}</span>
+        <span>{{ (org.nameRu || '').charAt(0) }}</span>
       </div>
       <div class="org-header-info">
-        <span v-if="org.verified" class="badge badge-verified">
+        <span v-if="org.status === 'VERIFIED'" class="badge badge-verified">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
           {{ t('verified') }}
         </span>
@@ -29,10 +29,10 @@
     </div>
 
     <!-- Name -->
-    <h3 class="org-name">{{ lang === 'kaz' ? org.nameKaz : org.nameRus }}</h3>
+    <h3 class="org-name">{{ lang === 'kaz' ? org.nameKk : org.nameRu }}</h3>
 
     <!-- Description -->
-    <p class="org-desc">{{ lang === 'kaz' ? org.descriptionKaz : org.description }}</p>
+    <p class="org-desc">{{ lang === 'kaz' ? org.descriptionKk : org.description }}</p>
 
     <!-- Meta info -->
     <div class="org-meta">
@@ -44,9 +44,9 @@
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.64 3.38 2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l.8-.8a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
         <a :href="`tel:${org.phone}`" @click.stop>{{ org.phone }}</a>
       </div>
-      <div v-if="org.hours" class="org-meta-item">
+      <div v-if="org.workingHours || org.hours" class="org-meta-item">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span>{{ org.hours }}</span>
+        <span>{{ org.workingHours || org.hours }}</span>
       </div>
     </div>
 
@@ -59,11 +59,11 @@
     <div class="org-footer">
       <div class="org-rating">
         <span class="stars">
-          <svg v-for="i in 5" :key="i" width="12" height="12" viewBox="0 0 24 24" :fill="i <= Math.round(org.rating) ? '#F59E0B' : 'none'" stroke="#F59E0B" stroke-width="2">
+          <svg v-for="i in 5" :key="i" width="12" height="12" viewBox="0 0 24 24" :fill="i <= Math.round(org.ratingAvg) ? '#F59E0B' : 'none'" stroke="#F59E0B" stroke-width="2">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
           </svg>
         </span>
-        <span class="rating-val">{{ org.rating }}</span>
+        <span class="rating-val">{{ org.ratingAvg }}</span>
       </div>
       <button class="btn btn-primary btn-sm" @click="$emit('open', org)">
         {{ t('openCard') }}

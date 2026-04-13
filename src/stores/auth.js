@@ -69,6 +69,23 @@ export const useAuthStore = defineStore('auth', () => {
     persistUser(updated)
   }
 
+  /**
+   * loginWithTokens — used after OAuth callback
+   * Stores the tokens then fetches the user profile from GET /api/core/auth/me
+   * POST /api/core/auth/refresh → { accessToken, refreshToken } shape expected
+   */
+  async function loginWithTokens(at, rt) {
+    persistTokens(at, rt)
+    try {
+      const userData = await getMe(at)
+      persistUser(userData)
+    } catch {
+      // If getMe fails (e.g. expired token), clear
+      persistTokens(null, null)
+      throw new Error('Token validation failed')
+    }
+  }
+
   // ── Saved organisations ────────────────────────────────────────────────────
   const savedOrgs = ref(JSON.parse(localStorage.getItem('sqSavedOrgs') || '[]'))
 
@@ -91,7 +108,7 @@ export const useAuthStore = defineStore('auth', () => {
     user, accessToken, refreshToken,
     isAuthenticated, isAdmin, isModerator, isTaxiManager, isUser, isRelative,
     fullName, roleLabel,
-    login, register, logout, updateLocalUser,
+    login, register, logout, updateLocalUser, loginWithTokens,
     savedOrgs, savedChats, toggleSaveOrg, isOrgSaved, saveChat
   }
 })

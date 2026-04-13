@@ -26,28 +26,28 @@
             class="news-card-full"
           >
             <div class="news-card-img">
-              <img v-if="article.image" :src="article.image" :alt="article.title" class="news-img" loading="lazy" />
+              <img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.titleRu" class="news-img" loading="lazy" />
               <svg v-else width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               <span class="news-badge-cat">
                 {{ article.category === 'event' ? '📅' : article.category === 'announcement' ? '📢' : '📰' }}
               </span>
-              <span v-if="article.verified" class="news-v">✓</span>
+              <span v-if="article.status === 'PUBLISHED'" class="news-v">✓</span>
             </div>
             <div class="news-card-body">
               <div class="news-meta">
-                <span class="news-date">{{ formatDate(article.date) }}</span>
-                <span class="news-author">{{ article.author }}</span>
+                <span class="news-date">{{ formatDate(article.publishedAt) }}</span>
+                <span class="news-author">{{ article.author?.profile?.firstName || '' }}</span>
               </div>
-              <h2 class="news-card-title">{{ a11y.lang === 'kaz' ? article.titleKaz : article.title }}</h2>
-              <p class="news-card-excerpt">{{ a11y.lang === 'kaz' ? article.excerptKaz : article.excerpt }}</p>
+              <h2 class="news-card-title">{{ a11y.lang === 'kaz' ? article.titleKk : article.titleRu }}</h2>
+              <p class="news-card-excerpt">{{ excerpt(article) }}</p>
               <div class="news-card-stats">
                 <button class="like-btn" @click.prevent="toggleLike(article)">
                   <svg width="14" height="14" viewBox="0 0 24 24" :fill="likedNews.has(article.id) ? '#EF4444' : 'none'" stroke="#EF4444" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                  {{ article.likes + (likedNews.has(article.id) ? 1 : 0) }}
+                  {{ article.likesCount + (likedNews.has(article.id) ? 1 : 0) }}
                 </button>
                 <span class="news-comments-count">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                  {{ article.comments }}
+                  {{ article.commentsCount }}
                 </span>
               </div>
             </div>
@@ -71,9 +71,21 @@ const news = ref([])
 const loading = ref(true)
 const likedNews = ref(new Set())
 
-onMounted(async () => { news.value = await getNews(); loading.value = false })
+onMounted(async () => {
+  const res = await getNews()
+  // API returns { items, total }; fallback to plain array for safety
+  news.value = res.items ?? res
+  loading.value = false
+})
 
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' }) : ''
+
+// First 140 chars of body as excerpt
+const excerpt = (article) => {
+  const body = a11y.lang === 'kaz' ? article.bodyKk : article.bodyRu
+  return body ? body.slice(0, 140) + (body.length > 140 ? '…' : '') : ''
+}
+
 const toggleLike = (article) => {
   if (likedNews.value.has(article.id)) likedNews.value.delete(article.id)
   else likedNews.value.add(article.id)
