@@ -1,6 +1,20 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 
+// Admin roles that have access to the admin panel
+const ADMIN_ROLES = ['ADMIN', 'MODERATOR', 'TAXI_MANAGER']
+
+// Route guard for admin section
+const requireAdmin = (to, from, next) => {
+  const raw = localStorage.getItem('sqUser')
+  const user = raw ? JSON.parse(raw) : null
+  if (user && ADMIN_ROLES.includes(user.role)) {
+    next()
+  } else {
+    next('/')
+  }
+}
+
 const routes = [
   { path: '/', name: 'home', component: HomeView },
   { path: '/home', redirect: '/' },
@@ -129,6 +143,40 @@ const routes = [
     name: 'requests',
     component: () => import('../views/PlaceholderView.vue'),
     props: { title: 'Мои заявки', icon: '📋' }
+  },
+
+  // ── Admin panel (ADMIN / MODERATOR / TAXI_MANAGER only) ─────────────────────
+  {
+    path: '/admin',
+    component: () => import('../views/admin/AdminLayout.vue'),
+    beforeEnter: requireAdmin,
+    children: [
+      {
+        path: '',
+        name: 'admin-dashboard',
+        component: () => import('../views/admin/AdminDashboard.vue'),
+      },
+      {
+        path: 'orgs',
+        name: 'admin-orgs',
+        component: () => import('../views/admin/AdminOrgs.vue'),
+      },
+      {
+        path: 'news',
+        name: 'admin-news',
+        component: () => import('../views/admin/AdminNews.vue'),
+      },
+      {
+        path: 'users',
+        name: 'admin-users',
+        component: () => import('../views/admin/AdminUsers.vue'),
+      },
+      {
+        path: 'taxi',
+        name: 'admin-taxi',
+        component: () => import('../views/admin/AdminTaxi.vue'),
+      },
+    ]
   },
 
   // 404

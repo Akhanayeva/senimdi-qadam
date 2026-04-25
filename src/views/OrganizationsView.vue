@@ -9,10 +9,6 @@
               <h1 class="orgs-page-title">{{ t('allOrgs') }}</h1>
               <p class="orgs-page-subtitle">Каталог организаций, центров и фондов Алматы для людей с инвалидностью</p>
             </div>
-            <button v-if="authStore.isAdmin" class="btn btn-primary" @click="showAddForm = true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Добавить организацию
-            </button>
           </div>
 
           <!-- Search + Filters -->
@@ -92,8 +88,6 @@
             :key="org.id"
             :org="org"
             @open="selectedOrg = org"
-            @edit="editOrg = org; showAddForm = true"
-            @delete="confirmDelete(org)"
           />
         </div>
       </div>
@@ -101,55 +95,17 @@
 
     <!-- Org modal -->
     <OrgModal :org="selectedOrg" @close="selectedOrg = null" />
-
-    <!-- Admin add/edit form modal -->
-    <Teleport to="body">
-      <div v-if="showAddForm" class="modal-overlay" @click.self="showAddForm = false">
-        <div class="modal-box admin-form-modal">
-          <h3 class="modal-title">{{ editOrg ? 'Редактировать организацию' : 'Добавить организацию' }}</h3>
-          <div class="form-group">
-            <label class="form-label">Название (рус)</label>
-            <input class="form-input" v-model="formData.nameRus" placeholder="Название на русском" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Название (каз)</label>
-            <input class="form-input" v-model="formData.nameKaz" placeholder="Атауы қазақша" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Адрес</label>
-            <input class="form-input" v-model="formData.address" placeholder="Алматы, ул. ..." />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Телефон</label>
-            <input class="form-input" v-model="formData.phone" placeholder="+7 727 ..." />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Статус</label>
-            <select class="form-input" v-model="formData.verified">
-              <option :value="false">На проверке</option>
-              <option :value="true">Проверено ✓</option>
-            </select>
-          </div>
-          <div class="form-actions">
-            <button class="btn btn-outline" @click="showAddForm = false; editOrg = null">Отмена</button>
-            <button class="btn btn-primary" @click="saveOrg">{{ editOrg ? 'Сохранить' : 'Добавить' }}</button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
   </main>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useAuthStore } from '../stores/auth.js'
 import { useAccessibilityStore } from '../stores/accessibility.js'
 import { useI18n } from '../i18n.js'
 import { getOrganizations } from '../api/organizations.js'
 import OrganizationCard from '../components/OrganizationCard.vue'
 import OrgModal from '../components/OrgModal.vue'
 
-const authStore = useAuthStore()
 const a11y = useAccessibilityStore()
 const t = computed(() => useI18n(a11y.lang))
 
@@ -163,10 +119,6 @@ const searchQuery = ref('')
 const activeCategory = ref('all')
 const activeDistrict = ref('all')
 const onlyVerified = ref(false)
-
-const showAddForm = ref(false)
-const editOrg = ref(null)
-const formData = ref({ nameRus: '', nameKaz: '', address: '', phone: '', verified: false })
 
 const categories = computed(() => [
   { value: 'all', label: t.value('filterAll') },
@@ -182,7 +134,9 @@ const districts = computed(() => [...new Set(allOrgs.value.map(o => o.district).
 const loadOrgs = async () => {
   loading.value = true; error.value = null
   try {
-    const res = await getOrganizations()
+    // limit:200 ensures real API returns enough orgs for client-side filtering.
+    // Client-side filtering (applyFilters) gives instant UX without extra round trips.
+    const res = await getOrganizations({ limit: 200 })
     allOrgs.value = res.items ?? res
     applyFilters()
   } catch (e) { error.value = e.message }
@@ -210,25 +164,6 @@ const applyFilters = () => {
 const resetFilters = () => {
   searchQuery.value = ''; activeCategory.value = 'all'; activeDistrict.value = 'all'; onlyVerified.value = false
   applyFilters()
-}
-
-const saveOrg = () => {
-  if (editOrg.value) {
-    const idx = allOrgs.value.findIndex(o => o.id === editOrg.value.id)
-    if (idx !== -1) Object.assign(allOrgs.value[idx], formData.value)
-  } else {
-    allOrgs.value.push({ ...formData.value, id: Date.now(), tags: [], rating: 0, district: 'Алматы' })
-  }
-  showAddForm.value = false; editOrg.value = null
-  formData.value = { nameRus: '', nameKaz: '', address: '', phone: '', verified: false }
-  applyFilters()
-}
-
-const confirmDelete = (org) => {
-  if (confirm(`Удалить "${org.nameRus}"?`)) {
-    allOrgs.value = allOrgs.value.filter(o => o.id !== org.id)
-    applyFilters()
-  }
 }
 
 onMounted(loadOrgs)

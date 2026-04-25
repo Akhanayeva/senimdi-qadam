@@ -69,16 +69,6 @@
             </div>
           </div>
 
-          <!-- Demo hints -->
-          <div class="auth-demo-hints">
-            <div class="demo-hint-title">{{ lang==='kaz' ? 'Демо аккаунттар:' : 'Демо-аккаунты:' }}</div>
-            <div class="demo-hints-grid">
-              <button type="button" class="demo-hint" @click="fillDemo('admin@senimdi.kz','admin123')">🔑 {{ lang==='kaz' ? 'Әкімші' : 'Администратор' }}</button>
-              <button type="button" class="demo-hint" @click="fillDemo('user@senimdi.kz','User1234')">👤 {{ lang==='kaz' ? 'Пайдаланушы' : 'Пользователь' }}</button>
-              <button type="button" class="demo-hint" @click="fillDemo('mod@senimdi.kz','Mod12345')">🛡 {{ lang==='kaz' ? 'Модератор' : 'Модератор' }}</button>
-              <button type="button" class="demo-hint" @click="fillDemo('manager@senimdi.kz','Manager1')">🚕 {{ lang==='kaz' ? 'Менеджер' : 'Менеджер' }}</button>
-            </div>
-          </div>
 
           <Transition name="fade">
             <div v-if="error" class="auth-error">

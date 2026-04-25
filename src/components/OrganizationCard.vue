@@ -11,8 +11,8 @@
           {{ t('verified') }}
         </span>
         <span v-else class="badge badge-unverified">{{ t('notVerified') }}</span>
-        <span class="badge badge-category" style="margin-left:4px">
-          {{ lang === 'kaz' ? org.categoryLabel?.kaz : org.categoryLabel?.rus }}
+        <span v-if="categoryLabel" class="badge badge-category" style="margin-left:4px">
+          {{ categoryLabel }}
         </span>
       </div>
       <button
@@ -70,11 +70,6 @@
       </button>
     </div>
 
-    <!-- Admin actions -->
-    <div v-if="authStore.isAdmin" class="org-admin-actions">
-      <button class="btn btn-ghost btn-sm" @click.stop="$emit('edit', org)">✏️ Ред.</button>
-      <button class="btn btn-ghost btn-sm" style="color:var(--danger)" @click.stop="$emit('delete', org)">❌ Удалить</button>
-    </div>
   </div>
 </template>
 
@@ -85,12 +80,39 @@ import { useAccessibilityStore } from '../stores/accessibility.js'
 import { useI18n } from '../i18n.js'
 
 const props = defineProps({ org: Object })
-defineEmits(['open', 'edit', 'delete'])
+defineEmits(['open'])
 
 const authStore = useAuthStore()
 const a11y = useAccessibilityStore()
 const lang = computed(() => a11y.lang)
 const t = computed(() => useI18n(lang.value))
+
+// Maps real API org.category enum → display label (RU/KK)
+const CATEGORY_LABELS = {
+  MEDICAL:        { rus: 'Медицина',             kaz: 'Медицина' },
+  LEGAL:          { rus: 'Юридическая помощь',   kaz: 'Заңдық көмек' },
+  SOCIAL:         { rus: 'Социальная поддержка', kaz: 'Әлеуметтік қолдау' },
+  REHABILITATION: { rus: 'Реабилитация',          kaz: 'Оңалту' },
+  EDUCATION:      { rus: 'Образование',           kaz: 'Білім' },
+  EMPLOYMENT:     { rus: 'Трудоустройство',       kaz: 'Жұмысқа орналасу' },
+  SPORT:          { rus: 'Спорт',                 kaz: 'Спорт' },
+  CULTURE:        { rus: 'Культура',              kaz: 'Мәдениет' },
+  PSYCHOLOGICAL:  { rus: 'Психологическая',       kaz: 'Психологиялық' },
+  OTHER:          { rus: 'Прочее',                kaz: 'Басқа' },
+}
+
+// Works with real API (org.category enum) AND mock (org.categoryLabel nested object)
+const categoryLabel = computed(() => {
+  if (!props.org) return ''
+  const cat = props.org.category
+  if (cat && CATEGORY_LABELS[cat]) {
+    return lang.value === 'kaz' ? CATEGORY_LABELS[cat].kaz : CATEGORY_LABELS[cat].rus
+  }
+  // Fallback to mock nested format
+  return lang.value === 'kaz'
+    ? props.org.categoryLabel?.kaz
+    : props.org.categoryLabel?.rus
+})
 </script>
 
 <style scoped>
@@ -180,10 +202,4 @@ const t = computed(() => useI18n(lang.value))
 .stars { display: flex; gap: 1px; }
 .rating-val { font-size: var(--fs-xs); font-weight: 700; color: var(--gray-700); }
 
-.org-admin-actions {
-  display: flex;
-  gap: 8px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--gray-200);
-}
 </style>

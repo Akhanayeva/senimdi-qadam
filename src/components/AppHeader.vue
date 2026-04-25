@@ -110,22 +110,35 @@
         </div>
         <div v-else class="dropdown" ref="profileRef">
           <button class="profile-btn" @click="profileOpen = !profileOpen" :aria-expanded="profileOpen">
-            <div class="avatar">{{ authStore.user?.name?.charAt(0) || 'U' }}</div>
-            <span class="profile-name">{{ authStore.user?.name }}</span>
+            <div class="avatar">{{ authStore.user?.firstName?.charAt(0) || authStore.user?.email?.charAt(0) || 'U' }}</div>
+            <span class="profile-name">{{ authStore.fullName || authStore.user?.email }}</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <polyline points="6 9 12 15 18 9"/>
             </svg>
           </button>
           <div v-if="profileOpen" class="dropdown-menu profile-menu" role="menu">
             <div class="profile-menu-header">
-              <div class="avatar avatar-lg">{{ authStore.user?.name?.charAt(0) }}</div>
+              <div class="avatar avatar-lg">{{ authStore.user?.firstName?.charAt(0) || authStore.user?.email?.charAt(0) || 'U' }}</div>
               <div>
-                <div class="fw-bold">{{ authStore.user?.name }}</div>
+                <div class="fw-bold">{{ authStore.fullName || authStore.user?.email }}</div>
                 <div class="text-sm text-gray">{{ authStore.user?.email }}</div>
-                <span class="badge badge-primary mt-4" style="margin-top:4px">{{ authStore.user?.role }}</span>
+                <span class="badge badge-primary mt-4" style="margin-top:4px">{{ authStore.roleLabel }}</span>
               </div>
             </div>
             <div class="profile-menu-divider"></div>
+            <!-- Admin panel link — only for ADMIN / MODERATOR / TAXI_MANAGER -->
+            <RouterLink
+              v-if="authStore.isAdmin || authStore.isModerator || authStore.isTaxiManager"
+              to="/admin"
+              class="dropdown-item dropdown-item--admin"
+              @click="profileOpen=false"
+              role="menuitem"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              Панель управления
+            </RouterLink>
             <RouterLink to="/profile" class="dropdown-item" @click="profileOpen=false" role="menuitem">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               {{ t('myProfile') }}
@@ -338,6 +351,13 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 .profile-menu { min-width: 240px; right: 0; left: auto; }
 .profile-menu-header { display: flex; gap: 12px; padding: 16px; align-items: center; }
 .profile-menu-divider { height: 1px; background: var(--gray-200); }
+
+/* Admin panel menu item */
+.dropdown-item--admin {
+  color: #3b82f6 !important;
+  font-weight: 700;
+}
+.dropdown-item--admin:hover { background: #eff6ff; }
 
 /* Burger */
 .burger-btn {
