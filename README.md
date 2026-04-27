@@ -116,6 +116,8 @@ Dev-сервер запускается на http://localhost:5173
 
 ---
 
+<!--
+
 ## Архитектурные решения
 
 ### Hash Router
@@ -273,3 +275,6 @@ import { avatarUrl, newsImageUrl } from '../api/apiClient.js'
 VITE_API_BASE=http://localhost:3000/api
 VITE_STATIC_BASE=http://localhost:3001
 ```
+
+
+-->
