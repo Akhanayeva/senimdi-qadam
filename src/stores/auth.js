@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { login as apiLogin, register as apiRegister, logout as apiLogout, getMe } from '../api/auth.js'
+import { login as apiLogin, register as apiRegister, logout as apiLogout } from '../api/auth.js'
 import { getMyProfile, updateMyProfile } from '../api/profile.js'
 import { saveOrganization, unsaveOrganization } from '../api/organizations.js'
 
@@ -30,9 +30,26 @@ export const useAuthStore = defineStore('auth', () => {
   })
 
   // ── Persist helpers ────────────────────────────────────────────────────────
+  function normalizeUser(u) {
+    if (!u) return null
+    // Real backend may return { name, profile: { firstName, ... } } or flat { firstName }
+    // Normalize everything to flat structure with firstName/lastName
+    const profile = u.profile || {}
+    return {
+      ...u,
+      firstName: u.firstName || profile.firstName || u.name?.split(' ')[0] || '',
+      lastName:  u.lastName  || profile.lastName  || u.name?.split(' ').slice(1).join(' ') || '',
+      email:     u.email     || profile.email     || '',
+      role:      u.role      || u.userRole        || 'USER',
+      avatarUrl: u.avatarUrl || profile.avatarUrl || null,
+      phone:     u.phone     || profile.phone     || '',
+    }
+  }
+
   function persistUser(u) {
-    user.value = u
-    localStorage.setItem('sqUser', JSON.stringify(u))
+    const normalized = normalizeUser(u)
+    user.value = normalized
+    localStorage.setItem('sqUser', JSON.stringify(normalized))
   }
   function persistTokens(at, rt) {
     accessToken.value = at
@@ -46,39 +63,31 @@ export const useAuthStore = defineStore('auth', () => {
   // ── Auth actions ───────────────────────────────────────────────────────────
   async function login(email, password) {
     const data = await apiLogin(email, password)
-    // Persist tokens first so getMyProfile can read the access token
     persistTokens(data.accessToken, data.refreshToken)
-    // Use full profile data if available; fall back to auth-level user from login response
     try {
-      const fullProfile = await getMyProfile(data.accessToken)
+      // getMyProfile reads token from localStorage automatically
+      const fullProfile = await getMyProfile()
       persistUser(fullProfile)
     } catch {
-      persistUser(data.user)
+      // Fall back to minimal user from login response if profile fetch fails
+      persistUser(data.user || null)
     }
   }
 
   async function register(payload) {
-    // Real API POST /api/core/auth/register only accepts { email, password, role }
-    // Profile fields (firstName, lastName, phone, disabilityType) are sent separately
-    // via PATCH /api/core/profile/me after successful registration.
-    const authPayload = {
-      email: payload.email,
-      password: payload.password,
-      role: payload.role || 'USER'
-    }
-    const data = await apiRegister(authPayload)
+    // Real API accepts all fields in one request: { email, password, role, firstName, lastName, phone, disabilityType }
+    const data = await apiRegister({
+      email:          payload.email,
+      password:       payload.password,
+      role:           payload.role || 'USER',
+      firstName:      payload.firstName      || undefined,
+      lastName:       payload.lastName       || undefined,
+      phone:          payload.phone          || undefined,
+      disabilityType: payload.disabilityType || undefined,
+    })
     persistTokens(data.accessToken, data.refreshToken)
     try {
-      // Send profile fields after registration if provided
-      const profileFields = {}
-      if (payload.firstName)      profileFields.firstName      = payload.firstName
-      if (payload.lastName)       profileFields.lastName       = payload.lastName
-      if (payload.phone)          profileFields.phone          = payload.phone
-      if (payload.disabilityType) profileFields.disabilityType = payload.disabilityType
-      if (Object.keys(profileFields).length) {
-        await updateMyProfile(data.accessToken, profileFields)
-      }
-      const fullProfile = await getMyProfile(data.accessToken)
+      const fullProfile = await getMyProfile()
       persistUser(fullProfile)
     } catch {
       persistUser(data.user || { id: null, email: payload.email, role: payload.role || 'USER' })
@@ -108,13 +117,11 @@ export const useAuthStore = defineStore('auth', () => {
   async function loginWithTokens(at, rt) {
     persistTokens(at, rt)
     try {
-      // getMyProfile returns full user incl. firstName, lastName, avatarUrl, etc.
-      const userData = await getMyProfile(at)
+      const userData = await getMyProfile()
       persistUser(userData)
     } catch {
-      // If profile fetch fails, fall back to minimal auth data
       try {
-        const minData = await getMe(at)
+        const minData = await getMe()
         persistUser(minData)
       } catch {
         persistTokens(null, null)

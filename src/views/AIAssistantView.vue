@@ -336,10 +336,12 @@ const sendMessage = async () => {
         nameKk: o.nameKk || o.name,
         address: o.address
       }))
+      // Real API may return: { answer: { content, id } } or { content } or { message } or string
+      const aiContent = res?.answer?.content ?? res?.answer ?? res?.content ?? res?.message ?? res?.reply ?? res?.text ?? JSON.stringify(res)
       messages.value.push({
-        id: res.answer.id,
+        id: res?.answer?.id || Date.now(),
         role: 'ai',
-        content: res.answer.content,
+        content: aiContent,
         suggestedOrgs: orgs
       })
 
@@ -350,15 +352,17 @@ const sendMessage = async () => {
         content: m.content
       }))
       const res = await sendChat(msgHistory, null)
+      const aiContent2 = res?.answer?.content ?? res?.answer ?? res?.content ?? res?.message ?? res?.reply ?? res?.text ?? JSON.stringify(res)
       messages.value.push({
         id: Date.now(),
         role: 'ai',
-        content: res.answer,
+        content: aiContent2,
         suggestedOrgs: []
       })
     }
   } catch (e) {
-    messages.value.push({ id: Date.now(), role: 'ai', content: '⚠️ Произошла ошибка. Попробуйте ещё раз.' })
+    console.error('[AI Error]', e)
+    messages.value.push({ id: Date.now(), role: 'ai', content: `⚠️ Ошибка: ${e.message || 'Попробуйте ещё раз.'}` })
   } finally {
     isTyping.value = false
     await scrollToBottom()

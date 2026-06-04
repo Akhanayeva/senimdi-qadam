@@ -1,72 +1,32 @@
-import guidesData from '../mock/guides.json'
+/**
+ * Guides API — Real backend calls
+ * Base: /core/guides
+ */
+import { get, post, patch, buildQuery } from './apiClient.js'
 
-const delay = (ms = 400) => new Promise(r => setTimeout(r, ms))
-
-// In-memory state
-const guidesStore = guidesData.map(g => ({ ...g }))
-const likedSet = new Set(['guide-001', 'guide-002']) // pre-liked for demo
-
-// GET /api/core/guides?category=&search=&limit=20&offset=0
-// Real API uses offset-based pagination (not page-based)
-export async function getGuides(filters = {}) {
-  await delay()
-  const { category, search, offset = 0, limit = 20 } = filters
-
-  let items = guidesStore.filter(g => g.isPublished)
-
-  if (category && category !== 'all') {
-    items = items.filter(g => g.category === category)
-  }
-
-  if (search) {
-    const q = search.toLowerCase()
-    items = items.filter(g =>
-      g.titleRu?.toLowerCase().includes(q) ||
-      g.titleKk?.toLowerCase().includes(q) ||
-      g.bodyRu?.toLowerCase().includes(q) ||
-      g.tags?.some(t => t.toLowerCase().includes(q))
-    )
-  }
-
-  const total = items.length
-  const pageItems = items.slice(offset, offset + limit)
-
-  return { items: pageItems, total }
+export const getGuides = async (filters = {}) => {
+  const res = await get(buildQuery('/core/guides', {
+    category: filters.category !== 'all' ? filters.category : undefined,
+    search:   filters.search,
+    limit:    filters.limit  ?? 50,
+    offset:   filters.offset ?? 0,
+  }), false)
+  if (Array.isArray(res)) return { items: res, total: res.length }
+  return res
 }
 
-// GET /api/core/guides/:id
-export async function getGuideById(id) {
-  await delay()
-  const guide = guidesStore.find(g => g.id === id)
-  if (!guide) throw new Error('Guide not found')
-  return { ...guide, liked: likedSet.has(id) }
-}
+export const getGuideById = async (id) => get(`/core/guides/${id}`, false)
 
-// POST /api/core/guides/:id/like  (toggle)
-export async function likeGuide(id) {
-  await delay(200)
-  const guide = guidesStore.find(g => g.id === id)
-  if (!guide) throw new Error('Guide not found')
+export const likeGuide = async (id) => post(`/core/guides/${id}/like`, {})
 
-  if (likedSet.has(id)) {
-    likedSet.delete(id)
-    guide.likesCount = Math.max(0, guide.likesCount - 1)
-  } else {
-    likedSet.add(id)
-    guide.likesCount = guide.likesCount + 1
-  }
-  return { liked: likedSet.has(id), likesCount: guide.likesCount }
-}
+export const createGuide = async (payload) => post('/core/guides', payload)
 
-// GET liked guide IDs for current user
-export async function getLikedGuideIds() {
-  await delay(150)
-  return [...likedSet]
-}
+export const publishGuide = async (id) => patch(`/core/guides/${id}/publish`, {})
 
-// GET distinct categories
-export async function getGuideCategories() {
-  await delay(100)
-  const cats = [...new Set(guidesStore.map(g => g.category))]
-  return cats
+export const unpublishGuide = async (id) => patch(`/core/guides/${id}/unpublish`, {})
+
+/** GET /core/profile/me/liked-guides — returns array of guide IDs */
+export const getLikedGuideIds = async () => {
+  const res = await get('/core/profile/me/liked-guides')
+  return Array.isArray(res) ? res : (res.items ?? [])
 }

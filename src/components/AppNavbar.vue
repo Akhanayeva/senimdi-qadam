@@ -2,12 +2,12 @@
   <nav class="app-navbar" role="navigation" aria-label="Главная навигация">
     <div class="container navbar-inner">
       <!-- Қызметтер -->
-      <div class="nav-item dropdown" @mouseenter="open('services')" @mouseleave="close('services')">
-        <button class="nav-link" :class="{ active: isActive(['/services']) }" :aria-expanded="active === 'services'">
+      <div class="nav-item dropdown" @mouseenter="open('services')" @mouseleave="scheduleClose('services')">
+        <button class="nav-link" :class="{ active: isActive(['/services']) }" :aria-expanded="active === 'services'" @click.stop="toggle('services')">
           {{ t('services') }}
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
-        <div v-if="active === 'services'" class="dropdown-menu nav-dropdown">
+        <div v-if="active === 'services'" class="dropdown-menu nav-dropdown" @mouseenter="cancelClose('services')" @mouseleave="scheduleClose('services')">
           <RouterLink to="/services/organizations" class="dropdown-item" @click="close('services')">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
             {{ t('orgList') }}
@@ -32,12 +32,12 @@
       </div>
 
       <!-- Жобалар -->
-      <div class="nav-item dropdown" @mouseenter="open('projects')" @mouseleave="close('projects')">
-        <button class="nav-link" :class="{ active: isActive(['/projects']) }" :aria-expanded="active === 'projects'">
+      <div class="nav-item dropdown" @mouseenter="open('projects')" @mouseleave="scheduleClose('projects')">
+        <button class="nav-link" :class="{ active: isActive(['/projects']) }" :aria-expanded="active === 'projects'" @click.stop="toggle('projects')">
           {{ t('projects') }}
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
-        <div v-if="active === 'projects'" class="dropdown-menu nav-dropdown">
+        <div v-if="active === 'projects'" class="dropdown-menu nav-dropdown" @mouseenter="cancelClose('projects')" @mouseleave="scheduleClose('projects')">
           <RouterLink to="/projects/forums" class="dropdown-item" @click="close('projects')">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             {{ t('forums') }}
@@ -50,12 +50,12 @@
       </div>
 
       <!-- ИнваТакси -->
-      <div class="nav-item dropdown" @mouseenter="open('taxi')" @mouseleave="close('taxi')">
-        <button class="nav-link" :class="{ active: isActive(['/inva-taxi']) }" :aria-expanded="active === 'taxi'">
-          {{ t('invaTaxi') }} 🚕
+      <div class="nav-item dropdown" @mouseenter="open('taxi')" @mouseleave="scheduleClose('taxi')">
+        <button class="nav-link" :class="{ active: isActive(['/inva-taxi']) }" :aria-expanded="active === 'taxi'" @click.stop="toggle('taxi')">
+          {{ t('invaTaxi') }}
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
-        <div v-if="active === 'taxi'" class="dropdown-menu nav-dropdown">
+        <div v-if="active === 'taxi'" class="dropdown-menu nav-dropdown" @mouseenter="cancelClose('taxi')" @mouseleave="scheduleClose('taxi')">
           <RouterLink to="/inva-taxi" class="dropdown-item" @click="close('taxi')">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
             {{ a11y.lang === 'kaz' ? 'Тапсырыс беру' : 'Заказать поездку' }}
@@ -146,9 +146,32 @@ const route = useRoute()
 const t = computed(() => useI18n(a11y.lang))
 const active = ref(null)
 const mobileOpen = ref(false)
+const closeTimers = {}
 
-const open = (name) => { active.value = name }
-const close = (name) => { if (active.value === name) active.value = null }
+// Открыть немедленно
+const open = (name) => {
+  if (closeTimers[name]) { clearTimeout(closeTimers[name]); delete closeTimers[name] }
+  active.value = name
+}
+
+// Переключить по клику
+const toggle = (name) => {
+  if (active.value === name) { active.value = null } else { open(name) }
+}
+
+// Закрыть с задержкой 300ms — успеваешь переместить мышь на меню
+const scheduleClose = (name) => {
+  closeTimers[name] = setTimeout(() => {
+    if (active.value === name) active.value = null
+    delete closeTimers[name]
+  }, 300)
+}
+
+// Отменить закрытие (мышь вернулась)
+const cancelClose = (name) => {
+  if (closeTimers[name]) { clearTimeout(closeTimers[name]); delete closeTimers[name] }
+}
+
 const isActive = (paths) => paths.some(p => route.path.startsWith(p))
 </script>
 
