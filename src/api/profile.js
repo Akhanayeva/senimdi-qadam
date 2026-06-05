@@ -83,6 +83,18 @@ export async function deleteRelativeLink(_token, linkId) {
   return del(`/core/profile/links/${linkId}`)
 }
 
+// ── Push-уведомления (FCM device token) ──────────────────────────────────────
+
+/** POST /profile/me/device-token — { token, platform: 'android'|'ios'|'web' } */
+export async function registerDeviceToken(token, platform = 'web') {
+  return post('/core/profile/me/device-token', { token, platform })
+}
+
+/** DELETE /profile/me/device-token — { token } */
+export async function unregisterDeviceToken(token) {
+  return del('/core/profile/me/device-token', { token })
+}
+
 // ── Saved organisations (used in auth store) ──────────────────────────────────
 
 /** POST /core/organizations/:id/save */

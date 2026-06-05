@@ -21,11 +21,12 @@ export const createSession = async (title = '') => post('/ai/chat/sessions', { t
 /** GET /ai/chat/sessions/:id — session + messages */
 export const getSession = async (id) => get(`/ai/chat/sessions/${id}`)
 
-/** POST /ai/chat/sessions/:id/message — { content, language? }
- *  Returns: { id, role, content, createdAt }
+/** POST /ai/chat/sessions/:id/message
+ *  Бэкенд ждёт { message: string, location?: {lat,lon,city} } — НЕ content!
+ *  Returns: { session_id, user_message, answer: { id, role, content }, organizations? }
  */
-export const sendMessage = async (sessionId, content, language) =>
-  post(`/ai/chat/sessions/${sessionId}/message`, { content, language })
+export const sendMessage = async (sessionId, content, location = null) =>
+  post(`/ai/chat/sessions/${sessionId}/message`, location ? { message: content, location } : { message: content })
 
 /** PATCH /ai/chat/sessions/:id/title — { title } */
 export const renameSession = async (id, title) => patch(`/ai/chat/sessions/${id}/title`, { title })
@@ -89,6 +90,6 @@ export const createChatSession = (_token, _type, title) => createSession(title)
 export const getChatSession    = (_token, id) => getSession(id)
 export const sendChat          = (messages, _lang) => chatOnce(messages)
 
-export const sendSessionMessage = (_token, sessionId, content, language) => sendMessage(sessionId, content, language)
+export const sendSessionMessage = (_token, sessionId, content, _language) => sendMessage(sessionId, content)
 export const updateSessionTitle = (_token, id, title) => renameSession(id, title)
 export const deleteChatSession  = (_token, id) => deleteSession(id)

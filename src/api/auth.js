@@ -2,7 +2,7 @@
  * Auth API — Real backend calls
  * Base: POST /auth/login, /auth/register, /auth/refresh, /auth/logout, GET /auth/me
  */
-import { post, get, buildQuery } from './apiClient.js'
+import { post, get, buildQuery, GATEWAY_URL } from './apiClient.js'
 
 /** POST /auth/login → { accessToken, refreshToken, user? } */
 export async function login(email, password) {
@@ -55,4 +55,28 @@ export async function verify2FA(totpCode) {
 /** POST /auth/2fa/disable */
 export async function disable2FA(totpCode) {
   return post('/core/auth/2fa/disable', { totpCode })
+}
+
+// ── Подтверждение почты ───────────────────────────────────────────────────────
+
+/** GET /auth/verify?token=... — переход по ссылке из письма */
+export async function verifyEmail(token) {
+  return get(buildQuery('/core/auth/verify', { token }), false)
+}
+
+/** POST /auth/resend-verification — { email } */
+export async function resendVerification(email) {
+  return post('/core/auth/resend-verification', { email }, false)
+}
+
+// ── Google OAuth ──────────────────────────────────────────────────────────────
+
+/** Ссылка для входа через Google (редирект браузера) */
+export function googleLoginUrl() {
+  return `${GATEWAY_URL}/core/auth/google`
+}
+
+/** POST /auth/exchange-code — обмен временного кода на токены после OAuth */
+export async function exchangeCode(code) {
+  return post('/core/auth/exchange-code', { code }, false)
 }

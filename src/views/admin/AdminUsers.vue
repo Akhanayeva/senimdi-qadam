@@ -73,9 +73,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { getUsers, updateUserRole, toggleUserBan } from '../../api/admin.js'
 
-// Mock users — replace with real API GET /api/core/admin/users when backend ready
-const allUsers = ref([
+// Демо-данные на случай, если бэкенд недоступен или нет прав ADMIN
+const mockUsers = ([
   { id: 'usr-1', firstName: 'Администратор', lastName: '', email: 'admin@senimdi.kz', role: 'ADMIN', phone: '+7 727 000 0001', createdAt: '2025-01-01T00:00:00Z', disabilityType: null },
   { id: 'usr-2', firstName: 'Асель', lastName: 'Нурланова', email: 'user@senimdi.kz', role: 'USER', phone: '+7 777 123 4567', createdAt: '2025-06-15T10:30:00Z', disabilityType: 'Нарушение опорно-двигательного аппарата' },
   { id: 'usr-3', firstName: 'Модератор', lastName: '', email: 'mod@senimdi.kz', role: 'MODERATOR', phone: '+7 727 000 0002', createdAt: '2025-02-10T09:00:00Z', disabilityType: null },
@@ -85,9 +86,25 @@ const allUsers = ref([
   { id: 'usr-7', firstName: 'Зарина', lastName: 'Смагулова', email: 'z.smagulova@gmail.com', role: 'USER', phone: '+7 707 555 6677', createdAt: '2025-10-05T16:00:00Z', disabilityType: 'Нарушение слуха' },
 ])
 
-const filteredUsers = ref([...allUsers.value])
+const allUsers = ref([])
+const filteredUsers = ref([])
 const searchQuery = ref('')
 const filterRole = ref('all')
+const loading = ref(false)
+
+const loadUsers = async () => {
+  loading.value = true
+  try {
+    const res = await getUsers({ q: searchQuery.value, role: filterRole.value })
+    allUsers.value = res.items ?? res
+  } catch (e) {
+    // нет прав / бэкенд недоступен → показываем демо-данные
+    allUsers.value = [...mockUsers]
+  } finally {
+    loading.value = false
+    applyFilters()
+  }
+}
 
 const applyFilters = () => {
   let data = [...allUsers.value]
@@ -103,17 +120,19 @@ const applyFilters = () => {
   filteredUsers.value = data
 }
 
-const changeRole = (user, newRole) => {
+const changeRole = async (user, newRole) => {
   const idx = allUsers.value.findIndex(u => u.id === user.id)
   if (idx !== -1) allUsers.value[idx].role = newRole
   applyFilters()
+  try { await updateUserRole(user.id, newRole) }
+  catch (e) { alert('Не удалось изменить роль: ' + e.message) }
 }
 
-const confirmDelete = (user) => {
-  if (confirm(`Заблокировать пользователя "${user.email}"?`)) {
-    allUsers.value = allUsers.value.filter(u => u.id !== user.id)
-    applyFilters()
-  }
+const confirmDelete = async (user) => {
+  if (!confirm(`Заблокировать / разблокировать пользователя "${user.email}"?`)) return
+  try { await toggleUserBan(user.id) }
+  catch (e) { alert('Не удалось выполнить: ' + e.message) }
+  loadUsers()
 }
 
 const formatDate = (iso) => {
@@ -121,7 +140,7 @@ const formatDate = (iso) => {
   return new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-onMounted(applyFilters)
+onMounted(loadUsers)
 </script>
 
 <style scoped>

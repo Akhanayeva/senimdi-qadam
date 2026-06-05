@@ -163,7 +163,7 @@ export const get    = (path, auth = true)              => request(path, 'GET',  
 export const post   = (path, body = {}, auth = true)   => request(path, 'POST',   body, auth)
 export const patch  = (path, body = {}, auth = true)   => request(path, 'PATCH',  body, auth)
 export const put    = (path, body = {}, auth = true)   => request(path, 'PUT',    body, auth)
-export const del    = (path, auth = true)              => request(path, 'DELETE', null, auth)
+export const del    = (path, body = null, auth = true) => request(path, 'DELETE', body, auth)
 export const upload = (path, formData, auth = true)    => request(path, 'POST',   formData, auth)
 
 // ── Query string builder ──────────────────────────────────────────────────────

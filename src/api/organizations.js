@@ -89,3 +89,33 @@ export const getSavedOrganizations = async () => {
   const res = await get('/core/profile/me')
   return res.savedOrganizations ?? []
 }
+
+// ── Кабинет организации: услуги (только роль ORG_MANAGER) ─────────────────────
+
+/** GET /organizations/mine/saved-users — кто сохранил мою организацию */
+export const getMyOrgSavedUsers = async (limit = 20, offset = 0) => {
+  const res = await get(buildQuery('/core/organizations/mine/saved-users', { limit, offset }))
+  if (Array.isArray(res)) return { items: res, total: res.length }
+  return res
+}
+
+/** GET /organizations/mine/services — список услуг моей организации */
+export const getMyOrgServices = async () => {
+  const res = await get('/core/organizations/mine/services')
+  if (Array.isArray(res)) return res
+  return res.items ?? res
+}
+
+/** POST /organizations/mine/services
+ *  Body: { nameRu, nameKk?, descriptionRu?, price?, isActive? }
+ */
+export const createMyOrgService = async (service) =>
+  post('/core/organizations/mine/services', service)
+
+/** PATCH /organizations/mine/services/:serviceId */
+export const updateMyOrgService = async (serviceId, fields) =>
+  patch(`/core/organizations/mine/services/${serviceId}`, fields)
+
+/** DELETE /organizations/mine/services/:serviceId */
+export const deleteMyOrgService = async (serviceId) =>
+  del(`/core/organizations/mine/services/${serviceId}`)

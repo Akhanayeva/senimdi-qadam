@@ -54,3 +54,14 @@ export const getPendingNews = async () => {
 }
 
 export const moderateNews = async (newsId, status) => patch(`/core/news/${newsId}/moderate`, { status })
+
+/** GET /news/moderation/comments — очередь комментариев на модерацию (MODERATOR/ADMIN) */
+export const getPendingComments = async (limit = 20, offset = 0) => {
+  const res = await get(buildQuery('/core/news/moderation/comments', { limit, offset }))
+  if (Array.isArray(res)) return { items: res, total: res.length }
+  return res
+}
+
+/** PATCH /news/comments/:commentId/moderate — { status: 'PUBLISHED'|'REJECTED', reason? } */
+export const moderateComment = async (commentId, status, reason) =>
+  patch(`/core/news/comments/${commentId}/moderate`, reason ? { status, reason } : { status })
