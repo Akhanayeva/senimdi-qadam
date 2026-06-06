@@ -33,6 +33,8 @@ export const uploadNewsImage = async (newsId, file) => {
   return upload(`/core/news/${newsId}/image`, form)
 }
 
+export const updateNews = async (id, payload) => patch(`/core/news/${id}`, payload)
+
 export const deleteNews = async (_token, id) => del(`/core/news/${id}`)
 
 export const likeNews = async (id) => post(`/core/news/${id}/like`, {})

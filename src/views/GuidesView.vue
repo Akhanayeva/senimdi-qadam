@@ -4,10 +4,8 @@
     <!-- Hero -->
     <section class="guides-hero">
       <div class="hero-content">
-        <h1>{{ lang === 'kaz' ? 'Нұсқаулықтар' : 'Руководства' }}</h1>
-        <p>{{ lang === 'kaz'
-          ? 'Мүгедектігі бар адамдарға арналған пайдалы ақпарат пен нұсқаулықтар'
-          : 'Полезная информация и практические руководства для людей с инвалидностью' }}</p>
+        <h1>{{ t('guidesTitle') }}</h1>
+        <p>{{ t('guidesSubtitle') }}</p>
 
         <!-- Search -->
         <div class="search-bar">
@@ -15,7 +13,7 @@
           <input
             v-model="searchQuery"
             type="text"
-            :placeholder="lang === 'kaz' ? 'Іздеу...' : 'Поиск...'"
+            :placeholder="t('guidesSearchPlaceholder')"
             @input="onSearch"
           />
           <button v-if="searchQuery" class="clear-btn" @click="searchQuery = ''; loadGuides()">✕</button>
@@ -34,7 +32,7 @@
           @click="selectCategory(cat.value)"
         >
           <span class="cat-icon">{{ cat.icon }}</span>
-          {{ lang === 'kaz' ? cat.labelKk : cat.labelRu }}
+          {{ lang === 'eng' ? (cat.labelEn || cat.labelRu) : lang === 'kaz' ? cat.labelKk : cat.labelRu }}
         </button>
       </div>
     </section>
@@ -46,13 +44,13 @@
         <!-- Loading -->
         <div v-if="loading" class="loading-state">
           <div class="spinner"></div>
-          <p>{{ lang === 'kaz' ? 'Жүктелуде...' : 'Загрузка...' }}</p>
+          <p>{{ t('guidesLoading') }}</p>
         </div>
 
         <!-- Empty -->
         <div v-else-if="guides.length === 0" class="empty-state">
           <span class="empty-icon">📋</span>
-          <p>{{ lang === 'kaz' ? 'Нұсқаулықтар табылмады' : 'Руководства не найдены' }}</p>
+          <p>{{ t('guidesEmpty') }}</p>
         </div>
 
         <!-- Grid -->
@@ -63,20 +61,29 @@
             class="guide-card"
             @click="openGuide(guide)"
           >
-            <div class="card-header">
-              <span class="cat-badge" :class="`cat-${guide.category}`">
-                {{ getCatLabel(guide.category) }}
-              </span>
-              <span class="likes-badge">
-                <button
-                  class="like-btn"
-                  :class="{ liked: likedIds.includes(guide.id) }"
-                  @click.stop="toggleLike(guide)"
-                >
-                  {{ likedIds.includes(guide.id) ? '❤️' : '🤍' }}
-                </button>
-                {{ guide.likesCount }}
-              </span>
+            <!-- Guide image banner -->
+            <div class="guide-card-img">
+              <img
+                :src="`https://picsum.photos/seed/${500 + (guide.id % 150)}/600/280`"
+                :alt="lang === 'kaz' ? guide.titleKk : guide.titleRu"
+                class="guide-img"
+                loading="lazy"
+              />
+              <div class="guide-img-overlay">
+                <span class="cat-badge cat-badge-overlay" :class="`cat-${guide.category}`">
+                  {{ getCatLabel(guide.category) }}
+                </span>
+                <span class="likes-badge">
+                  <button
+                    class="like-btn"
+                    :class="{ liked: likedIds.includes(guide.id) }"
+                    @click.stop="toggleLike(guide)"
+                  >
+                    {{ likedIds.includes(guide.id) ? '❤️' : '🤍' }}
+                  </button>
+                  {{ guide.likesCount }}
+                </span>
+              </div>
             </div>
 
             <h3 class="card-title">
@@ -84,7 +91,7 @@
             </h3>
 
             <p class="card-excerpt">
-              {{ excerpt(lang === 'kaz' ? guide.bodyKk : guide.bodyRu) }}
+              {{ excerpt(lang === 'kaz' ? guide.bodyKk : guide.bodyRu || guide.bodyKk) }}
             </p>
 
             <div class="card-footer">
@@ -93,7 +100,7 @@
                 <span v-for="tag in (guide.tags || []).slice(0, 2)" :key="tag" class="tag">{{ tag }}</span>
               </span>
               <span class="read-more">
-                {{ lang === 'kaz' ? 'Толығырақ →' : 'Читать →' }}
+                {{ t('guidesReadMore') }}
               </span>
             </div>
           </article>
@@ -101,7 +108,7 @@
 
         <!-- Total -->
         <p v-if="total > 0 && !loading" class="total-count">
-          {{ lang === 'kaz' ? `Барлығы: ${total} нұсқаулық` : `Всего: ${total} руководств` }}
+          {{ t('guidesTotal').replace('{n}', total) }}
         </p>
       </div>
     </section>
@@ -118,7 +125,7 @@
           </div>
 
           <h2 class="modal-title">
-            {{ lang === 'kaz' ? selectedGuide.titleKk : selectedGuide.titleRu }}
+            {{ lang === 'kaz' ? selectedGuide.titleKk : selectedGuide.titleRu || selectedGuide.titleKk }}
           </h2>
 
           <div class="modal-meta">
@@ -150,10 +157,12 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useAccessibilityStore } from '../stores/accessibility'
+import { useI18n } from '../i18n.js'
 import { getGuides, likeGuide, getLikedGuideIds } from '../api/guides'
 
 const accessStore = useAccessibilityStore()
 const lang = computed(() => accessStore.lang)
+const t = computed(() => useI18n(lang.value))
 const isDark = computed(() => accessStore.darkMode)
 
 // State
@@ -289,6 +298,7 @@ watch(lang, loadGuides)
   background: #f4f6fa;
   color: #1a1a2e;
   transition: background 0.3s, color 0.3s;
+  padding-top: calc(var(--header-h) + var(--navbar-h));
 }
 .guides-page.dark {
   background: #0f0f1a;
@@ -436,13 +446,13 @@ watch(lang, loadGuides)
 .guide-card {
   background: #fff;
   border-radius: 16px;
-  padding: 1.5rem;
+  overflow: hidden;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   border: 1px solid #e8ecf4;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0;
 }
 .dark .guide-card {
   background: #1a1a2e;
@@ -452,12 +462,49 @@ watch(lang, loadGuides)
   transform: translateY(-4px);
   box-shadow: 0 12px 30px rgba(102,126,234,0.15);
 }
+.guide-card:hover .guide-img {
+  transform: scale(1.05);
+}
 
-.card-header {
+/* Guide image banner */
+.guide-card-img {
+  height: 180px;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.guide-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+  display: block;
+}
+.guide-img-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px 12px;
+  background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%);
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
 }
+.cat-badge-overlay {
+  background: rgba(0,0,0,0.4) !important;
+  color: white !important;
+  backdrop-filter: blur(4px);
+}
+
+/* Card text body area */
+.card-title,
+.card-excerpt,
+.card-footer {
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+.card-title { padding-top: 1rem; }
 
 /* Category badges */
 .cat-badge {
@@ -500,7 +547,7 @@ watch(lang, loadGuides)
   font-size: 1.05rem;
   font-weight: 700;
   line-height: 1.4;
-  margin: 0;
+  margin: 0 0 0.5rem;
   color: #1a1a2e;
 }
 .dark .card-title { color: #e8e8f0; }
@@ -509,7 +556,7 @@ watch(lang, loadGuides)
   font-size: 0.9rem;
   color: #666;
   line-height: 1.5;
-  margin: 0;
+  margin: 0 0 0.75rem;
   flex: 1;
 }
 .dark .card-excerpt { color: #9090b0; }
@@ -520,6 +567,7 @@ watch(lang, loadGuides)
   gap: 0.75rem;
   flex-wrap: wrap;
   margin-top: auto;
+  padding-bottom: 1.25rem;
 }
 .card-date { font-size: 0.78rem; color: #aaa; }
 .card-tags { display: flex; gap: 0.3rem; flex: 1; }

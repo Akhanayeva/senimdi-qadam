@@ -15,9 +15,9 @@
       </div>
 
       <nav class="admin-nav">
-        <!-- Dashboard — ADMIN only -->
+        <!-- Dashboard — ADMIN + MODERATOR (TAXI_MANAGER авто-редиректится на /admin/taxi) -->
         <RouterLink
-          v-if="authStore.isAdmin"
+          v-if="authStore.isAdmin || authStore.isModerator"
           to="/admin"
           class="admin-nav-item"
           :class="{ active: route.path === '/admin' }"
@@ -73,6 +73,33 @@
           Пользователи
         </RouterLink>
 
+        <!-- Tickets — ADMIN + MODERATOR -->
+        <RouterLink
+          v-if="authStore.isAdmin || authStore.isModerator"
+          to="/admin/tickets"
+          class="admin-nav-item"
+          :class="{ active: route.path.startsWith('/admin/tickets') }"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          Обращения
+        </RouterLink>
+
+        <!-- Complaints — ADMIN + MODERATOR -->
+        <RouterLink
+          v-if="authStore.isAdmin || authStore.isModerator"
+          to="/admin/complaints"
+          class="admin-nav-item"
+          :class="{ active: route.path.startsWith('/admin/complaints') }"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          Жалобы
+        </RouterLink>
+
         <!-- Taxi — ADMIN + TAXI_MANAGER -->
         <RouterLink
           v-if="authStore.isAdmin || authStore.isTaxiManager"
@@ -87,6 +114,37 @@
             <circle cx="18.5" cy="18.5" r="2.5"/>
           </svg>
           ИнваТакси
+        </RouterLink>
+
+        <!-- Guides — ADMIN + MODERATOR -->
+        <RouterLink
+          v-if="authStore.isAdmin || authStore.isModerator"
+          to="/admin/guides"
+          class="admin-nav-item"
+          :class="{ active: route.path.startsWith('/admin/guides') }"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+          Гайды
+        </RouterLink>
+
+        <!-- Audit — ADMIN only -->
+        <RouterLink
+          v-if="authStore.isAdmin"
+          to="/admin/audit"
+          class="admin-nav-item"
+          :class="{ active: route.path.startsWith('/admin/audit') }"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+          Аудит
         </RouterLink>
       </nav>
 
@@ -137,7 +195,7 @@ const route = useRoute()
   display: flex;
   flex-direction: column;
   position: fixed;
-  top: 0;
+  top: var(--header-h);
   left: 0;
   bottom: 0;
   z-index: 100;
@@ -233,7 +291,7 @@ const route = useRoute()
   flex: 1;
   margin-left: 240px;
   min-height: 100vh;
-  padding: 32px;
+  padding: calc(var(--header-h) + 32px) 32px 32px;
   overflow-y: auto;
 }
 
@@ -243,7 +301,7 @@ const route = useRoute()
   .admin-user-role, .admin-back-btn span { display: none; }
   .admin-nav-item span { display: none; }
   .admin-logo { justify-content: center; padding: 16px 8px; }
-  .admin-main { margin-left: 60px; padding: 20px 16px; }
+  .admin-main { margin-left: 60px; padding: calc(var(--header-h) + 20px) 16px 20px; }
   .admin-back-btn { justify-content: center; }
   .admin-user-info { justify-content: center; }
 }

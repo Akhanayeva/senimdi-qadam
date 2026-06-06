@@ -5,7 +5,7 @@
         <div class="modal-box org-modal">
 
           <!-- Close -->
-          <button class="modal-close-btn" @click="$emit('close')" :aria-label="lang==='kaz' ? 'Жабу' : 'Закрыть'">
+          <button class="modal-close-btn" @click="$emit('close')" :aria-label="t('close')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
 
@@ -16,24 +16,24 @@
               <div class="org-header-main">
                 <h2 class="org-title">{{ orgName }}</h2>
                 <div v-if="org.verifiedDate" class="org-verified-date">
-                  {{ lang === 'kaz' ? 'Верификация күні:' : 'Дата верификации:' }} {{ org.verifiedDate }}
+                  {{ t('verifiedDate') }} {{ org.verifiedDate }}
                 </div>
               </div>
             </div>
             <div class="org-type-status">
               <div class="org-type-row">
-                <span class="detail-label">{{ lang === 'kaz' ? 'Санат:' : 'Категория:' }}</span>
+                <span class="detail-label">{{ t('categoryLabel') }}</span>
                 <span class="detail-value">{{ orgCategoryLabel }}</span>
               </div>
               <div class="org-status-row">
-                <span class="detail-label">{{ lang === 'kaz' ? 'Мәртебесі:' : 'Статус:' }}</span>
+                <span class="detail-label">{{ t('statusLabel') }}</span>
                 <span v-if="org.status === 'VERIFIED'" class="status-verified">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                  {{ lang === 'kaz' ? 'Верификацияланған' : 'Верифицировано' }}
+                  {{ t('statusVerified') }}
                 </span>
                 <span v-else class="status-pending">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  {{ lang === 'kaz' ? 'Верификация күтілуде' : 'Ожидает верификации' }}
+                  {{ t('statusPending') }}
                 </span>
               </div>
             </div>
@@ -43,20 +43,20 @@
           <div class="org-section">
             <div class="section-heading">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              {{ lang === 'kaz' ? 'Жалпы ақпарат' : 'Общая информация' }}
+              {{ t('generalInfo') }}
             </div>
             <div class="section-body">
               <div class="info-field">
-                <span class="info-field-label">{{ lang === 'kaz' ? 'Көмек санаты:' : 'Категория помощи:' }}</span>
+                <span class="info-field-label">{{ t('helpCategory') }}</span>
                 <span class="info-field-value">{{ orgCategoryLabel }}</span>
               </div>
               <div v-if="org.targetAudience || org.tags?.length" class="info-field">
-                <span class="info-field-label">{{ lang === 'kaz' ? 'Мақсатты аудитория:' : 'Целевая аудитория:' }}</span>
+                <span class="info-field-label">{{ t('targetAudience') }}</span>
                 <span class="info-field-value">{{ org.targetAudience || org.tags?.join(', ') }}</span>
               </div>
               <div class="info-field">
-                <span class="info-field-label">{{ lang === 'kaz' ? 'Қысқаша сипаттама:' : 'Краткое описание:' }}</span>
-                <span class="info-field-value org-desc-text">{{ lang === 'kaz' ? org.descriptionKk : org.description }}</span>
+                <span class="info-field-label">{{ t('shortDesc') }}</span>
+                <span class="info-field-value org-desc-text">{{ orgDesc }}</span>
               </div>
             </div>
           </div>
@@ -66,7 +66,7 @@
           <div v-if="orgServicesList.length" class="org-section">
             <div class="section-heading">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-              {{ lang === 'kaz' ? 'Негізгі қызметтер' : 'Основные услуги' }}
+              {{ t('mainServices') }}
             </div>
             <div class="section-body">
               <ul class="services-list">
@@ -82,27 +82,27 @@
           <div class="org-section">
             <div class="section-heading">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.64 3.38 2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l.8-.8a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-              {{ lang === 'kaz' ? 'Байланыс' : 'Контакты' }}
+              {{ t('contactsSection') }}
             </div>
             <div class="section-body contacts-grid">
               <div class="contact-row">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 <div>
-                  <div class="contact-label">{{ lang === 'kaz' ? 'Мекенжай:' : 'Адрес:' }}</div>
+                  <div class="contact-label">{{ t('addressLabel') }}</div>
                   <div class="contact-value">{{ org.address }}</div>
                 </div>
               </div>
               <div class="contact-row">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"/><path d="M12 22s-8-4-8-10a8 8 0 0 1 16 0c0 6-8 10-8 10z"/></svg>
                 <div>
-                  <div class="contact-label">{{ lang === 'kaz' ? 'Қала:' : 'Город:' }}</div>
+                  <div class="contact-label">{{ t('cityLabel') }}</div>
                   <div class="contact-value">{{ org.city || 'Алматы' }}</div>
                 </div>
               </div>
               <div v-if="org.phone" class="contact-row">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.64 3.38 2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l.8-.8a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                 <div>
-                  <div class="contact-label">{{ lang === 'kaz' ? 'Телефон:' : 'Телефон:' }}</div>
+                  <div class="contact-label">{{ t('phoneLabel') }}</div>
                   <a :href="`tel:${org.phone}`" class="contact-link">{{ org.phone }}</a>
                 </div>
               </div>
@@ -121,14 +121,14 @@
               <div v-if="org.website" class="contact-row">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                 <div>
-                  <div class="contact-label">{{ lang === 'kaz' ? 'Сайт:' : 'Сайт:' }}</div>
+                  <div class="contact-label">{{ t('websiteLabel') }}:</div>
                   <a :href="org.website" target="_blank" rel="noopener" class="contact-link">{{ org.website }}</a>
                 </div>
               </div>
               <div v-if="org.workingHours || org.hours" class="contact-row">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 <div>
-                  <div class="contact-label">{{ lang === 'kaz' ? 'Жұмыс уақыты:' : 'Режим работы:' }}</div>
+                  <div class="contact-label">{{ t('workingHoursLabel') }}</div>
                   <div class="contact-value">{{ org.workingHours || org.hours }}</div>
                 </div>
               </div>
@@ -139,33 +139,33 @@
           <div v-if="org.accessibility" class="org-section">
             <div class="section-heading">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-              {{ lang === 'kaz' ? 'Қолжетімділік' : 'Доступность' }}
+              {{ t('accessibilitySection') }}
             </div>
             <div class="section-body">
               <div class="accessibility-grid">
                 <div class="a11y-item" :class="org.accessibility.ramp ? 'a11y-yes' : 'a11y-no'">
                   <span class="a11y-icon">{{ org.accessibility.ramp ? '✅' : '❌' }}</span>
-                  <span>{{ lang === 'kaz' ? 'Пандус / кіреберіс' : 'Пандус / вход для колясок' }}</span>
+                  <span>{{ t('ramp') }}</span>
                 </div>
                 <div class="a11y-item" :class="org.accessibility.lift ? 'a11y-yes' : 'a11y-no'">
                   <span class="a11y-icon">{{ org.accessibility.lift ? '✅' : '❌' }}</span>
-                  <span>{{ lang === 'kaz' ? 'Лифт' : 'Лифт' }}</span>
+                  <span>{{ t('liftLabel') }}</span>
                 </div>
                 <div class="a11y-item" :class="org.accessibility.tactilePlates ? 'a11y-yes' : 'a11y-no'">
                   <span class="a11y-icon">{{ org.accessibility.tactilePlates ? '✅' : '❌' }}</span>
-                  <span>{{ lang === 'kaz' ? 'Тактильді тақтайшалар / ірі қаріп' : 'Тактильные таблички / крупный шрифт' }}</span>
+                  <span>{{ t('tactilePlates') }}</span>
                 </div>
                 <div class="a11y-item" :class="org.accessibility.signLanguage ? 'a11y-yes' : 'a11y-no'">
                   <span class="a11y-icon">{{ org.accessibility.signLanguage ? '✅' : '❌' }}</span>
-                  <span>{{ lang === 'kaz' ? 'Қызметкер ымдау тілін біледі' : 'Сотрудник знает жестовый язык' }}</span>
+                  <span>{{ t('signLang') }}</span>
                 </div>
                 <div class="a11y-item" :class="org.accessibility.onlineConsultations ? 'a11y-yes' : 'a11y-no'">
                   <span class="a11y-icon">{{ org.accessibility.onlineConsultations ? '✅' : '❌' }}</span>
-                  <span>{{ lang === 'kaz' ? 'Онлайн кеңес (иә/жоқ)' : 'Онлайн консультации (да/нет)' }}</span>
+                  <span>{{ t('onlineConsult') }}</span>
                 </div>
               </div>
               <div v-if="org.accessibility.languages?.length" class="a11y-langs">
-                <span class="contact-label">{{ lang === 'kaz' ? 'Қызмет тілдері:' : 'Языки обслуживания:' }}</span>
+                <span class="contact-label">{{ t('serviceLanguages') }}</span>
                 <div class="lang-tags">
                   <span v-for="l in org.accessibility.languages" :key="l" class="lang-tag">{{ l }}</span>
                 </div>
@@ -177,29 +177,27 @@
           <div v-if="org.verification" class="org-section">
             <div class="section-heading">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              {{ lang === 'kaz' ? 'Верификация (QA) + Ассистент' : 'Верификация (QA) + Ассистент' }}
+              {{ t('verificationSection') }}
             </div>
             <div class="section-body">
               <div class="info-field">
-                <span class="info-field-label">{{ lang === 'kaz' ? 'Мәртебесі:' : 'Статус:' }}</span>
+                <span class="info-field-label">{{ t('statusLabel') }}</span>
                 <span :class="org.verification.status === 'verified' ? 'v-verified' : 'v-pending'">
-                  {{ org.verification.status === 'verified'
-                    ? (lang === 'kaz' ? '✓ Верификацияланған' : '✓ Верифицировано')
-                    : (lang === 'kaz' ? '⏳ Верификация күтілуде' : '⏳ Ожидает верификации') }}
+                  {{ org.verification.status === 'verified' ? t('verifiedFull') : t('pendingFull') }}
                 </span>
               </div>
               <div v-if="org.verification.lastReviewer" class="info-field">
-                <span class="info-field-label">{{ lang === 'kaz' ? 'Соңғы тексерген:' : 'Последний проверяющий:' }}</span>
+                <span class="info-field-label">{{ t('lastReviewer') }}</span>
                 <span class="info-field-value">{{ org.verification.lastReviewer }}</span>
               </div>
               <div v-if="org.verification.source" class="info-field">
-                <span class="info-field-label">{{ lang === 'kaz' ? 'Верификация көзі:' : 'Источник верификации:' }}</span>
+                <span class="info-field-label">{{ t('verificationSource') }}</span>
                 <span class="info-field-value">{{ org.verification.source }}</span>
               </div>
               <div v-if="org.verification.moderatorComment" class="moderator-comment">
                 <div class="moderator-comment-label">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                  {{ lang === 'kaz' ? 'Модератордың пікірі:' : 'Комментарий модератора:' }}
+                  {{ t('moderatorComment') }}
                 </div>
                 <div class="moderator-comment-text">"{{ org.verification.moderatorComment }}"</div>
               </div>
@@ -210,17 +208,15 @@
           <div class="org-section org-ai-section">
             <div class="section-heading">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 12l9-9"/><path d="M17 3h4v4"/></svg>
-              {{ lang === 'kaz' ? 'AI Ассистент Сенім' : 'AI Ассистент Сенім' }}
+              {{ t('aiAssistantSection') }}
             </div>
             <div class="section-body ai-assistant-body">
               <button class="btn-ai-assistant" @click="askAI">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M21 12h-4l-3 3-4-8-3 5H3"/></svg>
-                {{ lang === 'kaz' ? 'Ассистентке қалай алуға болатынын сұра' : 'Спросить ассистента, как получить помощь здесь' }}
+                {{ t('askAIHelp') }}
               </button>
               <p class="ai-assistant-hint">
-                {{ lang === 'kaz'
-                  ? 'Ассистент қандай қадамдар жасау керек, қандай құжаттар әзірлеу керек және кімге хабарласу керектігін түсіндіреді.'
-                  : 'Ассистент объяснит, какие шаги предпринять, какие документы подготовить и к кому обратиться.' }}
+                {{ t('aiHint') }}
               </p>
             </div>
           </div>
@@ -229,7 +225,7 @@
           <div class="org-section">
             <div class="section-heading">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              {{ lang === 'kaz' ? 'Пікірлер' : 'Отзывы' }}
+              {{ t('reviewsSection') }}
             </div>
             <div class="section-body">
               <!-- Existing reviews -->
@@ -249,13 +245,13 @@
                 </div>
               </div>
               <div v-else class="reviews-empty">
-                <p>{{ lang === 'kaz' ? 'Пікірлер жоқ. Бірінші болыңыз!' : 'Отзывов пока нет. Будьте первым!' }}</p>
+                <p>{{ t('noReviews') }}</p>
               </div>
 
               <!-- Add review form (logged in, not yet reviewed) -->
               <div v-if="authStore.isAuthenticated && !hasReviewed" class="add-review-form">
                 <div class="add-review-title">
-                  {{ lang === 'kaz' ? 'Пікір қалдыру' : 'Оставить отзыв' }}
+                  {{ t('leaveReview') }}
                 </div>
                 <!-- Star picker -->
                 <div class="star-picker">
@@ -271,14 +267,14 @@
                   v-model="reviewForm.comment"
                   class="review-textarea form-input"
                   rows="2"
-                  :placeholder="lang === 'kaz' ? 'Пікіріңізді жазыңыз...' : 'Напишите ваш отзыв...'"
+                  :placeholder="t('writeReviewPlaceholder')"
                 />
                 <Transition name="rfade">
                   <div v-if="reviewError" class="field-error">{{ reviewError }}</div>
                 </Transition>
                 <Transition name="rfade">
                   <div v-if="reviewSuccess" class="save-success">
-                    ✅ {{ lang === 'kaz' ? 'Пікіріңіз жіберілді!' : 'Ваш отзыв отправлен!' }}
+                    ✅ {{ t('reviewSent') }}
                   </div>
                 </Transition>
                 <button
@@ -287,16 +283,59 @@
                   @click="submitReview"
                 >
                   <span v-if="reviewLoading" class="spinner-sm-dark"></span>
-                  {{ lang === 'kaz' ? 'Жіберу' : 'Отправить' }}
+                  {{ t('send') }}
                 </button>
               </div>
               <div v-else-if="!authStore.isAuthenticated" class="review-login-hint">
                 <RouterLink to="/login" class="btn btn-outline btn-sm" @click="$emit('close')">
-                  {{ lang === 'kaz' ? 'Пікір қалдыру үшін кіріңіз' : 'Войдите, чтобы оставить отзыв' }}
+                  {{ t('loginToReview') }}
                 </RouterLink>
               </div>
               <div v-else-if="hasReviewed" class="review-done-hint">
-                ✅ {{ lang === 'kaz' ? 'Сіз пікір қалдырдыңыз' : 'Вы уже оставили отзыв' }}
+                ✅ {{ t('alreadyReviewed') }}
+              </div>
+            </div>
+          </div>
+
+          <!-- ── COMPLAINT ── -->
+          <div class="org-section">
+            <div class="section-heading">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              {{ t('complaintSection') }}
+            </div>
+            <div class="section-body">
+              <div v-if="!authStore.isAuthenticated" class="review-login-hint">
+                <RouterLink to="/login" class="btn btn-outline btn-sm" @click="$emit('close')">{{ t('loginToComplain') }}</RouterLink>
+              </div>
+              <div v-else>
+                <button v-if="!showComplaintForm && !complaintSent" class="btn btn-outline btn-sm complaint-toggle-btn" @click="showComplaintForm = true">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+                  {{ t('submitComplaintBtn') }}
+                </button>
+                <div v-if="complaintSent" class="save-success">✅ {{ t('complaintAccepted') }}</div>
+                <div v-if="showComplaintForm && !complaintSent" class="complaint-form">
+                  <div class="sf-group" style="margin-bottom:10px">
+                    <label class="sf-label-sm">{{ t('complaintReason') }}</label>
+                    <select v-model="complaintForm.reason" class="sf-input-sm">
+                      <option value="SPAM">Спам</option>
+                      <option value="FAKE">Недостоверная информация</option>
+                      <option value="INAPPROPRIATE">Неуместный контент</option>
+                      <option value="OTHER">Другое</option>
+                    </select>
+                  </div>
+                  <div class="sf-group" style="margin-bottom:10px">
+                    <label class="sf-label-sm">{{ t('complaintDesc') }}</label>
+                    <textarea v-model="complaintForm.description" class="sf-input-sm sf-textarea-sm" rows="2" :placeholder="t('complaintDescPlaceholder')" />
+                  </div>
+                  <div v-if="complaintError" class="sf-error-sm">{{ complaintError }}</div>
+                  <div class="complaint-form-actions">
+                    <button class="btn btn-outline btn-sm" @click="showComplaintForm=false">{{ t('cancel') }}</button>
+                    <button class="btn btn-danger btn-sm" :disabled="complaintLoading" @click="submitComplaint">
+                      <span v-if="complaintLoading" class="spinner-sm"></span>
+                      {{ t('send') }}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -320,7 +359,7 @@
             <div class="footer-btns">
               <a v-if="org.phone" :href="`tel:${org.phone}`" class="btn btn-primary btn-sm">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.64 3.38 2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l.8-.8a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                {{ lang === 'kaz' ? 'Қоңырау шалу' : 'Позвонить' }}
+                {{ t('callBtn') }}
               </a>
               <a v-if="org.whatsapp" :href="`https://wa.me/${org.whatsapp.replace(/\D/g,'')}`" target="_blank" class="btn btn-whatsapp btn-sm">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12.003 2.003C6.476 2.003 2 6.478 2 12.003c0 1.992.578 3.854 1.59 5.43L2 22l4.65-1.574A9.957 9.957 0 0 0 12.003 22C17.53 22 22 17.525 22 12 22 6.476 17.53 2.003 12.003 2.003z"/></svg>
@@ -328,7 +367,7 @@
               </a>
               <a v-if="org.website" :href="org.website" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                {{ lang === 'kaz' ? 'Сайт' : 'Сайт' }}
+                {{ t('websiteLabel') }}
               </a>
               <button
                 v-if="authStore.isAuthenticated"
@@ -355,6 +394,7 @@ import { useAuthStore } from '../stores/auth.js'
 import { useAccessibilityStore } from '../stores/accessibility.js'
 import { useI18n } from '../i18n.js'
 import { getOrgReviews, addOrgReview } from '../api/organizations.js'
+import { createComplaint } from '../api/complaints.js'
 
 const props = defineProps({ org: Object })
 const emit = defineEmits(['close'])
@@ -365,21 +405,30 @@ const router = useRouter()
 const lang = computed(() => a11y.lang)
 const t = computed(() => useI18n(lang.value))
 
-const orgName = computed(() =>
-  props.org ? (lang.value === 'kaz' ? props.org.nameKk : props.org.nameRu) : ''
-)
+// API returns already-localised `name` (language interceptor). Fall back to
+// bilingual fields for safety. Always a string → orgName.charAt(0) never throws.
+const orgName = computed(() => {
+  const o = props.org
+  if (!o) return ''
+  return o.name || (lang.value === 'kaz' ? o.nameKk : o.nameRu) || o.nameRu || ''
+})
+const orgDesc = computed(() => {
+  const o = props.org
+  if (!o) return ''
+  return o.description || (lang.value === 'kaz' ? o.descriptionKk : o.descriptionRu) || ''
+})
 
 // ── Category label map (real API returns org.category as an enum) ────────────
 const CATEGORY_LABELS = {
-  MEDICAL:       { rus: 'Медицина',             kaz: 'Медицина' },
-  LEGAL:         { rus: 'Юридическая помощь',   kaz: 'Заңдық көмек' },
-  SOCIAL:        { rus: 'Социальная поддержка', kaz: 'Әлеуметтік қолдау' },
-  REHABILITATION:{ rus: 'Реабилитация',          kaz: 'Оңалту' },
-  EDUCATION:     { rus: 'Образование',           kaz: 'Білім' },
-  EMPLOYMENT:    { rus: 'Трудоустройство',       kaz: 'Жұмысқа орналасу' },
-  PSYCHOLOGICAL: { rus: 'Психологическая',       kaz: 'Психологиялық' },
-  TRANSPORT:     { rus: 'Транспорт',             kaz: 'Көлік' },
-  OTHER:         { rus: 'Прочее',                kaz: 'Басқа' },
+  MEDICAL:       { rus: 'Медицина',             kaz: 'Медицина',             eng: 'Medical' },
+  LEGAL:         { rus: 'Юридическая помощь',   kaz: 'Заңдық көмек',         eng: 'Legal Aid' },
+  SOCIAL:        { rus: 'Социальная поддержка', kaz: 'Әлеуметтік қолдау',    eng: 'Social Support' },
+  REHABILITATION:{ rus: 'Реабилитация',          kaz: 'Оңалту',               eng: 'Rehabilitation' },
+  EDUCATION:     { rus: 'Образование',           kaz: 'Білім',                eng: 'Education' },
+  EMPLOYMENT:    { rus: 'Трудоустройство',       kaz: 'Жұмысқа орналасу',     eng: 'Employment' },
+  PSYCHOLOGICAL: { rus: 'Психологическая',       kaz: 'Психологиялық',        eng: 'Psychological' },
+  TRANSPORT:     { rus: 'Транспорт',             kaz: 'Көлік',                eng: 'Transport' },
+  OTHER:         { rus: 'Прочее',                kaz: 'Басқа',                eng: 'Other' },
 }
 
 // Human-readable category — works with real API `org.category` enum
@@ -389,7 +438,7 @@ const orgCategoryLabel = computed(() => {
   if (!cat) return ''
   const entry = CATEGORY_LABELS[cat]
   if (!entry) return cat
-  return lang.value === 'kaz' ? entry.kaz : entry.rus
+  return lang.value === 'kaz' ? entry.kaz : lang.value === 'eng' ? (entry.eng || entry.rus) : entry.rus
 })
 
 function askAI() {
@@ -399,7 +448,9 @@ function askAI() {
     path: '/ai-assistant',
     query: { q: lang.value === 'kaz'
       ? `${orgN} ұйымынан қалай көмек алуға болады?`
-      : `Как получить помощь в организации "${orgN}"?`
+      : lang.value === 'eng'
+        ? `How can I get help from "${orgN}"?`
+        : `Как получить помощь в организации "${orgN}"?`
     }
   })
 }
@@ -468,7 +519,6 @@ async function submitReview() {
   reviewLoading.value = true
   try {
     const review = await addOrgReview(
-      authStore.accessToken,
       props.org.id,
       reviewForm.value.rating,
       reviewForm.value.comment.trim()
@@ -490,12 +540,42 @@ async function submitReview() {
   }
 }
 
+// ── Complaints ────────────────────────────────────────────────────────────────
+const showComplaintForm = ref(false)
+const complaintSent = ref(false)
+const complaintLoading = ref(false)
+const complaintError = ref('')
+const complaintForm = ref({ reason: 'SPAM', description: '' })
+
+async function submitComplaint() {
+  complaintError.value = ''
+  complaintLoading.value = true
+  try {
+    await createComplaint(null, {
+      targetType: 'Organization',
+      targetId: props.org.id,
+      reason: complaintForm.value.reason,
+      description: complaintForm.value.description.trim() || undefined,
+    })
+    complaintSent.value = true
+    showComplaintForm.value = false
+  } catch (e) {
+    complaintError.value = e.message || (lang.value === 'kaz' ? 'Қате орын алды' : 'Ошибка при отправке')
+  } finally {
+    complaintLoading.value = false
+  }
+}
+
 // Load reviews and reset form when org changes
 watch(() => props.org?.id, (newId) => {
   orgReviews.value = []
   reviewForm.value = { rating: 0, comment: '' }
   reviewError.value = ''
   reviewSuccess.value = false
+  showComplaintForm.value = false
+  complaintSent.value = false
+  complaintError.value = ''
+  complaintForm.value = { reason: 'SPAM', description: '' }
   if (newId) loadReviews(newId)
 }, { immediate: true })
 
@@ -628,6 +708,20 @@ function formatDate(iso) {
 }
 .btn-ai-assistant:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow-lg); }
 .ai-assistant-hint { font-size: var(--fs-xs); color: var(--gray-600); line-height: 1.5; }
+
+/* ── Complaint form ── */
+.complaint-toggle-btn { color: #DC2626; border-color: #DC2626; }
+.complaint-toggle-btn:hover { background: #FEF2F2; }
+.complaint-form { margin-top: 10px; display: flex; flex-direction: column; gap: 0; }
+.complaint-form-actions { display: flex; gap: 8px; }
+.sf-label-sm { font-size: var(--fs-xs); font-weight: 700; color: var(--gray-600); display: block; margin-bottom: 4px; }
+.sf-input-sm { width: 100%; padding: 7px 10px; border: 1.5px solid var(--gray-200); border-radius: var(--radius); font-size: var(--fs-sm); outline: none; background: white; }
+.sf-input-sm:focus { border-color: var(--primary); }
+.sf-textarea-sm { resize: vertical; min-height: 60px; font-family: inherit; }
+.sf-error-sm { background: #FEF2F2; color: #DC2626; padding: 6px 10px; border-radius: var(--radius); font-size: var(--fs-xs); font-weight: 600; margin-bottom: 8px; }
+.btn-danger { background: #DC2626; color: white; border-color: #DC2626; }
+.btn-danger:hover { background: #B91C1C; }
+.btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* ── Footer ── */
 .org-modal-footer { padding: 16px 24px; display: flex; flex-direction: column; gap: 12px; }

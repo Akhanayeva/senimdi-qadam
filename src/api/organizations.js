@@ -119,3 +119,10 @@ export const updateMyOrgService = async (serviceId, fields) =>
 /** DELETE /organizations/mine/services/:serviceId */
 export const deleteMyOrgService = async (serviceId) =>
   del(`/core/organizations/mine/services/${serviceId}`)
+
+/** POST /organizations/mine/logo — multipart/form-data; field: "logo" */
+export const uploadOrgLogo = async (file) => {
+  const fd = new FormData()
+  fd.append('logo', file)
+  return upload('/core/organizations/mine/logo', fd)
+}

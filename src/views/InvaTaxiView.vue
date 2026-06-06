@@ -8,18 +8,18 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
             ИнваТакси
           </div>
-          <h1 class="taxi-hero-title">{{ lang === 'kaz' ? 'Арнайы такси қызметі' : 'Специальное такси для людей с инвалидностью' }}</h1>
-          <p class="taxi-hero-desc">{{ lang === 'kaz' ? 'Алматы бойынша мүгедектігі бар адамдарға арналған жайлы және қауіпсіз тасымал. Арнайы жабдықталған көліктер.' : 'Комфортные и безопасные поездки по Алматы. Специально оборудованные автомобили с подъёмниками, опытные водители.' }}</p>
+          <h1 class="taxi-hero-title">{{ t('taxiHeroTitle') }}</h1>
+          <p class="taxi-hero-desc">{{ t('taxiHeroDesc') }}</p>
           <div class="taxi-hero-features">
-            <span class="taxi-feature"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>{{ lang === 'kaz' ? 'Арбаға арналған лифт' : 'Подъёмник для коляски' }}</span>
-            <span class="taxi-feature"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>{{ lang === 'kaz' ? 'Тәжірибелі жүргізушілер' : 'Опытные водители' }}</span>
-            <span class="taxi-feature"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>{{ lang === 'kaz' ? 'Менеджермен чат' : 'Чат с менеджером' }}</span>
-            <span class="taxi-feature"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>{{ lang === 'kaz' ? 'Ыңғайлы брондау' : 'Удобное бронирование' }}</span>
+            <span class="taxi-feature"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>{{ t('taxiFeatureWheelchair') }}</span>
+            <span class="taxi-feature"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>{{ t('taxiFeatureDrivers') }}</span>
+            <span class="taxi-feature"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>{{ t('taxiFeatureChat') }}</span>
+            <span class="taxi-feature"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>{{ t('taxiFeatureBooking') }}</span>
           </div>
           <div class="taxi-hero-cta">
             <button class="btn btn-white-outline btn-lg" @click="activeTab = 'book'">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              {{ lang === 'kaz' ? 'Жолаушы тапсырыс беру' : 'Заказать поездку' }}
+              {{ t('orderRideBtn') }}
             </button>
             <a href="tel:+77273334455" class="btn btn-outline-white btn-lg">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 7.07 7.07l1.06-1.06a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
@@ -54,81 +54,114 @@
       <div v-if="activeTab === 'book'" class="taxi-tab-content">
         <div class="book-layout">
           <div class="book-form-wrap">
-            <h2 class="section-title-sm">{{ lang === 'kaz' ? 'Жаңа тапсырыс' : 'Новая заявка на поездку' }}</h2>
+            <h2 class="section-title-sm">{{ t('newRideRequest') }}</h2>
             <form class="book-form" @submit.prevent="handleCreateBooking">
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.5 8 14 8 14s8-8.5 8-14a8 8 0 0 0-8-8z"/></svg>
-                    {{ lang === 'kaz' ? 'Кету мекенжайы' : 'Адрес отправления' }} *
+                    {{ t('fromAddressLabel') }} *
                   </label>
-                  <input v-model="form.fromAddress" type="text" class="form-input" :placeholder="lang === 'kaz' ? 'ул. Абай 1, Алматы' : 'ул. Абая 1, Алматы'" required />
+                  <input v-model="form.fromAddress" type="text" class="form-input" placeholder="ул. Абая 1, Алматы" required />
                 </div>
                 <div class="form-group">
                   <label class="form-label">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.5 8 14 8 14s8-8.5 8-14a8 8 0 0 0-8-8z"/></svg>
-                    {{ lang === 'kaz' ? 'Бару мекенжайы' : 'Адрес назначения' }} *
+                    {{ t('toAddressLabel') }} *
                   </label>
-                  <input v-model="form.toAddress" type="text" class="form-input" :placeholder="lang === 'kaz' ? 'Достык 10, Алматы' : 'ул. Достык 10, Алматы'" required />
+                  <input v-model="form.toAddress" type="text" class="form-input" placeholder="ул. Достык 10, Алматы" required />
                 </div>
               </div>
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    {{ lang === 'kaz' ? 'Күні мен уақыты' : 'Дата и время' }} *
+                    {{ t('dateTimeLabel') }} *
                   </label>
                   <input v-model="form.scheduledAt" type="datetime-local" class="form-input" :min="minDateTime" required />
                 </div>
                 <div class="form-group">
                   <label class="form-label">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                    {{ lang === 'kaz' ? 'Мүгедектік түрі' : 'Тип инвалидности' }} *
+                    {{ t('disabilityTypeLabel') }} *
                   </label>
                   <select v-model="form.disabilityType" class="form-input form-select" required>
-                    <option value="">{{ lang === 'kaz' ? 'Таңдаңыз' : 'Выберите...' }}</option>
-                    <option value="WHEELCHAIR">{{ lang === 'kaz' ? '♿ Арба пайдаланушы' : '♿ Колясочник' }}</option>
-                    <option value="VISUAL">{{ lang === 'kaz' ? '👁 Көру қабілеті нашар' : '👁 Нарушение зрения' }}</option>
-                    <option value="HEARING">{{ lang === 'kaz' ? '👂 Есту қабілеті нашар' : '👂 Нарушение слуха' }}</option>
-                    <option value="MOBILITY">{{ lang === 'kaz' ? '🦽 Қозғалыс мүмкіндігі шектеулі' : '🦽 Нарушение подвижности' }}</option>
-                    <option value="OTHER">{{ lang === 'kaz' ? '📋 Басқа' : '📋 Другое' }}</option>
+                    <option value="">{{ t('selectPlaceholder') }}</option>
+                    <option value="WHEELCHAIR">{{ t('typeWheelchair') }}</option>
+                    <option value="VISUAL">{{ t('typeVisual') }}</option>
+                    <option value="HEARING">{{ t('typeHearing') }}</option>
+                    <option value="MOBILITY">{{ t('typeMobility') }}</option>
+                    <option value="OTHER">{{ t('typeOther') }}</option>
                   </select>
                 </div>
               </div>
-              <div class="form-group">
-                <label class="form-label">{{ lang === 'kaz' ? 'Ескертпе (міндетті емес)' : 'Примечание для водителя (необязательно)' }}</label>
-                <textarea v-model="form.note" class="form-input form-textarea" :placeholder="lang === 'kaz' ? 'Мысалы: лифт қажет, итбалық орны бар...' : 'Например: нужен подъёмник, место для собаки-поводыря...'" rows="2"></textarea>
+              <!-- For RELATIVE: select dependent -->
+              <div v-if="authStore.isRelative && dependents.length > 0" class="form-group">
+                <label class="form-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                  {{ t('forWhomLabel') }}
+                </label>
+                <select v-model="form.dependentId" class="form-input form-select">
+                  <option value="">{{ t('forMyselfOption') }}</option>
+                  <option v-for="dep in dependents" :key="dep.dependentId" :value="dep.dependentId">
+                    {{ dep.dependent?.profile?.firstName || dep.dependent?.email || dep.label || dep.dependentId }}
+                  </option>
+                </select>
               </div>
+
+              <div class="form-group">
+                <label class="form-label">{{ t('driverNoteLabel') }}</label>
+                <textarea v-model="form.note" class="form-input form-textarea" :placeholder="t('driverNotePlaceholder')" rows="2"></textarea>
+              </div>
+              <!-- Price estimate block -->
+              <div v-if="form.fromAddress && form.toAddress" class="price-estimate-block">
+                <div class="price-estimate-header">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                  {{ t('estimateCostBtn') }}
+                </div>
+                <div v-if="priceEstimate !== null" class="price-estimate-value">
+                  ~{{ priceEstimate }} ₸
+                </div>
+                <div v-else-if="priceEstimateError" class="price-estimate-hint">{{ priceEstimateError }}</div>
+                <div v-else class="price-estimate-hint">
+                  {{ t('costDisclaimer') }}
+                </div>
+                <button type="button" class="price-estimate-btn" :disabled="estimating" @click="calcPriceEstimate">
+                  <span v-if="estimating" class="spinner-sm"></span>
+                  {{ estimating ? t('submitting') : t('estimateCostBtn') }}
+                </button>
+              </div>
+
               <div v-if="!authStore.isAuthenticated" class="form-auth-notice">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                {{ lang === 'kaz' ? 'Тапсырыс беру үшін жүйеге кіріңіз' : 'Для оформления заявки необходимо войти в аккаунт' }}
-                <RouterLink to="/login" class="auth-link">{{ lang === 'kaz' ? 'Кіру' : 'Войти' }}</RouterLink>
+                {{ t('loginToOrder') }}
+                <RouterLink to="/login" class="auth-link">{{ t('login') }}</RouterLink>
               </div>
               <button type="submit" class="btn btn-primary btn-lg book-submit" :disabled="bookingLoading || !authStore.isAuthenticated">
                 <span v-if="bookingLoading" class="spinner-sm"></span>
                 <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                {{ bookingLoading ? (lang === 'kaz' ? 'Жіберілуде...' : 'Отправляем...') : (lang === 'kaz' ? 'Тапсырыс беру' : 'Подать заявку') }}
+                {{ bookingLoading ? t('submitting') : t('submitOrderBtn') }}
               </button>
             </form>
           </div>
           <div class="book-info-aside">
             <div class="info-card">
               <div class="info-card-icon">📋</div>
-              <h3>{{ lang === 'kaz' ? 'Тапсырыс мәртебелері' : 'Статусы заявки' }}</h3>
+              <h3>{{ t('orderStatusTitle') }}</h3>
               <div class="status-flow">
                 <div class="status-step" v-for="(s, i) in statusFlow" :key="i">
                   <span class="status-dot" :style="{ background: s.color }"></span>
                   <div>
                     <div class="status-name">{{ s.name }}</div>
-                    <div class="status-desc">{{ lang === 'kaz' ? s.descKaz : s.desc }}</div>
+                    <div class="status-desc">{{ lang === 'eng' ? (s.descEng || s.desc) : (lang === 'kaz' ? s.descKaz : s.desc) }}</div>
                   </div>
                 </div>
               </div>
             </div>
             <div class="info-card">
               <div class="info-card-icon">📞</div>
-              <h3>{{ lang === 'kaz' ? 'Байланыс' : 'Связаться с нами' }}</h3>
-              <p class="info-card-text">{{ lang === 'kaz' ? 'Сұрақтар бойынша бізге хабарласыңыз:' : 'По любым вопросам обращайтесь к нам:' }}</p>
+              <h3>{{ t('contactTitle') }}</h3>
+              <p class="info-card-text">{{ t('contactMsg') }}</p>
               <a href="tel:+77273334455" class="contact-link">📞 +7 (727) 333-44-55</a>
               <a href="https://wa.me/77273334455" class="contact-link whatsapp-link" target="_blank">💬 WhatsApp</a>
             </div>
@@ -139,8 +172,8 @@
           <div v-if="bookingSuccess" class="booking-success">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             <div>
-              <strong>{{ lang === 'kaz' ? 'Тапсырыс қабылданды!' : 'Заявка принята!' }}</strong>
-              <span>{{ lang === 'kaz' ? 'Менеджер сізбен хабарласады.' : 'Менеджер свяжется с вами в ближайшее время.' }}</span>
+              <strong>{{ t('orderAcceptedMsg') }}</strong>
+              <span>{{ t('managerMsg') }}</span>
             </div>
             <button class="booking-success-close" @click="bookingSuccess = false">✕</button>
           </div>
@@ -150,10 +183,10 @@
       <!-- ── TAB: MY BOOKINGS ── -->
       <div v-else-if="activeTab === 'bookings'" class="taxi-tab-content">
         <div class="bookings-header">
-          <h2 class="section-title-sm">{{ lang === 'kaz' ? 'Менің тапсырыстарым' : 'Мои поездки' }}</h2>
+          <h2 class="section-title-sm">{{ t('myRidesTitle') }}</h2>
           <button class="btn btn-primary btn-sm" @click="activeTab = 'book'">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            {{ lang === 'kaz' ? 'Жаңа тапсырыс' : 'Новая заявка' }}
+            {{ t('newOrderBtn') }}
           </button>
         </div>
         <div v-if="bookingsLoading" class="bookings-grid">
@@ -165,13 +198,13 @@
         </div>
         <div v-else-if="!authStore.isAuthenticated" class="empty-state">
           <div class="empty-state-icon">🔐</div>
-          <p>{{ lang === 'kaz' ? 'Тапсырыстарды көру үшін жүйеге кіріңіз' : 'Войдите в аккаунт чтобы видеть свои заявки' }}</p>
-          <RouterLink to="/login" class="btn btn-primary mt-4">{{ lang === 'kaz' ? 'Кіру' : 'Войти' }}</RouterLink>
+          <p>{{ t('loginToRides') }}</p>
+          <RouterLink to="/login" class="btn btn-primary mt-4">{{ t('login') }}</RouterLink>
         </div>
         <div v-else-if="myBookings.length === 0" class="empty-state">
           <div class="empty-state-icon">🚐</div>
-          <p>{{ lang === 'kaz' ? 'Тапсырыстар жоқ' : 'У вас пока нет заявок' }}</p>
-          <button class="btn btn-primary mt-4" @click="activeTab = 'book'">{{ lang === 'kaz' ? 'Тапсырыс беру' : 'Подать заявку' }}</button>
+          <p>{{ t('noOrders') }}</p>
+          <button class="btn btn-primary mt-4" @click="activeTab = 'book'">{{ t('submitOrderBtn') }}</button>
         </div>
         <div v-else class="bookings-list">
           <div
@@ -214,7 +247,21 @@
                 class="cancel-btn"
                 @click.stop="handleCancelBooking(booking)"
               >
-                {{ lang === 'kaz' ? 'Бас тарту' : 'Отменить' }}
+                {{ t('cancelRide') }}
+              </button>
+              <button
+                v-if="booking.status === 'CONFIRMED' && !booking._paymentDone"
+                class="pay-btn"
+                @click.stop="openPayment(booking)"
+              >
+                💳 {{ t('payRide') }}
+              </button>
+              <button
+                v-if="booking.status === 'COMPLETED' && !booking._reviewed"
+                class="review-btn"
+                @click.stop="openReview(booking)"
+              >
+                ⭐ {{ t('rateRide') }}
               </button>
             </div>
           </div>
@@ -224,14 +271,14 @@
       <!-- ── TAB: DRIVERS ── -->
       <div v-else-if="activeTab === 'drivers'" class="taxi-tab-content">
         <div class="drivers-header">
-          <h2 class="section-title-sm">{{ lang === 'kaz' ? 'Біздің жүргізушілер' : 'Наши водители' }}</h2>
+          <h2 class="section-title-sm">{{ t('ourDrivers') }}</h2>
           <div class="driver-filter-btns">
-            <button class="filter-pill" :class="{ active: driverFilter === 'all' }" @click="driverFilter = 'all'">{{ lang === 'kaz' ? 'Барлығы' : 'Все' }}</button>
+            <button class="filter-pill" :class="{ active: driverFilter === 'all' }" @click="driverFilter = 'all'">{{ t('allFilter') }}</button>
             <button class="filter-pill" :class="{ active: driverFilter === 'ACTIVE' }" @click="driverFilter = 'ACTIVE'">
-              <span class="status-dot-sm status-dot--green"></span>{{ lang === 'kaz' ? 'Белсенді' : 'Активные' }}
+              <span class="status-dot-sm status-dot--green"></span>{{ t('activeDrivers') }}
             </button>
             <button class="filter-pill" :class="{ active: driverFilter === 'INACTIVE' }" @click="driverFilter = 'INACTIVE'">
-              <span class="status-dot-sm status-dot--gray"></span>{{ lang === 'kaz' ? 'Белсенді емес' : 'Неактивные' }}
+              <span class="status-dot-sm status-dot--gray"></span>{{ t('inactiveDrivers') }}
             </button>
           </div>
         </div>
@@ -257,20 +304,20 @@
             <div class="driver-rating">
               <span class="stars">{{ '★'.repeat(Math.round(driver.ratingAvg)) }}{{ '☆'.repeat(5 - Math.round(driver.ratingAvg)) }}</span>
               <span class="rating-num">{{ driver.ratingAvg.toFixed(1) }}</span>
-              <span class="rating-rides">· {{ driver.totalTrips }} {{ lang === 'kaz' ? 'сапар' : 'поездок' }}</span>
+              <span class="rating-rides">· {{ driver.totalTrips }} {{ t('ridesCount') }}</span>
             </div>
             <div class="driver-vehicle">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
               {{ driver.vehicleModel }} · {{ driver.licensePlate }}
             </div>
-            <p class="driver-bio">{{ lang === 'kaz' ? (driver.bioKk || driver.bio) : driver.bio }}</p>
+            <p class="driver-bio">{{ lang.value === 'kaz' ? (driver.bioKk || driver.bio) : driver.bio }}</p>
             <div class="driver-equipment">
               <span v-for="eq in driver.equipment" :key="eq" class="equipment-tag">
                 {{ equipmentLabel(eq, lang) }}
               </span>
             </div>
             <div class="driver-actions">
-              <span v-if="driver.status !== 'ACTIVE'" class="driver-unavailable">{{ lang === 'kaz' ? 'Қолжетімді емес' : 'Недоступен' }}</span>
+              <span v-if="driver.status !== 'ACTIVE'" class="driver-unavailable">{{ t('driverUnavailable') }}</span>
               <a v-else :href="driver.whatsapp" target="_blank" class="btn btn-whatsapp">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12.003 2.003C6.476 2.003 2 6.478 2 12.003c0 1.992.578 3.854 1.59 5.43L2 22l4.65-1.574A9.957 9.957 0 0 0 12.003 22C17.53 22 22 17.525 22 12 22 6.476 17.53 2.003 12.003 2.003zm0 18.197a8.157 8.157 0 0 1-4.164-1.14l-.298-.179-3.088 1.046 1.056-3.019-.199-.316A8.16 8.16 0 0 1 3.8 12c0-4.519 3.678-8.197 8.203-8.197 4.524 0 8.197 3.678 8.197 8.197 0 4.524-3.673 8.197-8.197 8.197z"/></svg>
                 WhatsApp
@@ -280,44 +327,128 @@
         </div>
       </div>
 
+      <!-- ── TAB: RECURRING ── -->
+      <div v-else-if="activeTab === 'recurring'" class="taxi-tab-content">
+        <div class="bookings-header">
+          <h2 class="section-title-sm">{{ t('regularRides') }}</h2>
+          <button class="btn btn-primary btn-sm" @click="showRecurringForm = !showRecurringForm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            {{ t('addBtn') }}
+          </button>
+        </div>
+
+        <!-- Create form -->
+        <div v-if="showRecurringForm" class="recurring-form-card">
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">{{ t('fromLabel') }}</label>
+              <input v-model="recurringForm.fromAddress" type="text" class="form-input" :placeholder="t('fromAddressLabel')" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">{{ t('toLabel') }}</label>
+              <input v-model="recurringForm.toAddress" type="text" class="form-input" :placeholder="t('toAddressLabel')" />
+            </div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">{{ t('timeLabel') }}</label>
+              <input v-model="recurringForm.time" type="time" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">{{ t('daysLabel') }}</label>
+              <div class="weekday-picker">
+                <button
+                  v-for="(d, i) in weekdays"
+                  :key="i"
+                  class="weekday-btn"
+                  :class="{ active: recurringForm.weekdays.includes(i) }"
+                  @click="toggleWeekday(i)"
+                >{{ d }}</button>
+              </div>
+            </div>
+          </div>
+          <div v-if="recurringError" class="field-error-sm">{{ recurringError }}</div>
+          <div class="form-actions">
+            <button class="btn btn-outline btn-sm" @click="showRecurringForm=false">{{ t('cancel') }}</button>
+            <button class="btn btn-primary btn-sm" :disabled="recurringLoading" @click="submitRecurring">
+              <span v-if="recurringLoading" class="spinner-sm"></span>
+              {{ t('send') }}
+            </button>
+          </div>
+        </div>
+
+        <!-- List -->
+        <div v-if="recurringLoading && recurringRides.length === 0" class="empty-state">
+          <span class="spinner-sm" style="margin:0 auto"></span>
+        </div>
+        <div v-else-if="recurringRides.length === 0" class="empty-state">
+          <div class="empty-state-icon">🔁</div>
+          <p>{{ t('noRegularRides') }}</p>
+        </div>
+        <div v-else class="recurring-list">
+          <div v-for="r in recurringRides" :key="r.id" class="recurring-card">
+            <div class="recurring-route">
+              <span class="rec-dot rec-dot--from"></span>
+              <div class="rec-addresses">
+                <span class="rec-addr">{{ r.fromAddress }}</span>
+                <span class="rec-arrow">→</span>
+                <span class="rec-addr">{{ r.toAddress }}</span>
+              </div>
+            </div>
+            <div class="recurring-meta">
+              <span class="rec-time">🕐 {{ r.time || '—' }}</span>
+              <span class="rec-days">{{ formatWeekdays(r.weekdays) }}</span>
+              <span class="rec-status-badge" :class="r.isPaused ? 'badge-cancelled' : 'badge-confirmed'">
+                {{ r.isPaused ? t('pausedStatus') : t('activeStatus') }}
+              </span>
+            </div>
+            <div class="recurring-actions">
+              <button v-if="!r.isPaused" class="btn btn-outline btn-sm" @click="handlePauseRecurring(r.id)">⏸ {{ t('pauseBtn') }}</button>
+              <button v-else class="btn btn-primary btn-sm" @click="handleResumeRecurring(r.id)">▶ {{ t('resumeBtn') }}</button>
+              <button class="btn btn-sm" style="color:#DC2626;border-color:#DC2626" @click="handleDeleteRecurring(r.id)">🗑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ── TAB: MANAGER ── -->
       <div v-else-if="activeTab === 'manager'" class="taxi-tab-content">
-        <h2 class="section-title-sm">{{ lang === 'kaz' ? 'Менеджер панелі' : 'Панель менеджера' }}</h2>
+        <h2 class="section-title-sm">{{ t('managerPanel') }}</h2>
 
         <!-- Stats row -->
         <div class="manager-stats">
           <div class="stat-card stat-card--yellow">
             <div class="stat-num">{{ managerStats.pending }}</div>
-            <div class="stat-label">{{ lang === 'kaz' ? 'Күтуде' : 'Ожидают' }}</div>
+            <div class="stat-label">{{ t('statPending') }}</div>
           </div>
           <div class="stat-card stat-card--blue">
             <div class="stat-num">{{ managerStats.confirmed }}</div>
-            <div class="stat-label">{{ lang === 'kaz' ? 'Расталған' : 'Подтверждены' }}</div>
+            <div class="stat-label">{{ t('statConfirmed') }}</div>
           </div>
           <div class="stat-card stat-card--orange">
             <div class="stat-num">{{ managerStats.inProgress }}</div>
-            <div class="stat-label">{{ lang === 'kaz' ? 'Жолда' : 'В пути' }}</div>
+            <div class="stat-label">{{ t('statInProgress') }}</div>
           </div>
           <div class="stat-card stat-card--green">
             <div class="stat-num">{{ managerStats.completed }}</div>
-            <div class="stat-label">{{ lang === 'kaz' ? 'Аяқталды' : 'Завершены' }}</div>
+            <div class="stat-label">{{ t('statCompleted') }}</div>
           </div>
           <div class="stat-card stat-card--primary">
             <div class="stat-num">{{ managerStats.availableDrivers }}</div>
-            <div class="stat-label">{{ lang === 'kaz' ? 'Бос жүргізушілер' : 'Свободных водителей' }}</div>
+            <div class="stat-label">{{ t('statFreeDrivers') }}</div>
           </div>
         </div>
 
         <!-- Queue -->
         <h3 class="manager-subtitle">
           <span class="queue-dot"></span>
-          {{ lang === 'kaz' ? 'Күту кезегі (PENDING)' : 'Очередь заявок (PENDING)' }}
+          {{ t('pendingQueue') }}
         </h3>
         <div v-if="queueLoading" class="queue-skeleton">
           <div v-for="i in 3" :key="i" class="skeleton" style="height:90px;border-radius:12px"></div>
         </div>
         <div v-else-if="managerQueue.length === 0" class="empty-state-sm">
-          <span>✅ {{ lang === 'kaz' ? 'Кезекте тапсырыс жоқ' : 'Очередь пуста — все заявки обработаны' }}</span>
+          <span>✅ {{ t('queueEmpty') }}</span>
         </div>
         <div v-else class="queue-list">
           <div v-for="item in managerQueue" :key="item.id" class="queue-item">
@@ -342,7 +473,7 @@
             </div>
             <div class="queue-actions">
               <select v-model="assignMap[item.id]" class="assign-select">
-                <option value="">{{ lang === 'kaz' ? 'Жүргізуші таңдаңыз...' : 'Выбрать водителя...' }}</option>
+                <option value="">{{ t('selectDriverOpt') }}</option>
                 <option v-for="d in availableDriversList" :key="d.id" :value="d.id">
                   {{ d.firstName }} {{ d.lastName }} · {{ d.vehicleModel }}
                 </option>
@@ -353,7 +484,7 @@
                 @click="handleAssignDriver(item.id)"
               >
                 <span v-if="assigning[item.id]" class="spinner-sm"></span>
-                {{ assigning[item.id] ? '...' : (lang === 'kaz' ? 'Жіберу' : 'Назначить') }}
+                {{ assigning[item.id] ? '...' : t('assignBtn') }}
               </button>
             </div>
           </div>
@@ -362,35 +493,35 @@
         <!-- Add Driver Form -->
         <h3 class="manager-subtitle" style="margin-top:40px">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          {{ lang === 'kaz' ? 'Жаңа жүргізуші қосу' : 'Добавить водителя' }}
+          {{ t('addDriverTitle') }}
         </h3>
         <form class="add-driver-form" @submit.prevent="handleAddDriver">
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">{{ lang === 'kaz' ? 'Толық аты' : 'Имя водителя' }} *</label>
+              <label class="form-label">{{ t('fullNameLabel') }} *</label>
               <input v-model="driverForm.name" type="text" class="form-input" placeholder="Асхат Бекжанов" required />
             </div>
             <div class="form-group">
-              <label class="form-label">{{ lang === 'kaz' ? 'Телефон' : 'Телефон' }} *</label>
+              <label class="form-label">{{ t('phoneLabel') }} *</label>
               <input v-model="driverForm.phone" type="tel" class="form-input" placeholder="+77011234567" required />
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">{{ lang === 'kaz' ? 'Көлік' : 'Автомобиль' }} *</label>
+              <label class="form-label">{{ t('vehicleLabel') }} *</label>
               <input v-model="driverForm.vehicle" type="text" class="form-input" placeholder="Toyota Sienna 2021" required />
             </div>
             <div class="form-group">
-              <label class="form-label">{{ lang === 'kaz' ? 'Мемлекеттік нөмір' : 'Гос. номер' }} *</label>
+              <label class="form-label">{{ t('plateLabel') }} *</label>
               <input v-model="driverForm.licensePlate" type="text" class="form-input" placeholder="777 ASK 02" required />
             </div>
           </div>
           <button type="submit" class="btn btn-primary btn-sm" :disabled="driverAddLoading">
             <span v-if="driverAddLoading" class="spinner-sm"></span>
-            {{ driverAddLoading ? '...' : (lang === 'kaz' ? 'Қосу' : 'Добавить') }}
+            {{ driverAddLoading ? '...' : t('addDriverBtn') }}
           </button>
           <Transition name="fade">
-            <span v-if="driverAddSuccess" class="add-driver-success">✓ {{ lang === 'kaz' ? 'Жүргізуші қосылды!' : 'Водитель добавлен!' }}</span>
+            <span v-if="driverAddSuccess" class="add-driver-success">✓ {{ t('driverAdded') }}</span>
           </Transition>
         </form>
       </div>
@@ -401,7 +532,7 @@
       <div v-if="selectedBooking" class="modal-overlay" @click.self="selectedBooking = null">
         <div class="modal-box booking-modal">
           <div class="modal-header">
-            <h3>{{ lang === 'kaz' ? 'Тапсырыс мәліметтері' : 'Детали заявки' }}</h3>
+            <h3>{{ t('bookingDetails') }}</h3>
             <span class="booking-status-badge" :class="'badge-' + selectedBooking.status.toLowerCase()">{{ statusLabel(selectedBooking.status, lang) }}</span>
             <button class="modal-close" @click="selectedBooking = null">✕</button>
           </div>
@@ -411,33 +542,33 @@
               <div class="modal-route">
                 <div class="route-point">
                   <span class="route-dot route-dot--from"></span>
-                  <div><div class="route-label">{{ lang === 'kaz' ? 'Кету' : 'Откуда' }}</div><div class="route-addr">{{ selectedBooking.fromAddress }}</div></div>
+                  <div><div class="route-label">{{ t('fromRouteLabel') }}</div><div class="route-addr">{{ selectedBooking.fromAddress }}</div></div>
                 </div>
                 <div class="route-line-v"></div>
                 <div class="route-point">
                   <span class="route-dot route-dot--to"></span>
-                  <div><div class="route-label">{{ lang === 'kaz' ? 'Бару' : 'Куда' }}</div><div class="route-addr">{{ selectedBooking.toAddress }}</div></div>
+                  <div><div class="route-label">{{ t('toRouteLabel') }}</div><div class="route-addr">{{ selectedBooking.toAddress }}</div></div>
                 </div>
               </div>
             </div>
             <!-- Info row -->
             <div class="modal-info-row">
               <div class="modal-info-item">
-                <span class="mii-label">{{ lang === 'kaz' ? 'Күні' : 'Дата' }}</span>
+                <span class="mii-label">{{ t('dateLabel2') }}</span>
                 <span class="mii-val">{{ formatDateTime(selectedBooking.scheduledAt) }}</span>
               </div>
               <div class="modal-info-item">
-                <span class="mii-label">{{ lang === 'kaz' ? 'Мүгедектік' : 'Тип' }}</span>
+                <span class="mii-label">{{ t('disabilityLabel2') }}</span>
                 <span class="mii-val">{{ disabilityLabel(selectedBooking.disabilityType, lang) }}</span>
               </div>
               <div v-if="selectedBooking.note" class="modal-info-item modal-info-item--full">
-                <span class="mii-label">{{ lang === 'kaz' ? 'Ескертпе' : 'Примечание' }}</span>
+                <span class="mii-label">{{ t('noteLabel2') }}</span>
                 <span class="mii-val">{{ selectedBooking.note }}</span>
               </div>
             </div>
             <!-- Driver -->
             <div v-if="selectedBooking.driver" class="modal-section">
-              <h4 class="modal-section-title">{{ lang === 'kaz' ? 'Жүргізуші' : 'Водитель' }}</h4>
+              <h4 class="modal-section-title">{{ t('driverLabel') }}</h4>
               <div class="modal-driver-card">
                 <div class="modal-driver-avatar">{{ (selectedBooking.driver.firstName || '?').charAt(0) }}</div>
                 <div class="modal-driver-info">
@@ -451,9 +582,38 @@
                 </div>
               </div>
             </div>
+            <!-- Live tracking -->
+            <div v-if="isTrackable(selectedBooking.status)" class="modal-section">
+              <h4 class="modal-section-title">
+                {{ t('liveTracking') }}
+                <span class="live-badge" :class="{ on: liveConnected }">
+                  <span class="live-dot"></span>{{ liveConnected ? 'LIVE' : t('noConnection') }}
+                </span>
+              </h4>
+              <div v-if="driverLocation" class="track-wrap">
+                <iframe
+                  class="track-map"
+                  :src="mapUrl"
+                  title="Карта"
+                  loading="lazy"
+                ></iframe>
+                <div class="track-info">
+                  <div class="track-eta" v-if="driverEta != null">
+                    🚐 {{ t('arrivalEta') }}:
+                    <strong>{{ driverEta }} {{ t('minLabel') }}</strong>
+                  </div>
+                  <div class="track-coords">📍 {{ driverLocation.lat.toFixed(5) }}, {{ driverLocation.lon.toFixed(5) }}</div>
+                </div>
+              </div>
+              <div v-else class="track-waiting">
+                <span class="spinner-sm"></span>
+                {{ t('waitingGps') }}
+              </div>
+            </div>
+
             <!-- Review -->
             <div v-if="selectedBooking.status === 'COMPLETED'" class="modal-section">
-              <h4 class="modal-section-title">{{ lang === 'kaz' ? 'Бағалау' : 'Оценка поездки' }}</h4>
+              <h4 class="modal-section-title">{{ t('rateTrip') }}</h4>
               <div v-if="selectedBooking.review" class="existing-review">
                 <div class="review-stars">{{ '★'.repeat(selectedBooking.review.rating) }}{{ '☆'.repeat(5 - selectedBooking.review.rating) }}</div>
                 <p v-if="selectedBooking.review.comment" class="review-comment">{{ selectedBooking.review.comment }}</p>
@@ -462,17 +622,17 @@
                 <div class="star-picker">
                   <button v-for="n in 5" :key="n" class="star-btn" :class="{ active: reviewRating >= n }" @click="reviewRating = n">★</button>
                 </div>
-                <input v-model="reviewComment" type="text" class="form-input" :placeholder="lang === 'kaz' ? 'Пікір (міндетті емес)' : 'Комментарий (необязательно)'" />
+                <input v-model="reviewComment" type="text" class="form-input" :placeholder="t('commentPlaceholder')" />
                 <button class="btn btn-primary btn-sm" :disabled="!reviewRating || reviewSubmitting" @click="handleLeaveReview">
-                  {{ reviewSubmitting ? '...' : (lang === 'kaz' ? 'Жіберу' : 'Отправить') }}
+                  {{ reviewSubmitting ? '...' : t('send') }}
                 </button>
               </div>
             </div>
             <!-- Chat -->
             <div class="modal-section">
-              <h4 class="modal-section-title">{{ lang === 'kaz' ? 'Менеджермен чат' : 'Чат с менеджером' }}</h4>
+              <h4 class="modal-section-title">{{ t('chatManager') }}</h4>
               <div class="chat-box" ref="chatBoxRef">
-                <div v-if="chatMessages.length === 0" class="chat-empty">{{ lang === 'kaz' ? 'Хабарламалар жоқ' : 'Сообщений пока нет' }}</div>
+                <div v-if="chatMessages.length === 0" class="chat-empty">{{ t('noMessages') }}</div>
                 <div
                   v-for="msg in chatMessages"
                   :key="msg.id"
@@ -489,7 +649,7 @@
                   v-model="chatInput"
                   type="text"
                   class="form-input chat-input"
-                  :placeholder="lang === 'kaz' ? 'Хабарлама жазыңыз...' : 'Написать сообщение...'"
+                  :placeholder="t('messagePlaceholder')"
                   @keydown.enter="handleSendChat"
                 />
                 <button class="btn btn-primary chat-send-btn" :disabled="!chatInput.trim() || chatSending" @click="handleSendChat">
@@ -501,24 +661,91 @@
         </div>
       </div>
     </Transition>
+
+    <!-- ── PAYMENT MODAL ── -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="paymentBooking" class="modal-overlay" @click.self="paymentBooking=null">
+          <div class="modal-box" style="max-width:420px">
+            <button class="modal-close-btn" @click="paymentBooking=null">✕</button>
+            <h3 class="modal-title">💳 {{ t('payRide') }}</h3>
+            <p class="modal-sub">{{ paymentBooking.fromAddress }} → {{ paymentBooking.toAddress }}</p>
+            <div v-if="paymentBooking.price" class="payment-amount">{{ paymentBooking.price }} ₸</div>
+            <div class="payment-methods">
+              <button v-for="m in payMethods" :key="m.value" class="pay-method-btn" :class="{ active: payMethod===m.value }" @click="payMethod=m.value">
+                {{ m.icon }} {{ lang.value === 'kaz' ? m.labelKk : lang.value === 'eng' ? (m.labelEn || m.labelRu) : m.labelRu }}
+              </button>
+            </div>
+            <div v-if="payError" class="field-error-sm">{{ payError }}</div>
+            <div v-if="paySuccess" class="save-success-sm">✅ {{ t('payConfirmed') }}</div>
+            <div v-if="!paySuccess" class="modal-footer-btns">
+              <button class="btn btn-outline btn-sm" @click="paymentBooking=null">{{ t('cancel') }}</button>
+              <button class="btn btn-primary btn-sm" :disabled="payLoading" @click="submitPayment">
+                <span v-if="payLoading" class="spinner-sm"></span>
+                {{ t('payRide') }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- ── REVIEW MODAL ── -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="reviewBooking" class="modal-overlay" @click.self="reviewBooking=null">
+          <div class="modal-box" style="max-width:420px">
+            <button class="modal-close-btn" @click="reviewBooking=null">✕</button>
+            <h3 class="modal-title">⭐ {{ t('rateRide') }}</h3>
+            <div v-if="reviewBooking.driver" class="review-driver-info">
+              <div class="driver-mini-avatar">{{ (reviewBooking.driver.firstName || '?').charAt(0) }}</div>
+              <span>{{ reviewBooking.driver.firstName }} {{ reviewBooking.driver.lastName }}</span>
+            </div>
+            <div class="review-stars-row">
+              <button v-for="i in 5" :key="i" class="star-pick-btn" :class="i <= reviewRating ? 'star-on' : 'star-off'" @click="reviewRating=i">★</button>
+            </div>
+            <textarea v-model="reviewComment" class="form-input" rows="3" :placeholder="t('commentPlaceholder')" style="width:100%;margin-top:12px;resize:none;font-family:inherit" />
+            <div v-if="reviewSubmitError" class="field-error-sm">{{ reviewSubmitError }}</div>
+            <div v-if="reviewSubmitSuccess" class="save-success-sm">✅ {{ t('reviewSent') }}</div>
+            <div v-if="!reviewSubmitSuccess" class="modal-footer-btns" style="margin-top:12px">
+              <button class="btn btn-outline btn-sm" @click="reviewBooking=null">{{ t('cancel') }}</button>
+              <button class="btn btn-primary btn-sm" :disabled="!reviewRating || reviewSubmitting" @click="submitDriverReview">
+                <span v-if="reviewSubmitting" class="spinner-sm"></span>
+                {{ t('send') }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </main>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAccessibilityStore } from '../stores/accessibility.js'
 import { useAuthStore } from '../stores/auth.js'
+import { useI18n } from '../i18n.js'
 import {
   getMyBookings, createBooking, cancelBooking,
-  getDrivers, leaveDriverReview,
-  getChatMessages, sendChatMessage,
-  getManagerStats, getManagerQueue, getAvailableDrivers, assignDriver, addDriver
+  getDrivers, leaveDriverReview, reviewDriver,
+  getChatMessages, sendChatMessage, getDriverLocation,
+  getManagerStats, getManagerQueue, getAvailableDrivers, assignDriver, addDriver,
+  initiatePayment, confirmPayment,
+  getRecurringRides, createRecurringRide, pauseRecurringRide, resumeRecurringRide, deleteRecurringRide,
+  estimatePrice
 } from '../api/taxi.js'
+import {
+  getTaxiSocket, joinBookingRoom,
+  sendSocketMessage, disconnectTaxiSocket
+} from '../api/taxiSocket.js'
+import { getMyLinks } from '../api/profile.js'
 
 const a11y = useAccessibilityStore()
 const authStore = useAuthStore()
 const lang = computed(() => a11y.lang)
+const t = computed(() => useI18n(lang.value))
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
 const activeTab = ref('book')
@@ -526,20 +753,33 @@ const activeTab = ref('book')
 const isManager = computed(() => authStore.isTaxiManager)
 
 const allTabs = [
-  { id: 'book', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>', labelKaz: 'Тапсырыс беру', labelRus: 'Заказать' },
-  { id: 'bookings', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>', labelKaz: 'Менің сапарларым', labelRus: 'Мои поездки' },
-  { id: 'drivers', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>', labelKaz: 'Жүргізушілер', labelRus: 'Водители' },
-  { id: 'manager', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>', labelKaz: 'Менеджер', labelRus: 'Менеджер', managerOnly: true }
+  { id: 'book', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>', labelKaz: 'Тапсырыс беру', labelRus: 'Заказать', labelEng: 'Book a ride' },
+  { id: 'bookings', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>', labelKaz: 'Менің сапарларым', labelRus: 'Мои поездки', labelEng: 'My rides' },
+  { id: 'drivers', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>', labelKaz: 'Жүргізушілер', labelRus: 'Водители', labelEng: 'Drivers' },
+  { id: 'recurring', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>', labelKaz: 'Тұрақты', labelRus: 'Регулярные', labelEng: 'Regular' },
+  { id: 'manager', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>', labelKaz: 'Менеджер', labelRus: 'Менеджер', labelEng: 'Manager', managerOnly: true }
 ]
 
 const availableTabs = computed(() =>
   allTabs
-    .filter(t => !t.managerOnly || isManager.value)
-    .map(t => ({ ...t, label: lang.value === 'kaz' ? t.labelKaz : t.labelRus }))
+    .filter(tab => !tab.managerOnly || isManager.value)
+    .map(tab => ({ ...tab, label: lang.value === 'kaz' ? tab.labelKaz : lang.value === 'eng' ? tab.labelEng : tab.labelRus }))
 )
 
+// ─── Relative: dependents list ────────────────────────────────────────────────
+const dependents = ref([])
+
+onMounted(async () => {
+  if (authStore.isRelative && authStore.isAuthenticated) {
+    try {
+      const links = await getMyLinks()
+      dependents.value = links?.asGuardian ?? []
+    } catch {}
+  }
+})
+
 // ─── Booking Form ─────────────────────────────────────────────────────────────
-const form = ref({ fromAddress: '', toAddress: '', scheduledAt: '', disabilityType: '', note: '' })
+const form = ref({ fromAddress: '', toAddress: '', scheduledAt: '', disabilityType: '', note: '', dependentId: '' })
 const bookingLoading = ref(false)
 const bookingSuccess = ref(false)
 
@@ -548,12 +788,39 @@ const minDateTime = computed(() => {
   return d.toISOString().slice(0, 16)
 })
 
+// ── Price estimate ────────────────────────────────────────────────────
+const priceEstimate = ref(null)
+const priceEstimateError = ref('')
+const estimating = ref(false)
+
+async function calcPriceEstimate() {
+  estimating.value = true
+  priceEstimate.value = null
+  priceEstimateError.value = ''
+  try {
+    // Try browser geolocation to get fromLat/Lon — fallback gracefully
+    const res = await estimatePrice({
+      fromAddress: form.value.fromAddress,
+      toAddress: form.value.toAddress,
+    })
+    priceEstimate.value = res?.estimatedPrice ?? res?.price ?? res?.amount ?? null
+    if (priceEstimate.value === null) {
+      priceEstimateError.value = lang.value === 'kaz' ? 'Баға диспетчермен анықталады' : 'Стоимость уточняется диспетчером'
+    }
+  } catch {
+    priceEstimateError.value = lang.value === 'kaz' ? 'Баға диспетчермен анықталады' : 'Стоимость уточняется диспетчером'
+  } finally {
+    estimating.value = false
+  }
+}
+
 async function handleCreateBooking() {
   if (!authStore.isAuthenticated) return
   bookingLoading.value = true
   try {
     await createBooking({ ...form.value })
-    form.value = { fromAddress: '', toAddress: '', scheduledAt: '', disabilityType: '', note: '' }
+    form.value = { fromAddress: '', toAddress: '', scheduledAt: '', disabilityType: '', note: '', dependentId: '' }
+  priceEstimate.value = null
     bookingSuccess.value = true
     setTimeout(() => { bookingSuccess.value = false }, 4000)
     myBookings.value = await getMyBookings()
@@ -569,6 +836,7 @@ const bookingsLoading = ref(true)
 onMounted(async () => {
   if (authStore.isAuthenticated) {
     myBookings.value = await getMyBookings()
+    loadRecurringRides()
   }
   bookingsLoading.value = false
   driversLoading.value = true
@@ -609,6 +877,85 @@ const reviewRating = ref(0)
 const reviewComment = ref('')
 const reviewSubmitting = ref(false)
 
+// ─── Live tracking ──────────────────────────────────────────────────────────
+const driverLocation = ref(null)   // { lat, lon }
+const driverEta = ref(null)        // минуты
+const liveConnected = ref(false)
+let locationPoll = null            // REST-фолбэк, если сокет недоступен
+
+// Поездку можно отслеживать, когда водитель назначен и в пути
+function isTrackable(status) {
+  return status === 'CONFIRMED' || status === 'IN_PROGRESS'
+}
+
+// URL карты OpenStreetMap (без сторонних библиотек) с меткой водителя
+const mapUrl = computed(() => {
+  if (!driverLocation.value) return ''
+  const { lat, lon } = driverLocation.value
+  const d = 0.008
+  const bbox = `${lon - d}%2C${lat - d}%2C${lon + d}%2C${lat + d}`
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat}%2C${lon}`
+})
+
+async function fetchDriverLocationRest(bookingId) {
+  try {
+    const res = await getDriverLocation(bookingId)
+    if (res && res.lat != null && res.lon != null) {
+      driverLocation.value = { lat: res.lat, lon: res.lon }
+      if (res.etaMinutes != null) driverEta.value = res.etaMinutes
+    }
+  } catch { /* нет данных пока — молча ждём */ }
+}
+
+function startTracking(booking) {
+  if (!isTrackable(booking.status)) return
+  // 1) сразу пробуем REST, чтобы показать последнюю известную точку
+  fetchDriverLocationRest(booking.id)
+  // 2) подключаем сокет и слушаем живые события
+  const s = joinBookingRoom(booking.id)
+  liveConnected.value = s.connected
+
+  s.on('connect', () => { liveConnected.value = true })
+  s.on('disconnect', () => { liveConnected.value = false })
+
+  s.on('driver:location', (p) => {
+    if (!selectedBooking.value || p.bookingId !== selectedBooking.value.id) return
+    driverLocation.value = { lat: p.lat, lon: p.lon }
+  })
+
+  s.on('booking:status_changed', (p) => {
+    if (!selectedBooking.value || p.bookingId !== selectedBooking.value.id) return
+    selectedBooking.value.status = p.status
+    const idx = myBookings.value.findIndex(b => b.id === p.bookingId)
+    if (idx !== -1) myBookings.value[idx].status = p.status
+    if (!isTrackable(p.status)) stopTracking()
+  })
+
+  s.on('message:received', (m) => {
+    if (!selectedBooking.value || m.bookingId !== selectedBooking.value.id) return
+    if (!chatMessages.value.some(x => x.id === m.id)) chatMessages.value.push(m)
+  })
+
+  // 3) REST-фолбэк раз в 12 сек на случай, если WebSocket не проходит через шлюз
+  locationPoll = setInterval(() => {
+    if (!liveConnected.value && selectedBooking.value) {
+      fetchDriverLocationRest(selectedBooking.value.id)
+    }
+  }, 12000)
+}
+
+function stopTracking() {
+  if (locationPoll) { clearInterval(locationPoll); locationPoll = null }
+  const s = getTaxiSocket()
+  if (s) {
+    s.off('driver:location'); s.off('booking:status_changed')
+    s.off('message:received'); s.off('connect'); s.off('disconnect')
+  }
+  driverLocation.value = null
+  driverEta.value = null
+  liveConnected.value = false
+}
+
 async function openBookingDetail(booking) {
   selectedBooking.value = booking
   reviewRating.value = 0
@@ -616,7 +963,12 @@ async function openBookingDetail(booking) {
   chatMessages.value = await getChatMessages(booking.id)
   await nextTick()
   scrollChatToBottom()
+  startTracking(booking)
 }
+
+// Чистим отслеживание при закрытии модалки
+watch(selectedBooking, (val) => { if (!val) stopTracking() })
+onUnmounted(() => { stopTracking(); disconnectTaxiSocket() })
 
 function scrollChatToBottom() {
   if (chatBoxRef.value) chatBoxRef.value.scrollTop = chatBoxRef.value.scrollHeight
@@ -629,13 +981,15 @@ async function handleSendChat() {
   chatSending.value = true
   const text = chatInput.value.trim()
   chatInput.value = ''
+  // Если сокет на связи — менеджер увидит сообщение мгновенно (message:received).
+  // REST-запрос всё равно делаем, чтобы сообщение сохранилось в БД.
+  sendSocketMessage(selectedBooking.value.id, text)
   await sendChatMessage(selectedBooking.value.id, text)
-  chatMessages.value = await getChatMessages(selectedBooking.value.id)
+  // Если живых событий нет — подтянем историю запросом
+  if (!liveConnected.value) {
+    chatMessages.value = await getChatMessages(selectedBooking.value.id)
+  }
   chatSending.value = false
-  // Re-fetch after auto-reply
-  setTimeout(async () => {
-    chatMessages.value = await getChatMessages(selectedBooking.value?.id)
-  }, 2000)
 }
 
 async function handleLeaveReview() {
@@ -733,6 +1087,130 @@ function formatTime(iso) {
   if (!iso) return ''
   return new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
 }
+
+// ─── Recurring rides ──────────────────────────────────────────────────────────
+const recurringRides = ref([])
+const showRecurringForm = ref(false)
+const recurringLoading = ref(false)
+const recurringError = ref('')
+const recurringForm = ref({ fromAddress: '', toAddress: '', time: '', weekdays: [] })
+const weekdays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+
+function toggleWeekday(i) {
+  const idx = recurringForm.value.weekdays.indexOf(i)
+  if (idx === -1) recurringForm.value.weekdays.push(i)
+  else recurringForm.value.weekdays.splice(idx, 1)
+}
+
+function formatWeekdays(days) {
+  if (!Array.isArray(days) || days.length === 0) return '—'
+  return days.map(d => weekdays[d]).join(', ')
+}
+
+async function loadRecurringRides() {
+  try {
+    const res = await getRecurringRides()
+    recurringRides.value = Array.isArray(res) ? res : (res?.items ?? [])
+  } catch {}
+}
+
+async function submitRecurring() {
+  recurringError.value = ''
+  if (!recurringForm.value.fromAddress.trim() || !recurringForm.value.toAddress.trim()) {
+    recurringError.value = lang.value === 'kaz' ? 'Мекенжайларды толтырыңыз' : 'Укажите адреса'
+    return
+  }
+  recurringLoading.value = true
+  try {
+    await createRecurringRide({ ...recurringForm.value })
+    recurringForm.value = { fromAddress: '', toAddress: '', time: '', weekdays: [] }
+    showRecurringForm.value = false
+    await loadRecurringRides()
+  } catch (e) {
+    recurringError.value = e.message || (lang.value === 'kaz' ? 'Қате' : 'Ошибка')
+  } finally { recurringLoading.value = false }
+}
+
+async function handlePauseRecurring(id) {
+  await pauseRecurringRide(id).catch(() => {})
+  await loadRecurringRides()
+}
+
+async function handleResumeRecurring(id) {
+  await resumeRecurringRide(id).catch(() => {})
+  await loadRecurringRides()
+}
+
+async function handleDeleteRecurring(id) {
+  if (!confirm(lang.value === 'kaz' ? 'Жоюды растаңыз' : 'Подтвердите удаление')) return
+  await deleteRecurringRide(id).catch(() => {})
+  await loadRecurringRides()
+}
+
+// ─── Payment ──────────────────────────────────────────────────────────────────
+const paymentBooking = ref(null)
+const payMethod = ref('CASH')
+const payLoading = ref(false)
+const payError = ref('')
+const paySuccess = ref(false)
+
+const payMethods = [
+  { value: 'CASH', icon: '💵', labelRu: 'Наличные', labelKk: 'Қолма-қол' },
+  { value: 'KASPI', icon: '📱', labelRu: 'Kaspi Pay', labelKk: 'Kaspi Pay' },
+  { value: 'CARD', icon: '💳', labelRu: 'Карта', labelKk: 'Карта' },
+]
+
+function openPayment(booking) {
+  paymentBooking.value = booking
+  payMethod.value = 'CASH'
+  payError.value = ''
+  paySuccess.value = false
+}
+
+async function submitPayment() {
+  payLoading.value = true
+  payError.value = ''
+  try {
+    const tx = await initiatePayment(paymentBooking.value.id, payMethod.value)
+    if (tx?.id) await confirmPayment(paymentBooking.value.id, tx.id)
+    paySuccess.value = true
+    // Mark locally so button disappears
+    const idx = myBookings.value.findIndex(b => b.id === paymentBooking.value.id)
+    if (idx !== -1) myBookings.value[idx] = { ...myBookings.value[idx], _paymentDone: true }
+    setTimeout(() => { paymentBooking.value = null }, 2000)
+  } catch (e) {
+    payError.value = e.message || (lang.value === 'kaz' ? 'Қате' : 'Ошибка оплаты')
+  } finally { payLoading.value = false }
+}
+
+// ─── Driver review (from booking card) ───────────────────────────────────────
+const reviewBooking = ref(null)
+// reviewRating, reviewComment, reviewSubmitting are shared with booking-detail review (declared above)
+const reviewSubmitError = ref('')
+const reviewSubmitSuccess = ref(false)
+
+function openReview(booking) {
+  reviewBooking.value = booking
+  reviewRating.value = 0
+  reviewComment.value = ''
+  reviewSubmitError.value = ''
+  reviewSubmitSuccess.value = false
+}
+
+async function submitDriverReview() {
+  if (!reviewRating.value) return
+  reviewSubmitting.value = true
+  reviewSubmitError.value = ''
+  try {
+    await reviewDriver(reviewBooking.value.id, reviewRating.value, reviewComment.value.trim() || undefined)
+    reviewSubmitSuccess.value = true
+    const idx = myBookings.value.findIndex(b => b.id === reviewBooking.value.id)
+    if (idx !== -1) myBookings.value[idx] = { ...myBookings.value[idx], _reviewed: true }
+    setTimeout(() => { reviewBooking.value = null }, 2000)
+  } catch (e) {
+    reviewSubmitError.value = e.message || (lang.value === 'kaz' ? 'Қате' : 'Ошибка')
+  } finally { reviewSubmitting.value = false }
+}
 </script>
 
 <style scoped>
@@ -793,6 +1271,14 @@ function formatTime(iso) {
 .form-select { cursor: pointer; }
 .form-textarea { resize: vertical; min-height: 72px; }
 .form-auth-notice { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: #FEF3C7; border-radius: var(--radius-md); font-size: var(--fs-sm); color: #92400E; }
+
+.price-estimate-block { background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: var(--radius-md); padding: 12px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.price-estimate-header { display: flex; align-items: center; gap: 6px; font-size: var(--fs-sm); font-weight: 700; color: #166534; }
+.price-estimate-value { font-size: 18px; font-weight: 800; color: #15803d; }
+.price-estimate-hint { font-size: var(--fs-sm); color: #64748b; flex: 1; }
+.price-estimate-btn { margin-left: auto; padding: 6px 14px; border-radius: var(--radius-sm); border: 1.5px solid #22c55e; background: white; color: #16a34a; font-size: var(--fs-sm); font-weight: 600; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
+.price-estimate-btn:hover:not(:disabled) { background: #dcfce7; }
+.price-estimate-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .auth-link { color: var(--primary); font-weight: 700; text-decoration: none; margin-left: 4px; }
 .book-submit { width: 100%; justify-content: center; gap: 8px; margin-top: 4px; }
 .booking-success { display: flex; align-items: center; gap: 14px; background: #ECFDF5; border: 1.5px solid #6EE7B7; border-radius: var(--radius-lg); padding: 16px 20px; margin-top: 20px; color: #065F46; font-size: var(--fs-sm); }
@@ -982,4 +1468,77 @@ function formatTime(iso) {
 .modal-enter-active .modal-box, .modal-leave-active .modal-box { transition: transform 0.25s ease; }
 .modal-enter-from, .modal-leave-to { opacity: 0; }
 .modal-enter-from .modal-box { transform: scale(0.94) translateY(12px); }
+
+/* ── Live tracking ── */
+.live-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-left: 8px; padding: 2px 8px; border-radius: 20px;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.5px;
+  background: #f1f5f9; color: #94a3b8; vertical-align: middle;
+}
+.live-badge.on { background: #fee2e2; color: #dc2626; }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.live-badge.on .live-dot { animation: livePulse 1.4s ease-in-out infinite; }
+@keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+.track-wrap { border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; }
+.track-map { width: 100%; height: 240px; border: 0; display: block; }
+.track-info {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 14px; background: #f8fafc; flex-wrap: wrap;
+}
+.track-eta { font-size: 14px; color: #0f172a; }
+.track-eta strong { color: #1B3FD8; }
+.track-coords { font-size: 12px; color: #64748b; }
+.track-waiting {
+  display: flex; align-items: center; gap: 10px;
+  padding: 24px; justify-content: center;
+  background: #f8fafc; border-radius: 12px;
+  color: #64748b; font-size: 13.5px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-badge.on .live-dot { animation: none; }
+}
+
+/* ── Pay / Review buttons on booking card ── */
+.pay-btn { background: #059669; color: white; border: none; padding: 5px 12px; border-radius: var(--radius-full); font-size: 12px; font-weight: 700; cursor: pointer; transition: background var(--transition); }
+.pay-btn:hover { background: #047857; }
+.review-btn { background: #F59E0B; color: white; border: none; padding: 5px 12px; border-radius: var(--radius-full); font-size: 12px; font-weight: 700; cursor: pointer; transition: background var(--transition); }
+.review-btn:hover { background: #D97706; }
+
+/* ── Payment modal ── */
+.payment-amount { font-size: 32px; font-weight: 900; color: var(--primary); text-align: center; margin: 16px 0; }
+.payment-methods { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.pay-method-btn { flex: 1; min-width: 90px; padding: 10px 8px; border: 2px solid var(--gray-200); border-radius: var(--radius-md); background: white; cursor: pointer; font-size: var(--fs-sm); font-weight: 600; color: var(--gray-600); transition: all var(--transition); text-align: center; }
+.pay-method-btn:hover { border-color: var(--primary); color: var(--primary); }
+.pay-method-btn.active { border-color: var(--primary); background: var(--primary-pale); color: var(--primary); }
+.modal-footer-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+.modal-title { font-size: var(--fs-lg); font-weight: 800; color: var(--black); margin-bottom: 6px; }
+.modal-sub { font-size: var(--fs-sm); color: var(--gray-500); margin-bottom: 4px; }
+.field-error-sm { background: #FEF2F2; color: #DC2626; padding: 8px 12px; border-radius: var(--radius); font-size: var(--fs-xs); font-weight: 600; margin-bottom: 8px; }
+.save-success-sm { background: #F0FDF4; color: #166534; padding: 10px 14px; border-radius: var(--radius); font-size: var(--fs-sm); font-weight: 600; }
+
+/* ── Review modal ── */
+.review-driver-info { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-weight: 600; font-size: var(--fs-sm); }
+.review-stars-row { display: flex; gap: 6px; }
+.star-pick-btn { font-size: 28px; background: none; border: none; cursor: pointer; padding: 2px; line-height: 1; transition: transform 0.1s; }
+.star-pick-btn:hover { transform: scale(1.15); }
+.star-on { color: #F59E0B; }
+.star-off { color: var(--gray-200); }
+
+/* ── Recurring rides ── */
+.recurring-form-card { background: white; border-radius: var(--radius-xl); padding: 20px 24px; box-shadow: var(--shadow); margin-bottom: 20px; }
+.weekday-picker { display: flex; gap: 6px; flex-wrap: wrap; }
+.weekday-btn { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--gray-200); background: white; font-size: 12px; font-weight: 700; color: var(--gray-600); cursor: pointer; transition: all var(--transition); }
+.weekday-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+.recurring-list { display: flex; flex-direction: column; gap: 12px; }
+.recurring-card { background: white; border-radius: var(--radius-lg); padding: 16px 20px; box-shadow: var(--shadow); }
+.recurring-route { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.rec-dot--from { width: 10px; height: 10px; border-radius: 50%; background: var(--primary); flex-shrink: 0; }
+.rec-addresses { display: flex; align-items: center; gap: 8px; font-size: var(--fs-sm); color: var(--black); font-weight: 600; flex-wrap: wrap; }
+.rec-arrow { color: var(--gray-400); }
+.recurring-meta { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--gray-500); margin-bottom: 10px; flex-wrap: wrap; }
+.rec-time { font-weight: 600; }
+.rec-status-badge { padding: 2px 8px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; }
+.recurring-actions { display: flex; gap: 8px; }
+.form-actions { display: flex; gap: 10px; }
 </style>

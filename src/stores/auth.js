@@ -15,6 +15,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => user.value?.role === 'ADMIN')
   const isModerator = computed(() => ['MODERATOR', 'ADMIN'].includes(user.value?.role))
   const isTaxiManager = computed(() => ['TAXI_MANAGER', 'ADMIN'].includes(user.value?.role))
+  const isOrgManager = computed(() => user.value?.role === 'ORG_MANAGER')
   const isUser = computed(() => user.value?.role === 'USER')
   const isRelative = computed(() => user.value?.role === 'RELATIVE')
   const fullName = computed(() => user.value ? `${user.value.firstName} ${user.value.lastName}`.trim() : '')
@@ -23,6 +24,7 @@ export const useAuthStore = defineStore('auth', () => {
       ADMIN: 'Администратор',
       MODERATOR: 'Модератор',
       TAXI_MANAGER: 'Менеджер ИнваТакси',
+      ORG_MANAGER: 'Менеджер организации',
       USER: 'Пользователь',
       RELATIVE: 'Опекун / Родственник'
     }
@@ -72,6 +74,12 @@ export const useAuthStore = defineStore('auth', () => {
       // Fall back to minimal user from login response if profile fetch fails
       persistUser(data.user || null)
     }
+    // Sync accessibility settings from server after login (non-blocking)
+    try {
+      const { useAccessibilityStore } = await import('./accessibility.js')
+      const accStore = useAccessibilityStore()
+      accStore.loadFromServer()
+    } catch {}
   }
 
   async function register(payload) {
@@ -92,6 +100,8 @@ export const useAuthStore = defineStore('auth', () => {
     } catch {
       persistUser(data.user || { id: null, email: payload.email, role: payload.role || 'USER' })
     }
+    // Return raw response so caller can read devCode (DEV email-verification mode)
+    return data
   }
 
   async function logout() {
@@ -128,6 +138,12 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('Token validation failed')
       }
     }
+    // Sync accessibility settings from server after login (non-blocking)
+    try {
+      const { useAccessibilityStore } = await import('./accessibility.js')
+      const accStore = useAccessibilityStore()
+      accStore.loadFromServer()
+    } catch {}
   }
 
   // ── Saved organisations ────────────────────────────────────────────────────
@@ -163,7 +179,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     user, accessToken, refreshToken,
-    isAuthenticated, isAdmin, isModerator, isTaxiManager, isUser, isRelative,
+    isAuthenticated, isAdmin, isModerator, isTaxiManager, isOrgManager, isUser, isRelative,
     fullName, roleLabel,
     login, register, logout, updateLocalUser, loginWithTokens,
     savedOrgs, savedChats, toggleSaveOrg, isOrgSaved, saveChat

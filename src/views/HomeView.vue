@@ -62,18 +62,18 @@
                 <div class="about-stat-cards">
                   <div class="about-stat">
                     <span class="about-stat-num">12+</span>
-                    <span class="about-stat-label">Организаций</span>
+                    <span class="about-stat-label">{{ t('statOrgs') }}</span>
                   </div>
                   <div class="about-stat about-stat-blue">
                     <span class="about-stat-num">QA ✓</span>
-                    <span class="about-stat-label">Проверено</span>
+                    <span class="about-stat-label">{{ t('statVerified') }}</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
           <div class="about-content">
-            <div class="section-tag">О платформе</div>
+            <div class="section-tag">{{ t('aboutSectionTag') }}</div>
             <h2 class="section-title">{{ t('aboutTitle') }}</h2>
             <p class="about-text">{{ t('aboutText') }}</p>
             <div class="about-features">
@@ -87,7 +87,7 @@
             </div>
             <div v-if="!authStore.isAuthenticated" class="about-cta">
               <RouterLink to="/login" class="btn btn-primary">{{ t('loginRegister') }}</RouterLink>
-              <RouterLink to="/services/ai" class="btn btn-outline">Попробовать ИИ</RouterLink>
+              <RouterLink to="/services/ai" class="btn btn-outline">{{ t('tryAI') }}</RouterLink>
             </div>
           </div>
         </div>
@@ -99,8 +99,8 @@
       <div class="container">
         <div class="section-header">
           <div class="section-tag">{{ t('orgsPreview') }}</div>
-          <h2 class="section-title">Проверенные организации Алматы</h2>
-          <p class="section-subtitle">Центры, фонды и государственные учреждения — всё с подтверждённым статусом</p>
+          <h2 class="section-title">{{ t('orgsPreviewTitle') }}</h2>
+          <p class="section-subtitle">{{ t('orgsPreviewSubtitle') }}</p>
         </div>
 
         <!-- Skeleton or orgs circles -->
@@ -113,13 +113,13 @@
             :key="org.id"
             class="org-circle-btn"
             @click="selectedOrg = org"
-            :title="lang === 'kaz' ? org.nameKk : org.nameRu"
+            :title="org.name || (lang === 'kaz' ? org.nameKk : org.nameRu)"
           >
             <div class="org-circle-avatar" :class="{ verified: org.status === 'VERIFIED' }">
-              <span class="org-circle-letter">{{ (org.nameRu || '').charAt(0) }}</span>
+              <span class="org-circle-letter">{{ (org.name || org.nameRu || org.nameKk || '?').charAt(0) }}</span>
               <span v-if="org.status === 'VERIFIED'" class="org-circle-check">✓</span>
             </div>
-            <div class="org-circle-name">{{ (lang === 'kaz' ? (org.nameKk || org.nameRu) : org.nameRu).slice(0, 24) }}{{ (lang === 'kaz' ? (org.nameKk || org.nameRu) : org.nameRu).length > 24 ? '…' : '' }}</div>
+            <div class="org-circle-name">{{ ((org.name || (lang === 'kaz' ? (org.nameKk || org.nameRu) : org.nameRu)) || '').slice(0, 24) }}{{ ((org.name || (lang === 'kaz' ? (org.nameKk || org.nameRu) : org.nameRu)) || '').length > 24 ? '…' : '' }}</div>
           </button>
         </div>
 
@@ -138,7 +138,7 @@
         <div class="section-header">
           <div class="section-tag">{{ t('latestNews') }}</div>
           <h2 class="section-title">{{ t('latestNews') }}</h2>
-          <p class="section-subtitle">Актуальные новости о поддержке людей с инвалидностью в Алматы</p>
+          <p class="section-subtitle">{{ t('newsSectionSubtitle') }}</p>
         </div>
 
         <div v-if="newsLoading" class="news-grid">
@@ -163,18 +163,20 @@
             class="news-card"
           >
             <div class="news-card-image">
-              <img v-if="article.imageUrl" :src="newsImageUrl(article.imageUrl)" :alt="article.titleRu" class="news-img" loading="lazy" />
-              <div v-else class="news-image-placeholder">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              </div>
+              <img
+                :src="article.imageUrl ? newsImageUrl(article.imageUrl) : homeFallbackImg(article)"
+                :alt="article.titleRu"
+                class="news-img"
+                loading="lazy"
+              />
               <div class="news-cat-badge">
-                {{ article.category === 'event' ? '📅 Событие' : article.category === 'announcement' ? '📢 Анонс' : '📰 Новость' }}
+                {{ article.category === 'event' ? `📅 ${t('catEvent')}` : article.category === 'announcement' ? `📢 ${t('catAnnouncement')}` : `📰 ${t('catNews')}` }}
               </div>
               <span v-if="article.status === 'PUBLISHED'" class="news-verified">✓</span>
             </div>
             <div class="news-card-body">
               <div class="news-date">{{ formatDate(article.publishedAt) }}</div>
-              <h3 class="news-title">{{ lang === 'kaz' ? article.titleKk : article.titleRu }}</h3>
+              <h3 class="news-title">{{ article.title || (lang === 'kaz' ? article.titleKk : article.titleRu) || '' }}</h3>
               <p class="news-excerpt">{{ homeExcerpt(article) }}</p>
               <div class="news-card-footer">
                 <span class="news-author">{{ article.author?.profile?.firstName || '' }}</span>
@@ -187,7 +189,7 @@
           </RouterLink>
         </div>
         <div class="section-cta">
-          <RouterLink to="/news" class="btn btn-outline btn-lg">Все новости</RouterLink>
+          <RouterLink to="/news" class="btn btn-outline btn-lg">{{ t('allNews') }}</RouterLink>
         </div>
       </div>
     </section>
@@ -202,7 +204,7 @@
             </div>
             <div>
               <h2 class="ask-ai-title">{{ t('askAI') }}</h2>
-              <p class="ask-ai-subtitle">ИИ-консультант Senim даёт ответы на основе проверенной базы данных Алматы</p>
+              <p class="ask-ai-subtitle">{{ t('aiSubtitleHome') }}</p>
             </div>
           </div>
           <div class="ask-ai-form">
@@ -223,7 +225,7 @@
                 {{ t('send') }}
               </button>
             </div>
-            <div class="ask-ai-hint">Например: «реабилитация для ребёнка с ДЦП» или «оформить льготы»</div>
+            <div class="ask-ai-hint">{{ t('aiHintHome') }}</div>
           </div>
         </div>
       </div>
@@ -240,8 +242,8 @@ import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
 import { useAccessibilityStore } from '../stores/accessibility.js'
 import { useI18n } from '../i18n.js'
-import { getFeaturedOrganizations } from '../api/organizations.js'
-import { getLatestNews as fetchLatestNews } from '../api/news.js'
+import { getFeaturedOrganizations, getOrganizations } from '../api/organizations.js'
+import { getLatestNews as fetchLatestNews, getNews } from '../api/news.js'
 import { newsImageUrl } from '../api/apiClient.js'
 import OrganizationCard from '../components/OrganizationCard.vue'
 import OrgModal from '../components/OrgModal.vue'
@@ -288,9 +290,9 @@ onUnmounted(() => clearInterval(sliderInterval))
 
 // About features
 const features = computed(() => [
-  { icon: '✅', title: 'QA-проверка', desc: 'Каждая организация проходит верификацию' },
-  { icon: '🤖', title: 'ИИ-консультант', desc: 'Ответы из локальной базы данных' },
-  { icon: '♿', title: 'Доступность', desc: 'Режим контраста, шрифт, голос' },
+  { icon: '✅', title: t.value('featureQA'), desc: t.value('featureQADesc') },
+  { icon: '🤖', title: t.value('featureAI'), desc: t.value('featureAIDesc') },
+  { icon: '♿', title: t.value('featureAccess'), desc: t.value('featureAccessDesc') },
 ])
 
 // Orgs preview
@@ -304,14 +306,25 @@ const newsLoading = ref(true)
 const newsError = ref(null)
 
 onMounted(async () => {
-  try {
-    featuredOrgs.value = await getFeaturedOrganizations()
-  } finally { orgsLoading.value = false }
-  try {
-    const newsRes = await fetchLatestNews()
-    latestNews.value = newsRes.items ?? newsRes
-  } catch (e) { newsError.value = e.message }
-  finally { newsLoading.value = false }
+  // Load orgs and news in parallel so one failure doesn't block the other
+  const [orgsResult, newsResult] = await Promise.allSettled([
+    getFeaturedOrganizations().catch(() => getOrganizations({ limit: 8 })),
+    fetchLatestNews().catch(() => getNews({ limit: 6 })),
+  ])
+
+  if (orgsResult.status === 'fulfilled') {
+    const r = orgsResult.value
+    featuredOrgs.value = (r.items ?? r).slice(0, 8)
+  }
+  orgsLoading.value = false
+
+  if (newsResult.status === 'fulfilled') {
+    const r = newsResult.value
+    latestNews.value = (r.items ?? r).slice(0, 6)
+  } else {
+    newsError.value = newsResult.reason?.message || 'error'
+  }
+  newsLoading.value = false
 })
 
 // AI Quick question
@@ -326,8 +339,15 @@ const formatDate = (d) => {
   return new Date(d).toLocaleDateString(lang.value === 'kaz' ? 'kk-KZ' : 'ru-RU', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 const homeExcerpt = (article) => {
-  const body = lang.value === 'kaz' ? article.bodyKk : article.bodyRu
+  const body = article.body || (lang.value === 'kaz' ? article.bodyKk : article.bodyRu) || ''
   return body ? body.slice(0, 120) + (body.length > 120 ? '…' : '') : ''
+}
+
+const CAT_SEED = { event: 10, announcement: 200, news: 400 }
+const homeFallbackImg = (article) => {
+  const base = CAT_SEED[article.category] ?? 100
+  const seed = base + ((article.id || 1) % 100)
+  return `https://picsum.photos/seed/${seed}/600/300`
 }
 </script>
 

@@ -94,6 +94,10 @@ export const adminGetTickets = async (limit = 100, offset = 0) => {
 export const adminSetTicketStatus = async (id, status) =>
   patch(`/core/admin/tickets/${id}`, { status })
 
+/** PATCH /admin/tickets/:id/response — { response } — ответ поддержки */
+export const adminReplyTicket = async (id, response) =>
+  patch(`/core/admin/tickets/${id}/response`, { response })
+
 // ── Жалобы (complaints) ───────────────────────────────────────────────────────
 
 /** GET /admin/complaints */

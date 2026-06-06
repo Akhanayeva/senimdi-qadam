@@ -118,6 +118,11 @@ const routes = [
     name: 'register',
     component: () => import('../views/RegisterView.vue')
   },
+  {
+    path: '/taxi-manager-register',
+    name: 'taxi-manager-register',
+    component: () => import('../views/RegisterManagerView.vue')
+  },
 
   // Auth callback (Google OAuth)
   {
@@ -135,14 +140,19 @@ const routes = [
   {
     path: '/favorites',
     name: 'favorites',
-    component: () => import('../views/PlaceholderView.vue'),
-    props: { title: 'Избранное / Таңдаулылар', icon: '❤️' }
+    component: () => import('../views/FavoritesView.vue')
   },
   {
     path: '/requests',
     name: 'requests',
-    component: () => import('../views/PlaceholderView.vue'),
-    props: { title: 'Мои заявки', icon: '📋' }
+    component: () => import('../views/RequestsView.vue')
+  },
+
+  // ── Org Cabinet (ORG_MANAGER only) ──────────────────────────────────────────
+  {
+    path: '/org-cabinet',
+    name: 'org-cabinet',
+    component: () => import('../views/OrgCabinetView.vue'),
   },
 
   // ── Admin panel (ADMIN / MODERATOR / TAXI_MANAGER only) ─────────────────────
@@ -154,6 +164,12 @@ const routes = [
       {
         path: '',
         name: 'admin-dashboard',
+        beforeEnter: (to, from, next) => {
+          const raw = localStorage.getItem('sqUser')
+          const user = raw ? JSON.parse(raw) : null
+          if (user?.role === 'TAXI_MANAGER') return next('/admin/taxi')
+          next()
+        },
         component: () => import('../views/admin/AdminDashboard.vue'),
       },
       {
@@ -172,9 +188,29 @@ const routes = [
         component: () => import('../views/admin/AdminUsers.vue'),
       },
       {
+        path: 'tickets',
+        name: 'admin-tickets',
+        component: () => import('../views/admin/AdminTickets.vue'),
+      },
+      {
+        path: 'complaints',
+        name: 'admin-complaints',
+        component: () => import('../views/admin/AdminComplaints.vue'),
+      },
+      {
         path: 'taxi',
         name: 'admin-taxi',
         component: () => import('../views/admin/AdminTaxi.vue'),
+      },
+      {
+        path: 'audit',
+        name: 'admin-audit',
+        component: () => import('../views/admin/AdminAudit.vue'),
+      },
+      {
+        path: 'guides',
+        name: 'admin-guides',
+        component: () => import('../views/admin/AdminGuides.vue'),
       },
     ]
   },

@@ -14,7 +14,7 @@
         <div class="taxi-stat-label">Ожидают водителя</div>
       </div>
       <div class="taxi-stat-card" style="border-left: 4px solid #3b82f6">
-        <div class="taxi-stat-val">{{ bookings.filter(b => b.status === 'ACCEPTED').length }}</div>
+        <div class="taxi-stat-val">{{ activeCount }}</div>
         <div class="taxi-stat-label">В пути</div>
       </div>
       <div class="taxi-stat-card" style="border-left: 4px solid #22c55e">
@@ -34,6 +34,10 @@
         <span v-if="pendingCount" class="tab-count">{{ pendingCount }}</span>
       </button>
       <button class="admin-tab" :class="{ active: activeTab === 'drivers' }" @click="activeTab = 'drivers'">Водители</button>
+      <button class="admin-tab" :class="{ active: activeTab === 'invites' }" @click="activeTab = 'invites'; loadInvites()">
+        Приглашения
+        <span v-if="invites.filter(i => !i.usedAt).length" class="tab-count">{{ invites.filter(i => !i.usedAt).length }}</span>
+      </button>
     </div>
 
     <!-- Bookings tab -->
@@ -90,14 +94,33 @@
             <option value="">Назначить водителя...</option>
             <option v-for="d in availableDrivers" :key="d.id" :value="d.id">{{ d.name }} — {{ d.car }}</option>
           </select>
-          <button v-if="b.status === 'ACCEPTED'" class="admin-action-btn btn-approve" @click="completeBooking(b)">✓ Завершить</button>
-          <button v-if="['PENDING','ACCEPTED'].includes(b.status)" class="admin-action-btn btn-reject" @click="cancelBooking(b)">✕ Отменить</button>
+          <button v-if="b.status === 'CONFIRMED'" class="admin-action-btn btn-inprogress" @click="setInProgress(b)">🛣 В путь</button>
+          <button v-if="['CONFIRMED','IN_PROGRESS'].includes(b.status)" class="admin-action-btn btn-approve" @click="completeBooking(b)">✓ Завершить</button>
+          <button v-if="['PENDING','CONFIRMED','IN_PROGRESS'].includes(b.status)" class="admin-action-btn btn-reject" @click="cancelBooking(b)">✕ Отменить</button>
+          <button class="admin-action-btn btn-chat" @click="openChat(b)">💬 Чат</button>
         </div>
       </div>
     </div>
 
     <!-- Drivers tab -->
     <div v-if="activeTab === 'drivers'" class="drivers-section">
+      <!-- Add driver form -->
+      <div class="add-driver-card">
+        <div class="add-driver-title">➕ Добавить водителя</div>
+        <div class="add-driver-form">
+          <input v-model="newDriver.firstName" class="driver-input" placeholder="Имя *" />
+          <input v-model="newDriver.lastName" class="driver-input" placeholder="Фамилия *" />
+          <input v-model="newDriver.phone" class="driver-input" placeholder="Телефон *" />
+          <input v-model="newDriver.vehicleModel" class="driver-input" placeholder="Модель авто *" />
+          <input v-model="newDriver.licensePlate" class="driver-input" placeholder="Номер авто *" />
+          <button class="admin-action-btn btn-approve" :disabled="addingDriver" @click="submitAddDriver">
+            <span v-if="addingDriver">...</span>
+            <span v-else>Добавить</span>
+          </button>
+        </div>
+        <div v-if="addDriverError" class="driver-error">{{ addDriverError }}</div>
+      </div>
+
       <div class="admin-table-wrap">
         <table class="admin-table">
           <thead>
@@ -127,65 +150,347 @@
                 </span>
               </td>
               <td>
-                <button class="admin-action-btn btn-reject" @click="confirmDeleteDriver(d)">🗑 Удалить</button>
+                <button class="admin-action-btn btn-reject" @click="confirmDeleteDriver(d)">🗑 Деактивировать</button>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
+    <!-- Invites tab -->
+    <div v-if="activeTab === 'invites'" class="invites-section">
+      <div class="invite-toolbar">
+        <div>
+          <div class="invite-toolbar-title">Коды приглашений для менеджеров</div>
+          <div class="invite-toolbar-sub">Передайте код будущему менеджеру — он регистрируется на <a href="#/taxi-manager-register" target="_blank" class="invite-reg-link">/taxi-manager-register</a></div>
+        </div>
+        <button class="btn-create-invite" :disabled="creatingInvite" @click="generateInvite">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          {{ creatingInvite ? 'Создание...' : 'Создать код' }}
+        </button>
+      </div>
+
+      <div v-if="invitesLoading" class="admin-loading">Загрузка...</div>
+      <div v-else-if="invites.length === 0" class="empty-state">
+        <div style="font-size:36px">🔑</div>
+        <p>Нет кодов приглашений</p>
+      </div>
+      <div v-else class="invites-list">
+        <div v-for="inv in invites" :key="inv.id" class="invite-card" :class="{ 'invite-used': inv.usedAt }">
+          <div class="invite-code-wrap">
+            <code class="invite-code">{{ inv.code }}</code>
+            <button class="invite-copy-btn" @click="copyCode(inv.code)" title="Копировать">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+          <div class="invite-meta">
+            <span class="invite-status-badge" :class="inv.usedAt ? 'invite-status-used' : 'invite-status-active'">
+              {{ inv.usedAt ? '✓ Использован' : '● Активен' }}
+            </span>
+            <span class="invite-date">Создан: {{ formatDate(inv.createdAt) }}</span>
+            <span v-if="inv.usedAt" class="invite-date">Использован: {{ formatDate(inv.usedAt) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <!-- Chat modal -->
+  <Transition name="fade">
+    <div v-if="chatBooking" class="chat-overlay" @click.self="chatBooking=null">
+      <div class="chat-panel">
+        <div class="chat-header">
+          <div>
+            <div class="chat-title">Чат с клиентом</div>
+            <div class="chat-sub">Заявка #{{ chatBooking.id }}</div>
+          </div>
+          <button class="chat-close" @click="chatBooking=null">✕</button>
+        </div>
+        <div class="chat-messages" ref="chatScroll">
+          <div v-if="chatLoading" class="chat-loading">Загрузка...</div>
+          <div v-else-if="chatMessages.length === 0" class="chat-empty">Сообщений пока нет</div>
+          <div
+            v-for="m in chatMessages" :key="m.id"
+            class="chat-msg"
+            :class="m.isFromManager ? 'msg-manager' : 'msg-user'"
+          >
+            <div class="msg-text">{{ m.text }}</div>
+            <div class="msg-time">{{ formatTime(m.createdAt) }}</div>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input
+            v-model="chatInput"
+            class="chat-input"
+            placeholder="Написать клиенту..."
+            @keydown.enter="sendManagerMessage"
+          />
+          <button class="chat-send-btn" :disabled="!chatInput.trim()" @click="sendManagerMessage">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </Transition>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
+import {
+  getManagerBookings, getDrivers, addDriver,
+  assignDriver as apiAssignDriver, setManagerBookingStatus, setDriverStatus,
+  getChatMessages, sendChatMessage,
+  createManagerInvite, getManagerInvites
+} from '../../api/taxi.js'
+import { useToast } from '../../stores/toast.js'
 
+const toast = useToast()
 const activeTab = ref('bookings')
 
-const bookings = ref([
+// Демо-данные — показываются, если нет прав TAXI_MANAGER или бэкенд недоступен
+const mockBookings = [
   { id: 1001, fromAddress: 'ул. Абая 10', toAddress: 'Больница №1, пр. Достык', passengerName: 'Асель Нурланова', specialNeeds: 'Инвалидная коляска', status: 'PENDING', assignedDriverId: '', createdAt: new Date().toISOString() },
-  { id: 1002, fromAddress: 'мкр Алмагуль, д.5', toAddress: 'Реабилитационный центр', passengerName: 'Бауыржан Қасымов', specialNeeds: 'Нарушение зрения', status: 'ACCEPTED', assignedDriverId: 'drv-1', createdAt: new Date(Date.now()-3600000).toISOString() },
+  { id: 1002, fromAddress: 'мкр Алмагуль, д.5', toAddress: 'Реабилитационный центр', passengerName: 'Бауыржан Қасымов', specialNeeds: 'Нарушение зрения', status: 'CONFIRMED', assignedDriverId: 'drv-1', createdAt: new Date(Date.now()-3600000).toISOString() },
   { id: 1003, fromAddress: 'пр. Назарбаева 100', toAddress: 'ТД Мегацентр', passengerName: 'Зарина Смагулова', specialNeeds: '', status: 'COMPLETED', assignedDriverId: 'drv-2', createdAt: new Date(Date.now()-7200000).toISOString() },
-])
-
-const drivers = ref([
+]
+const mockDrivers = [
   { id: 'drv-1', name: 'Канат Бекенов', car: 'Hyundai H1 • А 001 АА', phone: '+7 701 111 2233', rating: 4.8, available: true },
   { id: 'drv-2', name: 'Серік Алтынбеков', car: 'Ford Transit • В 222 ВВ', phone: '+7 707 333 4455', rating: 4.6, available: false },
   { id: 'drv-3', name: 'Дмитрий Чен', car: 'Volkswagen Caravelle • С 333 СС', phone: '+7 702 555 6677', rating: 4.9, available: true },
-])
+]
+
+const bookings = ref([])
+const drivers = ref([])
+const usingMock = ref(false)
+
+// Приводим заявку с бэкенда к виду, который ждёт шаблон
+const mapBooking = (b) => ({
+  id: b.id,
+  fromAddress: b.fromAddress,
+  toAddress: b.toAddress,
+  passengerName: b.userName || [b.user?.firstName, b.user?.lastName].filter(Boolean).join(' ') || '—',
+  specialNeeds: b.note || disabilityLabel(b.disabilityType),
+  status: b.status,
+  assignedDriverId: b.driverId || b.driver?.id || '',
+  createdAt: b.scheduledAt || b.createdAt,
+})
+
+const mapDriver = (d) => ({
+  id: d.id,
+  name: [d.firstName, d.lastName].filter(Boolean).join(' ') || d.name || '—',
+  car: [d.vehicleModel, d.licensePlate].filter(Boolean).join(' • ') || d.car || '—',
+  phone: d.phone || '—',
+  rating: d.ratingAvg ?? d.rating ?? 0,
+  available: d.status ? d.status === 'ACTIVE' : !!d.available,
+})
+
+function disabilityLabel(type) {
+  const map = { WHEELCHAIR: 'Колясочник', VISUAL: 'Нарушение зрения', HEARING: 'Нарушение слуха', MOBILITY: 'Нарушение подвижности', OTHER: 'Другое' }
+  return map[type] || ''
+}
+
+async function loadAll() {
+  try {
+    const [bk, drv] = await Promise.all([getManagerBookings(), getDrivers()])
+    bookings.value = (bk || []).map(mapBooking)
+    drivers.value = (drv || []).map(mapDriver)
+    usingMock.value = false
+  } catch (e) {
+    // нет прав / бэкенд недоступен → демо-данные
+    bookings.value = [...mockBookings]
+    drivers.value = [...mockDrivers]
+    usingMock.value = true
+  }
+}
+
+onMounted(loadAll)
 
 const pendingCount = computed(() => bookings.value.filter(b => b.status === 'PENDING').length)
+const activeCount = computed(() => bookings.value.filter(b => ['CONFIRMED', 'IN_PROGRESS'].includes(b.status)).length)
 const availableDrivers = computed(() => drivers.value.filter(d => d.available))
 
-const assignDriver = (booking) => {
-  if (booking.assignedDriverId) {
-    booking.status = 'ACCEPTED'
+const assignDriver = async (booking) => {
+  if (!booking.assignedDriverId) return
+  if (usingMock.value) { booking.status = 'CONFIRMED'; return }
+  try {
+    await apiAssignDriver(booking.id, booking.assignedDriverId)
+    toast.success('Водитель назначен')
+    await loadAll()
+  } catch (e) { toast.error('Не удалось назначить: ' + e.message) }
+}
+
+const completeBooking = async (booking) => {
+  if (usingMock.value) { booking.status = 'COMPLETED'; return }
+  try {
+    await setManagerBookingStatus(booking.id, 'COMPLETED')
+    toast.success('Поездка завершена')
+    await loadAll()
+  } catch (e) { toast.error('Ошибка: ' + e.message) }
+}
+
+const cancelBooking = async (booking) => {
+  if (!confirm('Отменить эту заявку?')) return
+  if (usingMock.value) { booking.status = 'CANCELLED'; return }
+  try {
+    await setManagerBookingStatus(booking.id, 'CANCELLED', 'Отменено диспетчером')
+    toast.success('Заявка отменена')
+    await loadAll()
+  } catch (e) { toast.error('Ошибка: ' + e.message) }
+}
+
+const confirmDeleteDriver = async (driver) => {
+  if (!confirm(`Деактивировать водителя "${driver.name}"?`)) return
+  if (usingMock.value) { drivers.value = drivers.value.filter(d => d.id !== driver.id); return }
+  try {
+    await setDriverStatus(driver.id, 'INACTIVE')
+    toast.success('Водитель деактивирован')
+    await loadAll()
+  } catch (e) { toast.error('Ошибка: ' + e.message) }
+}
+
+const setInProgress = async (booking) => {
+  if (usingMock.value) { booking.status = 'IN_PROGRESS'; return }
+  try {
+    await setManagerBookingStatus(booking.id, 'IN_PROGRESS')
+    toast.success('Статус: В пути')
+    await loadAll()
+  } catch (e) { toast.error('Ошибка: ' + e.message) }
+}
+
+// ── Add driver ────────────────────────────────────────────────────────
+const newDriver = ref({ firstName: '', lastName: '', phone: '', vehicleModel: '', licensePlate: '' })
+const addingDriver = ref(false)
+const addDriverError = ref('')
+
+const submitAddDriver = async () => {
+  if (!newDriver.value.firstName || !newDriver.value.phone || !newDriver.value.vehicleModel) {
+    addDriverError.value = 'Заполните обязательные поля (Имя, Телефон, Авто)'
+    return
+  }
+  addingDriver.value = true
+  addDriverError.value = ''
+  try {
+    await addDriver(newDriver.value)
+    toast.success('Водитель добавлен')
+    newDriver.value = { firstName: '', lastName: '', phone: '', vehicleModel: '', licensePlate: '' }
+    await loadAll()
+  } catch (e) {
+    addDriverError.value = e.message || 'Ошибка добавления'
+  } finally {
+    addingDriver.value = false
   }
 }
 
-const completeBooking = (booking) => { booking.status = 'COMPLETED' }
-const cancelBooking = (booking) => {
-  if (confirm('Отменить эту заявку?')) booking.status = 'CANCELLED'
-}
+// ── Chat ──────────────────────────────────────────────────────────────
+const chatBooking = ref(null)
+const chatMessages = ref([])
+const chatLoading = ref(false)
+const chatInput = ref('')
+const chatScroll = ref(null)
 
-const confirmDeleteDriver = (driver) => {
-  if (confirm(`Удалить водителя "${driver.name}"?`)) {
-    drivers.value = drivers.value.filter(d => d.id !== driver.id)
+const openChat = async (booking) => {
+  chatBooking.value = booking
+  chatMessages.value = []
+  chatLoading.value = true
+  try {
+    // Manager endpoint: /taxi/chat/manager/bookings/:id/messages
+    const res = await fetch(
+      `${window.location.origin}/api/taxi/chat/manager/bookings/${booking.id}/messages`,
+      { headers: { Authorization: `Bearer ${localStorage.getItem('sqAccessToken')}` } }
+    )
+    const data = await res.json()
+    chatMessages.value = Array.isArray(data) ? data : (data.items ?? [])
+  } catch {
+    chatMessages.value = []
+  } finally {
+    chatLoading.value = false
+    await nextTick()
+    if (chatScroll.value) chatScroll.value.scrollTop = chatScroll.value.scrollHeight
   }
 }
+
+const sendManagerMessage = async () => {
+  const text = chatInput.value.trim()
+  if (!text || !chatBooking.value) return
+  chatInput.value = ''
+  try {
+    const res = await fetch(
+      `${window.location.origin}/api/taxi/chat/manager/bookings/${chatBooking.value.id}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('sqAccessToken')}`
+        },
+        body: JSON.stringify({ text })
+      }
+    )
+    const msg = await res.json()
+    chatMessages.value.push({ ...msg, isFromManager: true })
+    await nextTick()
+    if (chatScroll.value) chatScroll.value.scrollTop = chatScroll.value.scrollHeight
+  } catch (e) {
+    toast.error('Не удалось отправить')
+  }
+}
+
+const formatTime = (iso) => iso ? new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : ''
 
 const bookingStatusLabel = (status) => {
-  const map = { PENDING: '⏳ Ожидает', ACCEPTED: '🚗 В пути', COMPLETED: '✓ Завершена', CANCELLED: '✕ Отменена' }
+  const map = {
+    PENDING: '⏳ Ожидает', CONFIRMED: '🚗 Назначен', IN_PROGRESS: '🛣 В пути',
+    COMPLETED: '✓ Завершена', CANCELLED: '✕ Отменена'
+  }
   return map[status] || status
 }
 const bookingStatusClass = (status) => {
-  const map = { PENDING: 'status-pending', ACCEPTED: 'status-inprogress', COMPLETED: 'status-done', CANCELLED: 'status-cancelled' }
+  const map = {
+    PENDING: 'status-pending', CONFIRMED: 'status-inprogress', IN_PROGRESS: 'status-inprogress',
+    COMPLETED: 'status-done', CANCELLED: 'status-cancelled'
+  }
   return map[status] || ''
 }
 
 const formatDate = (iso) => {
   if (!iso) return '—'
   return new Date(iso).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+}
+
+// ── Manager invites ───────────────────────────────────────────────────
+const invites = ref([])
+const invitesLoading = ref(false)
+const creatingInvite = ref(false)
+
+const loadInvites = async () => {
+  invitesLoading.value = true
+  try {
+    const res = await getManagerInvites()
+    invites.value = Array.isArray(res) ? res : (res.items ?? [])
+  } catch (e) {
+    // not a taxi manager or endpoint unavailable
+    invites.value = []
+  } finally {
+    invitesLoading.value = false
+  }
+}
+
+const generateInvite = async () => {
+  creatingInvite.value = true
+  try {
+    const inv = await createManagerInvite()
+    invites.value.unshift(inv)
+    toast.success('Код создан: ' + inv.code)
+  } catch (e) {
+    toast.error('Ошибка: ' + (e.message || 'не удалось создать код'))
+  } finally {
+    creatingInvite.value = false
+  }
+}
+
+const copyCode = (code) => {
+  navigator.clipboard?.writeText(code).then(() => toast.success('Код скопирован')).catch(() => {})
 }
 </script>
 
@@ -273,5 +578,73 @@ const formatDate = (iso) => {
 .text-gray { color: #64748b; }
 .rating-cell { font-size: 13px; color: #475569; }
 
-@media (max-width: 640px) { .taxi-stats { grid-template-columns: repeat(2, 1fr); } }
+/* Add driver */
+.add-driver-card { background: white; border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.add-driver-title { font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }
+.add-driver-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.driver-input { padding: 8px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; outline: none; flex: 1; min-width: 130px; }
+.driver-input:focus { border-color: #3b82f6; }
+.driver-error { margin-top: 8px; font-size: 12.5px; color: #dc2626; }
+
+.btn-chat { background: #f0f9ff; color: #0284c7; }
+.btn-chat:hover { background: #e0f2fe; }
+.btn-inprogress { background: #eff6ff; color: #3b82f6; }
+.btn-inprogress:hover { background: #dbeafe; }
+
+/* Chat modal */
+.chat-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; display: flex; align-items: flex-end; justify-content: flex-end; padding: 20px; }
+.chat-panel { background: white; border-radius: 16px; width: 380px; max-width: 100%; height: 560px; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.25); }
+.chat-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid #f1f5f9; }
+.chat-title { font-size: 15px; font-weight: 700; color: #1e293b; }
+.chat-sub { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+.chat-close { background: none; border: none; font-size: 16px; color: #94a3b8; cursor: pointer; padding: 4px; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.chat-loading, .chat-empty { text-align: center; color: #94a3b8; font-size: 13px; padding: 20px 0; }
+.chat-msg { max-width: 80%; display: flex; flex-direction: column; gap: 3px; }
+.msg-user { align-self: flex-start; }
+.msg-manager { align-self: flex-end; }
+.msg-text { padding: 9px 13px; border-radius: 12px; font-size: 13.5px; line-height: 1.5; }
+.msg-user .msg-text { background: #f1f5f9; color: #1e293b; border-bottom-left-radius: 4px; }
+.msg-manager .msg-text { background: #3b82f6; color: white; border-bottom-right-radius: 4px; }
+.msg-time { font-size: 11px; color: #94a3b8; }
+.msg-manager .msg-time { text-align: right; }
+.chat-input-row { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid #f1f5f9; }
+.chat-input { flex: 1; padding: 9px 14px; border: 1.5px solid #e2e8f0; border-radius: 22px; font-size: 13.5px; outline: none; }
+.chat-input:focus { border-color: #3b82f6; }
+.chat-send-btn { width: 38px; height: 38px; border-radius: 50%; background: #3b82f6; color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s; }
+.chat-send-btn:hover:not(:disabled) { background: #2563eb; }
+.chat-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Invites */
+.invites-section { display: flex; flex-direction: column; gap: 16px; }
+.invite-toolbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; background: white; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.invite-toolbar-title { font-size: 14px; font-weight: 700; color: #1e293b; }
+.invite-toolbar-sub { font-size: 12.5px; color: #64748b; margin-top: 3px; }
+.btn-create-invite { display: flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 9px; border: none; background: #3b82f6; color: white; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; flex-shrink: 0; white-space: nowrap; }
+.btn-create-invite:hover:not(:disabled) { background: #2563eb; }
+.btn-create-invite:disabled { opacity: 0.6; cursor: not-allowed; }
+.invites-list { display: flex; flex-direction: column; gap: 8px; }
+.invite-card { background: white; border-radius: 10px; padding: 14px 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.invite-used { opacity: 0.65; }
+.invite-code-wrap { display: flex; align-items: center; gap: 8px; }
+.invite-code { font-family: 'Courier New', monospace; font-size: 15px; font-weight: 700; color: #1e293b; background: #f1f5f9; padding: 6px 12px; border-radius: 8px; letter-spacing: 1.5px; }
+.invite-copy-btn { background: none; border: none; cursor: pointer; color: #64748b; padding: 5px; border-radius: 6px; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+.invite-copy-btn:hover { background: #e2e8f0; color: #1e293b; }
+.invite-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.invite-status-badge { font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 20px; }
+.invite-status-active { background: #f0fdf4; color: #16a34a; }
+.invite-status-used { background: #f1f5f9; color: #64748b; }
+.invite-date { font-size: 12px; color: #94a3b8; }
+.invite-reg-link { color: #3b82f6; text-decoration: none; font-weight: 600; }
+.invite-reg-link:hover { text-decoration: underline; }
+
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+@media (max-width: 640px) {
+  .taxi-stats { grid-template-columns: repeat(2, 1fr); }
+  .chat-panel { width: 100%; height: 70vh; }
+  .chat-overlay { align-items: flex-end; padding: 0; }
+  .chat-panel { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+}
 </style>

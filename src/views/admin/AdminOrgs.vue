@@ -74,6 +74,7 @@
             <td>
               <div class="action-btns">
                 <button class="action-btn action-btn-verify" v-if="org.status !== 'VERIFIED'" @click="verifyOrg(org)" title="Верифицировать">✓</button>
+                <button class="action-btn action-btn-unverify" v-else @click="unverifyOrg(org)" title="Снять верификацию">✗</button>
                 <button class="action-btn action-btn-edit" @click="openEditForm(org)" title="Редактировать">✏️</button>
                 <button class="action-btn action-btn-delete" @click="confirmDelete(org)" title="Удалить">🗑</button>
               </div>
@@ -157,6 +158,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getOrganizations } from '../../api/organizations.js'
+import { verifyOrganization, adminDeleteOrganization } from '../../api/admin.js'
 
 const CATEGORY_LABELS = {
   MEDICAL:        { rus: 'Медицина' },
@@ -251,16 +253,37 @@ const saveOrg = () => {
   applyFilters()
 }
 
-const verifyOrg = (org) => {
-  const idx = allOrgs.value.findIndex(o => o.id === org.id)
-  if (idx !== -1) allOrgs.value[idx].status = 'VERIFIED'
-  applyFilters()
+const verifyOrg = async (org) => {
+  try {
+    await verifyOrganization(org.id, true)
+    const idx = allOrgs.value.findIndex(o => o.id === org.id)
+    if (idx !== -1) allOrgs.value[idx] = { ...allOrgs.value[idx], status: 'VERIFIED', isVerified: true }
+    applyFilters()
+  } catch (e) {
+    alert('Ошибка верификации: ' + (e.message || ''))
+  }
 }
 
-const confirmDelete = (org) => {
-  if (confirm(`Удалить "${org.nameRu}"?`)) {
+const unverifyOrg = async (org) => {
+  if (!confirm(`Снять верификацию с "${org.nameRu}"?`)) return
+  try {
+    await verifyOrganization(org.id, false)
+    const idx = allOrgs.value.findIndex(o => o.id === org.id)
+    if (idx !== -1) allOrgs.value[idx] = { ...allOrgs.value[idx], status: 'PENDING', isVerified: false }
+    applyFilters()
+  } catch (e) {
+    alert('Ошибка: ' + (e.message || ''))
+  }
+}
+
+const confirmDelete = async (org) => {
+  if (!confirm(`Удалить "${org.nameRu}"? Это действие необратимо.`)) return
+  try {
+    await adminDeleteOrganization(org.id)
     allOrgs.value = allOrgs.value.filter(o => o.id !== org.id)
     applyFilters()
+  } catch (e) {
+    alert('Ошибка удаления: ' + (e.message || ''))
   }
 }
 
@@ -350,6 +373,8 @@ onMounted(loadOrgs)
 }
 .action-btn-verify { background: #f0fdf4; }
 .action-btn-verify:hover { background: #dcfce7; }
+.action-btn-unverify { background: #fef2f2; color: #dc2626; }
+.action-btn-unverify:hover { background: #fee2e2; }
 .action-btn-edit { background: #eff6ff; }
 .action-btn-edit:hover { background: #dbeafe; }
 .action-btn-delete { background: #fef2f2; }

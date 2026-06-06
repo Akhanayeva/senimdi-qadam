@@ -26,8 +26,12 @@
             class="news-card-full"
           >
             <div class="news-card-img">
-              <img v-if="article.imageUrl" :src="newsImageUrl(article.imageUrl)" :alt="article.titleRu" class="news-img" loading="lazy" />
-              <svg v-else width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <img
+                :src="article.imageUrl ? newsImageUrl(article.imageUrl) : fallbackImage(article)"
+                :alt="newsTitle(article)"
+                class="news-img"
+                loading="lazy"
+              />
               <span class="news-badge-cat">
                 {{ article.category === 'event' ? '📅' : article.category === 'announcement' ? '📢' : '📰' }}
               </span>
@@ -38,7 +42,7 @@
                 <span class="news-date">{{ formatDate(article.publishedAt) }}</span>
                 <span class="news-author">{{ article.author?.profile?.firstName || '' }}</span>
               </div>
-              <h2 class="news-card-title">{{ a11y.lang === 'kaz' ? article.titleKk : article.titleRu }}</h2>
+              <h2 class="news-card-title">{{ newsTitle(article) }}</h2>
               <p class="news-card-excerpt">{{ excerpt(article) }}</p>
               <div class="news-card-stats">
                 <button class="like-btn" @click.prevent="toggleLike(article)">
@@ -81,15 +85,28 @@ onMounted(async () => {
 
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' }) : ''
 
+// API returns already-localised `title`/`body` (language interceptor).
+// Fall back to bilingual fields for safety.
+const newsTitle = (article) =>
+  article.title || (a11y.lang === 'kaz' ? article.titleKk : article.titleRu) || article.titleRu || ''
+
 // First 140 chars of body as excerpt
 const excerpt = (article) => {
-  const body = a11y.lang === 'kaz' ? article.bodyKk : article.bodyRu
+  const body = article.body || (a11y.lang === 'kaz' ? article.bodyKk : article.bodyRu) || ''
   return body ? body.slice(0, 140) + (body.length > 140 ? '…' : '') : ''
 }
 
 const toggleLike = (article) => {
   if (likedNews.value.has(article.id)) likedNews.value.delete(article.id)
   else likedNews.value.add(article.id)
+}
+
+// Category-based seed offsets so event/news/announcement look different
+const CAT_SEED = { event: 10, announcement: 200, news: 400 }
+const fallbackImage = (article) => {
+  const base = CAT_SEED[article.category] ?? 100
+  const seed = base + (article.id % 100)
+  return `https://picsum.photos/seed/${seed}/600/300`
 }
 </script>
 

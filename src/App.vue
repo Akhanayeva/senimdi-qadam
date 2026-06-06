@@ -1,13 +1,16 @@
 <template>
   <div id="app">
+    <!-- Skip to content (для клавиатуры и скринридеров) -->
+    <a href="#main-content" class="skip-link">{{ t('skipToContent') }}</a>
+
     <!-- Header -->
     <AppHeader
       @toggle-accessibility="a11yOpen = !a11yOpen"
       @toggle-mobile-menu="mobileMenuOpen = !mobileMenuOpen"
     />
 
-    <!-- Navbar (desktop) -->
-    <AppNavbar />
+    <!-- Navbar (desktop) — hidden on admin pages -->
+    <AppNavbar v-if="!isAdminPage" />
 
     <!-- Accessibility Panel -->
     <AccessibilityPanel :open="a11yOpen" @close="a11yOpen = false" />
@@ -21,40 +24,41 @@
         </div>
         <nav class="mobile-nav-body">
           <div class="mobile-nav-group">
-            <div class="mobile-nav-label">Қызметтер</div>
-            <RouterLink to="/services/organizations" class="mobile-nav-link" @click="mobileMenuOpen=false">🏢 Орталықтар тізімдері</RouterLink>
-            <RouterLink to="/services/ai" class="mobile-nav-link" @click="mobileMenuOpen=false">🤖 Жергілікті ЖИ</RouterLink>
-            <RouterLink to="/services/accessibility-map" class="mobile-nav-link" @click="mobileMenuOpen=false">🗺️ Қолжетімділік картасы</RouterLink>
-            <RouterLink to="/services/jobs" class="mobile-nav-link" @click="mobileMenuOpen=false">💼 Жұмыс іздеу</RouterLink>
-            <RouterLink to="/services/documents" class="mobile-nav-link" @click="mobileMenuOpen=false">📋 Құжаттарды рәсімдеу</RouterLink>
+            <div class="mobile-nav-label">{{ t('services') }}</div>
+            <RouterLink to="/services/organizations" class="mobile-nav-link" @click="mobileMenuOpen=false">🏢 {{ t('orgList') }}</RouterLink>
+            <RouterLink to="/services/ai" class="mobile-nav-link" @click="mobileMenuOpen=false">🤖 {{ t('localAI') }}</RouterLink>
+            <RouterLink to="/services/accessibility-map" class="mobile-nav-link" @click="mobileMenuOpen=false">🗺️ {{ t('accessMap') }}</RouterLink>
+            <RouterLink to="/services/jobs" class="mobile-nav-link" @click="mobileMenuOpen=false">💼 {{ t('jobs') }}</RouterLink>
+            <RouterLink to="/services/documents" class="mobile-nav-link" @click="mobileMenuOpen=false">📋 {{ t('documents') }}</RouterLink>
           </div>
           <div class="mobile-nav-group">
-            <div class="mobile-nav-label">Жобалар</div>
-            <RouterLink to="/projects/forums" class="mobile-nav-link" @click="mobileMenuOpen=false">💬 Форумдар</RouterLink>
-            <RouterLink to="/projects/community" class="mobile-nav-link" @click="mobileMenuOpen=false">👥 Қоғамдастық</RouterLink>
+            <div class="mobile-nav-label">{{ t('projects') }}</div>
+            <RouterLink to="/projects/forums" class="mobile-nav-link" @click="mobileMenuOpen=false">💬 {{ t('forums') }}</RouterLink>
+            <RouterLink to="/projects/community" class="mobile-nav-link" @click="mobileMenuOpen=false">👥 {{ t('community') }}</RouterLink>
           </div>
           <div class="mobile-nav-group">
-            <RouterLink to="/inva-taxi/order" class="mobile-nav-link" @click="mobileMenuOpen=false">🚕 ИнваТакси</RouterLink>
-            <RouterLink to="/news" class="mobile-nav-link" @click="mobileMenuOpen=false">📰 Жаңалықтар</RouterLink>
-            <RouterLink to="/info" class="mobile-nav-link" @click="mobileMenuOpen=false">📚 Қосымша ақпараттар</RouterLink>
-            <RouterLink to="/help" class="mobile-nav-link" @click="mobileMenuOpen=false">❓ Помощь по сайту</RouterLink>
+            <RouterLink to="/inva-taxi/order" class="mobile-nav-link" @click="mobileMenuOpen=false">🚕 {{ t('invaTaxi') }}</RouterLink>
+            <RouterLink to="/news" class="mobile-nav-link" @click="mobileMenuOpen=false">📰 {{ t('news') }}</RouterLink>
+            <RouterLink to="/info" class="mobile-nav-link" @click="mobileMenuOpen=false">📚 {{ t('moreInfo') }}</RouterLink>
+            <RouterLink to="/help" class="mobile-nav-link" @click="mobileMenuOpen=false">❓ {{ t('helpNav') }}</RouterLink>
           </div>
           <div class="mobile-nav-group">
             <template v-if="!authStore.isAuthenticated">
-              <RouterLink to="/login" class="mobile-nav-link" @click="mobileMenuOpen=false">🔑 Кіру</RouterLink>
-              <RouterLink to="/register" class="mobile-nav-link" @click="mobileMenuOpen=false">📝 Тіркелу</RouterLink>
+              <RouterLink to="/login" class="mobile-nav-link" @click="mobileMenuOpen=false">🔑 {{ t('login') }}</RouterLink>
+              <RouterLink to="/register" class="mobile-nav-link" @click="mobileMenuOpen=false">📝 {{ t('register') }}</RouterLink>
             </template>
             <template v-else>
               <RouterLink to="/profile" class="mobile-nav-link" @click="mobileMenuOpen=false">👤 {{ authStore.user?.name }}</RouterLink>
-              <button class="mobile-nav-link mobile-nav-btn" @click="logout">🚪 Шығу</button>
+              <button class="mobile-nav-link mobile-nav-btn" @click="logout">🚪 {{ t('logoutBtn') }}</button>
             </template>
           </div>
           <div class="mobile-nav-lang">
             <button :class="{ active: a11y.lang === 'kaz' }" @click="a11y.setLang('kaz')">ҚАЗ</button>
             <button :class="{ active: a11y.lang === 'rus' }" @click="a11y.setLang('rus')">РУС</button>
+            <button :class="{ active: a11y.lang === 'eng' }" @click="a11y.setLang('eng')">ENG</button>
           </div>
           <button class="mobile-a11y-btn" @click="a11yOpen = true; mobileMenuOpen = false">
-            ♿ Настройки доступности
+            ♿ {{ t('accessPanel') }}
           </button>
         </nav>
       </div>
@@ -62,26 +66,37 @@
     <div v-if="mobileMenuOpen" class="mobile-backdrop" @click="mobileMenuOpen = false"></div>
 
     <!-- Router View -->
-    <RouterView />
+    <main id="main-content" tabindex="-1">
+      <RouterView />
+    </main>
 
-    <!-- Footer -->
-    <AppFooter />
+    <!-- Footer — hidden on admin pages -->
+    <AppFooter v-if="!isAdminPage" />
+
+    <!-- Глобальные тосты -->
+    <ToastContainer />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { RouterView, RouterLink, useRouter } from 'vue-router'
+import { ref, computed } from 'vue'
+import { RouterView, RouterLink, useRouter, useRoute } from 'vue-router'
 import AppHeader from './components/AppHeader.vue'
 import AppNavbar from './components/AppNavbar.vue'
 import AppFooter from './components/AppFooter.vue'
 import AccessibilityPanel from './components/AccessibilityPanel.vue'
+import ToastContainer from './components/ToastContainer.vue'
 import { useAuthStore } from './stores/auth.js'
 import { useAccessibilityStore } from './stores/accessibility.js'
+import { useI18n } from './i18n.js'
 
 const authStore = useAuthStore()
 const a11y = useAccessibilityStore()
 const router = useRouter()
+const route = useRoute()
+const t = computed(() => useI18n(a11y.lang))
+
+const isAdminPage = computed(() => route.path.startsWith('/admin'))
 
 const a11yOpen = ref(false)
 const mobileMenuOpen = ref(false)

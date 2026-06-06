@@ -58,15 +58,15 @@
         <div v-if="active === 'taxi'" class="dropdown-menu nav-dropdown" @mouseenter="cancelClose('taxi')" @mouseleave="scheduleClose('taxi')">
           <RouterLink to="/inva-taxi" class="dropdown-item" @click="close('taxi')">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-            {{ a11y.lang === 'kaz' ? 'Тапсырыс беру' : 'Заказать поездку' }}
+            {{ a11y.lang === 'kaz' ? 'Тапсырыс беру' : a11y.lang === 'eng' ? 'Book a Ride' : 'Заказать поездку' }}
           </RouterLink>
           <RouterLink to="/inva-taxi" class="dropdown-item" @click="close('taxi')">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
-            {{ a11y.lang === 'kaz' ? 'Менің сапарларым' : 'Мои поездки' }}
+            {{ a11y.lang === 'kaz' ? 'Менің сапарларым' : a11y.lang === 'eng' ? 'My Rides' : 'Мои поездки' }}
           </RouterLink>
           <RouterLink to="/inva-taxi" class="dropdown-item" @click="close('taxi')">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            {{ a11y.lang === 'kaz' ? 'Жүргізушілер' : 'Водители' }}
+            {{ a11y.lang === 'kaz' ? 'Жүргізушілер' : a11y.lang === 'eng' ? 'Drivers' : 'Водители' }}
           </RouterLink>
         </div>
       </div>
@@ -83,17 +83,11 @@
 
       <!-- Language switch -->
       <div class="nav-lang">
-        <button
-          class="lang-btn"
-          :class="{ active: a11y.lang === 'kaz' }"
-          @click="a11y.setLang('kaz')"
-        >ҚАЗ</button>
+        <button class="lang-btn" :class="{ active: a11y.lang === 'kaz' }" @click="a11y.setLang('kaz')">ҚАЗ</button>
         <span class="lang-divider">|</span>
-        <button
-          class="lang-btn"
-          :class="{ active: a11y.lang === 'rus' }"
-          @click="a11y.setLang('rus')"
-        >РУС</button>
+        <button class="lang-btn" :class="{ active: a11y.lang === 'rus' }" @click="a11y.setLang('rus')">РУС</button>
+        <span class="lang-divider">|</span>
+        <button class="lang-btn" :class="{ active: a11y.lang === 'eng' }" @click="a11y.setLang('eng')">ENG</button>
       </div>
     </div>
   </nav>
@@ -127,6 +121,7 @@
       <div class="mobile-nav-section mobile-lang">
         <button class="lang-btn" :class="{ active: a11y.lang === 'kaz' }" @click="a11y.setLang('kaz')">ҚАЗ</button>
         <button class="lang-btn" :class="{ active: a11y.lang === 'rus' }" @click="a11y.setLang('rus')">РУС</button>
+        <button class="lang-btn" :class="{ active: a11y.lang === 'eng' }" @click="a11y.setLang('eng')">ENG</button>
       </div>
     </nav>
   </div>

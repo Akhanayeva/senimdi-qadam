@@ -74,6 +74,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getUsers, updateUserRole, toggleUserBan } from '../../api/admin.js'
+import { useToast } from '../../stores/toast.js'
+
+const toast = useToast()
 
 // Демо-данные на случай, если бэкенд недоступен или нет прав ADMIN
 const mockUsers = ([
@@ -124,14 +127,14 @@ const changeRole = async (user, newRole) => {
   const idx = allUsers.value.findIndex(u => u.id === user.id)
   if (idx !== -1) allUsers.value[idx].role = newRole
   applyFilters()
-  try { await updateUserRole(user.id, newRole) }
-  catch (e) { alert('Не удалось изменить роль: ' + e.message) }
+  try { await updateUserRole(user.id, newRole); toast.success(`Роль изменена на ${newRole}`) }
+  catch (e) { toast.error('Не удалось изменить роль: ' + e.message) }
 }
 
 const confirmDelete = async (user) => {
   if (!confirm(`Заблокировать / разблокировать пользователя "${user.email}"?`)) return
-  try { await toggleUserBan(user.id) }
-  catch (e) { alert('Не удалось выполнить: ' + e.message) }
+  try { await toggleUserBan(user.id); toast.success('Статус пользователя обновлён') }
+  catch (e) { toast.error('Не удалось выполнить: ' + e.message) }
   loadUsers()
 }
 

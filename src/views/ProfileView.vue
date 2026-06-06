@@ -209,7 +209,10 @@
                   <input v-model="passForm.confirm" type="password" class="form-input" :placeholder="lang==='kaz' ? 'Растау' : 'Подтверждение'" />
                   <div v-if="passError" class="field-error">{{ passError }}</div>
                   <div v-if="passSuccess" class="save-success">✅ {{ lang==='kaz' ? 'Құпия сөз өзгертілді' : 'Пароль изменён' }}</div>
-                  <button class="btn btn-primary btn-sm" @click="handleChangePass">{{ lang==='kaz' ? 'Сақтау' : 'Сохранить' }}</button>
+                  <button class="btn btn-primary btn-sm" :disabled="passLoading" @click="handleChangePass">
+                    <span v-if="passLoading" class="spinner-sm-btn"></span>
+                    {{ passLoading ? (lang==='kaz'?'Сақталуда...':'Сохранение...') : (lang==='kaz' ? 'Сақтау' : 'Сохранить') }}
+                  </button>
                 </div>
               </Transition>
 
@@ -223,6 +226,50 @@
                 </div>
                 <span class="verified-tag">✓ {{ lang==='kaz' ? 'Расталды' : 'Подтверждён' }}</span>
               </div>
+
+              <!-- 2FA -->
+              <div class="security-item">
+                <div class="security-item-info">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                  <div>
+                    <div class="sec-label">{{ lang==='kaz' ? 'Екі факторлы аутентификация' : 'Двухфакторная аутентификация' }}</div>
+                    <div class="sec-hint">{{ twoFaEnabled ? (lang==='kaz' ? 'Қосулы ✓' : 'Включена ✓') : (lang==='kaz' ? 'Өшірулі' : 'Отключена') }}</div>
+                  </div>
+                </div>
+                <button class="btn btn-outline btn-sm" @click="toggle2FA">
+                  {{ twoFaEnabled ? (lang==='kaz'?'Өшіру':'Отключить') : (lang==='kaz'?'Қосу':'Включить') }}
+                </button>
+              </div>
+              <Transition name="fade">
+                <div v-if="show2FASetup" class="twofa-setup">
+                  <p class="twofa-hint">{{ lang==='kaz' ? 'QR-кодты Google Authenticator арқылы сканерлеңіз:' : 'Отсканируйте QR-код в Google Authenticator:' }}</p>
+                  <img v-if="twoFaQr" :src="twoFaQr" class="twofa-qr" alt="QR Code" />
+                  <div v-if="twoFaSecret" class="twofa-secret">{{ twoFaSecret }}</div>
+                  <input v-model="twoFaCode" type="text" inputmode="numeric" maxlength="6" class="form-input twofa-input" :placeholder="lang==='kaz'?'6 таңбалы код':'6-значный код'" @keydown.enter="confirm2FA" />
+                  <div v-if="twoFaError" class="field-error">{{ twoFaError }}</div>
+                  <div class="twofa-actions">
+                    <button class="btn btn-outline btn-sm" @click="show2FASetup=false">{{ lang==='kaz'?'Болдырмау':'Отмена' }}</button>
+                    <button class="btn btn-primary btn-sm" :disabled="twoFaLoading || twoFaCode.length<6" @click="confirm2FA">
+                      <span v-if="twoFaLoading" class="spinner-sm"></span>
+                      {{ lang==='kaz'?'Растау':'Подтвердить' }}
+                    </button>
+                  </div>
+                </div>
+              </Transition>
+              <Transition name="fade">
+                <div v-if="show2FADisable" class="twofa-setup">
+                  <p class="twofa-hint">{{ lang==='kaz' ? '2FA-ны өшіру үшін кодты енгізіңіз:' : 'Введите код из приложения для отключения 2FA:' }}</p>
+                  <input v-model="twoFaCode" type="text" inputmode="numeric" maxlength="6" class="form-input twofa-input" :placeholder="lang==='kaz'?'6 таңбалы код':'6-значный код'" @keydown.enter="confirmDisable2FA" />
+                  <div v-if="twoFaError" class="field-error">{{ twoFaError }}</div>
+                  <div class="twofa-actions">
+                    <button class="btn btn-outline btn-sm" @click="show2FADisable=false">{{ lang==='kaz'?'Болдырмау':'Отмена' }}</button>
+                    <button class="btn btn-danger-outline btn-sm" :disabled="twoFaLoading || twoFaCode.length<6" @click="confirmDisable2FA">
+                      <span v-if="twoFaLoading" class="spinner-sm"></span>
+                      {{ lang==='kaz'?'Өшіру':'Отключить' }}
+                    </button>
+                  </div>
+                </div>
+              </Transition>
 
               <div class="danger-zone">
                 <div class="danger-zone-title">⚠️ {{ lang==='kaz' ? 'Қауіпті аймақ' : 'Опасная зона' }}</div>
@@ -291,6 +338,27 @@
                 </RouterLink>
               </div>
             </div>
+            <!-- Liked guides -->
+            <div class="activity-card">
+              <div class="activity-card-header">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                <h3>{{ lang==='kaz' ? 'Ұнатылған нұсқаулықтар' : 'Понравившиеся гайды' }}</h3>
+              </div>
+              <div v-if="likedGuidesList.length === 0" class="activity-empty">
+                <p>{{ lang==='kaz' ? 'Ұнатылған нұсқаулықтар жоқ' : 'Нет понравившихся гайдов' }}</p>
+                <RouterLink to="/guides" class="btn btn-outline btn-sm">{{ lang==='kaz' ? 'Нұсқаулықтарға өту' : 'Перейти к гайдам' }}</RouterLink>
+              </div>
+              <div v-else class="liked-news-list">
+                <RouterLink v-for="g in likedGuidesList" :key="g.id" :to="`/guides`" class="liked-news-item">
+                  <div class="liked-news-placeholder">📖</div>
+                  <div class="liked-news-info">
+                    <div class="liked-news-title">{{ lang==='kaz' ? (g.titleKk || g.titleRu) : (g.titleRu || g.title) }}</div>
+                    <div class="liked-news-date">{{ formatDate(g.publishedAt || g.createdAt) }}</div>
+                  </div>
+                </RouterLink>
+              </div>
+            </div>
+
             <!-- AI chat history -->
             <div class="activity-card">
               <div class="activity-card-header">
@@ -436,14 +504,20 @@
         <div v-else-if="activeTab === 'mynews'" class="tab-content">
           <div class="tab-section-header">
             <h2 class="info-box-title">{{ lang==='kaz' ? 'Менің жаңалықтарым' : 'Мои новости' }}</h2>
-            <div class="mynews-filter">
-              <button
-                v-for="f in newsFilters"
-                :key="f.value"
-                class="mynews-filter-btn"
-                :class="{ active: myNewsFilter === f.value }"
-                @click="myNewsFilter = f.value"
-              >{{ lang==='kaz' ? f.labelKk : f.labelRu }}</button>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <div class="mynews-filter">
+                <button
+                  v-for="f in newsFilters"
+                  :key="f.value"
+                  class="mynews-filter-btn"
+                  :class="{ active: myNewsFilter === f.value }"
+                  @click="myNewsFilter = f.value"
+                >{{ lang==='kaz' ? f.labelKk : f.labelRu }}</button>
+              </div>
+              <button class="btn btn-primary btn-sm" @click="openCreateNews">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                {{ lang==='kaz' ? 'Жаңалық жазу' : 'Написать новость' }}
+              </button>
             </div>
           </div>
           <div v-if="myNewsLoading" class="empty-tab">
@@ -452,6 +526,9 @@
           <div v-else-if="myNewsFiltered.length === 0" class="empty-tab">
             <div class="empty-tab-icon">📰</div>
             <p>{{ lang==='kaz' ? 'Жаңалықтар жоқ' : 'Нет новостей' }}</p>
+            <button class="btn btn-primary btn-sm" @click="openCreateNews">
+              {{ lang==='kaz' ? 'Алғашқы жаңалықты жазыңыз' : 'Написать первую новость' }}
+            </button>
           </div>
           <div v-else class="mynews-list">
             <div
@@ -475,9 +552,89 @@
                   </span>
                 </div>
               </div>
-              <span class="mynews-status-badge" :class="'mynews-status-' + (n.status||'').toLowerCase()">
-                {{ newsStatusLabel(n.status) }}
-              </span>
+              <div class="mynews-actions">
+                <span class="mynews-status-badge" :class="'mynews-status-' + (n.status||'').toLowerCase()">
+                  {{ newsStatusLabel(n.status) }}
+                </span>
+                <button
+                  v-if="n.status === 'DRAFT' || n.status === 'REJECTED'"
+                  class="mynews-edit-btn"
+                  @click="openEditNews(n)"
+                  title="Редактировать"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button
+                  v-if="n.status === 'DRAFT' || n.status === 'REJECTED'"
+                  class="mynews-delete-btn"
+                  :disabled="deletingNewsId === n.id"
+                  @click="deleteMyNewsItem(n)"
+                  title="Удалить"
+                >
+                  <svg v-if="deletingNewsId !== n.id" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                  <span v-else class="spinner-sm-del"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- ── TAB: Requests (tickets + complaints) ── -->
+        <div v-else-if="activeTab === 'requests'" class="tab-content">
+          <div class="admin-tabs" style="margin-bottom:20px">
+            <button class="admin-tab" :class="{active: reqTab==='tickets'}" @click="reqTab='tickets'">
+              {{ lang==='kaz' ? 'Өтінімдер' : 'Обращения' }}
+              <span v-if="myTickets.length" class="tab-count-sm">{{ myTickets.length }}</span>
+            </button>
+            <button class="admin-tab" :class="{active: reqTab==='complaints'}" @click="reqTab='complaints'">
+              {{ lang==='kaz' ? 'Шағымдар' : 'Жалобы' }}
+              <span v-if="myComplaints.length" class="tab-count-sm">{{ myComplaints.length }}</span>
+            </button>
+          </div>
+
+          <!-- Tickets -->
+          <div v-if="reqTab==='tickets'">
+            <div v-if="reqLoading" class="empty-tab"><span class="spinner-sm" style="margin:0 auto"></span></div>
+            <div v-else-if="myTickets.length === 0" class="empty-tab">
+              <div class="empty-tab-icon">📭</div>
+              <p>{{ lang==='kaz' ? 'Өтінімдер жоқ' : 'Обращений пока нет' }}</p>
+              <RouterLink to="/help" class="btn btn-primary btn-sm">{{ lang==='kaz' ? 'Өтінім жіберу' : 'Написать обращение' }}</RouterLink>
+            </div>
+            <div v-else class="req-items-list">
+              <div v-for="t in myTickets" :key="t.id" class="req-item-card">
+                <div class="req-item-header">
+                  <span class="req-item-subject">{{ t.subject }}</span>
+                  <span class="req-item-badge" :class="ticketStatusClass(t.status)">{{ ticketStatusLabel(t.status) }}</span>
+                </div>
+                <p class="req-item-body">{{ t.body }}</p>
+                <div class="req-item-footer">
+                  <span class="req-item-date">📅 {{ formatDate(t.createdAt) }}</span>
+                  <span v-if="t.response" class="req-item-response">💬 {{ t.response }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Complaints -->
+          <div v-if="reqTab==='complaints'">
+            <div v-if="reqLoading" class="empty-tab"><span class="spinner-sm" style="margin:0 auto"></span></div>
+            <div v-else-if="myComplaints.length === 0" class="empty-tab">
+              <div class="empty-tab-icon">🔕</div>
+              <p>{{ lang==='kaz' ? 'Шағымдар жоқ' : 'Жалоб пока нет' }}</p>
+            </div>
+            <div v-else class="req-items-list">
+              <div v-for="c in myComplaints" :key="c.id" class="req-item-card">
+                <div class="req-item-header">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span class="req-target-badge">{{ complaintTargetLabel(c.targetType) }}</span>
+                    <span class="req-item-subject">{{ c.reason }}</span>
+                  </div>
+                  <span class="req-item-badge" :class="complaintStatusClass(c.status)">{{ complaintStatusLabel(c.status) }}</span>
+                </div>
+                <p v-if="c.description" class="req-item-body">{{ c.description }}</p>
+                <div class="req-item-footer">
+                  <span class="req-item-date">📅 {{ formatDate(c.createdAt) }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -486,6 +643,72 @@
 
     <!-- Org modal -->
     <OrgModal v-if="selectedOrg" :org="selectedOrg" @close="selectedOrg=null" />
+
+    <!-- News create/edit modal -->
+    <Teleport to="body">
+      <div v-if="showNewsForm" class="profile-modal-overlay" @click.self="closeNewsForm">
+        <div class="profile-modal">
+          <div class="profile-modal-header">
+            <h3>{{ editingNews ? (lang==='kaz' ? 'Жаңалықты өңдеу' : 'Редактировать новость') : (lang==='kaz' ? 'Жаңалық жазу' : 'Написать новость') }}</h3>
+            <button class="profile-modal-close" @click="closeNewsForm">✕</button>
+          </div>
+          <div class="profile-modal-body">
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label">{{ lang==='kaz' ? 'Тақырып (орысша)' : 'Заголовок (рус)' }} *</label>
+                <input v-model="newsForm.titleRu" type="text" class="form-input" :placeholder="lang==='kaz'?'Тақырып орыс тілінде':'Заголовок на русском'" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">{{ lang==='kaz' ? 'Тақырып (қазақша)' : 'Заголовок (каз)' }}</label>
+                <input v-model="newsForm.titleKk" type="text" class="form-input" :placeholder="lang==='kaz'?'Тақырып қазақ тілінде':'Заголовок на казахском'" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">{{ lang==='kaz' ? 'Мазмұн (орысша)' : 'Текст (рус)' }} *</label>
+              <textarea v-model="newsForm.contentRu" class="form-input form-textarea" rows="5" :placeholder="lang==='kaz'?'Мақала мәтіні...':'Текст статьи...'" required></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">{{ lang==='kaz' ? 'Мазмұн (қазақша)' : 'Текст (каз)' }}</label>
+              <textarea v-model="newsForm.contentKk" class="form-input form-textarea" rows="3" :placeholder="lang==='kaz'?'Мақала мәтіні қазақша...':'Текст статьи на казахском...'" ></textarea>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label">{{ lang==='kaz' ? 'Санат' : 'Категория' }}</label>
+                <select v-model="newsForm.category" class="form-input form-select">
+                  <option value="">{{ lang==='kaz' ? 'Таңдалмаған' : 'Не указана' }}</option>
+                  <option value="SOCIAL">{{ lang==='kaz' ? 'Әлеуметтік' : 'Социальная' }}</option>
+                  <option value="MEDICAL">{{ lang==='kaz' ? 'Медицина' : 'Медицина' }}</option>
+                  <option value="LEGAL">{{ lang==='kaz' ? 'Заңдық' : 'Юридическая' }}</option>
+                  <option value="SPORT">{{ lang==='kaz' ? 'Спорт' : 'Спорт' }}</option>
+                  <option value="CULTURE">{{ lang==='kaz' ? 'Мәдениет' : 'Культура' }}</option>
+                  <option value="OTHER">{{ lang==='kaz' ? 'Басқа' : 'Другое' }}</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">{{ lang==='kaz' ? 'Сурет (файл)' : 'Изображение (файл)' }}</label>
+                <input type="file" accept="image/*" class="form-input" style="padding:6px" @change="handleNewsImageSelect" />
+                <div v-if="newsForm.imagePreview" class="news-img-preview-wrap">
+                  <img :src="newsForm.imagePreview" class="news-img-preview" alt="preview" />
+                </div>
+              </div>
+            </div>
+            <div v-if="newsFormError" class="field-error">{{ newsFormError }}</div>
+            <div v-if="newsFormSuccess" class="save-success">
+              ✅ {{ editingNews ? (lang==='kaz'?'Сақталды!':'Сохранено!') : (lang==='kaz'?'Жіберілді модерацияға!':'Отправлено на модерацию!') }}
+            </div>
+          </div>
+          <div class="profile-modal-footer">
+            <button class="btn btn-outline btn-sm" @click="closeNewsForm" :disabled="newsFormLoading">
+              {{ lang==='kaz' ? 'Болдырмау' : 'Отмена' }}
+            </button>
+            <button class="btn btn-primary btn-sm" :disabled="newsFormLoading || !newsForm.titleRu.trim() || !newsForm.contentRu.trim()" @click="submitNewsForm">
+              <span v-if="newsFormLoading" class="spinner-sm-btn"></span>
+              {{ newsFormLoading ? '...' : (editingNews ? (lang==='kaz'?'Сақтау':'Сохранить') : (lang==='kaz'?'Жіберу':'Отправить')) }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </main>
 </template>
 
@@ -494,11 +717,14 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
 import { useAccessibilityStore } from '../stores/accessibility.js'
-import { getMyProfile, updateMyProfile, uploadAvatar, getLikedNews, getMyLinks, requestRelativeLink, acceptRelativeLink, deleteRelativeLink } from '../api/profile.js'
+import { getMyProfile, updateMyProfile, uploadAvatar, getLikedNews, getLikedGuides, getMyLinks, requestRelativeLink, acceptRelativeLink, deleteRelativeLink, deactivateAccount } from '../api/profile.js'
 import { getMyBookings } from '../api/taxi.js'
-import { getNews, getMyNews } from '../api/news.js'
+import { getNews, getMyNews, createNews, updateNews, deleteNews, uploadNewsImage } from '../api/news.js'
 import { newsImageUrl, avatarUrl as buildAvatarUrl } from '../api/apiClient.js'
 import { getSavedOrganizations } from '../api/organizations.js'
+import { getMyTickets } from '../api/tickets.js'
+import { getMyComplaints } from '../api/complaints.js'
+import { setup2FA, verify2FA, disable2FA, changePassword } from '../api/auth.js'
 import OrgModal from '../components/OrgModal.vue'
 
 const authStore = useAuthStore()
@@ -572,7 +798,8 @@ const profileTabs = computed(() => [
   { id: 'activity', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>', label: lang.value==='kaz' ? 'Белсенділік' : 'Активность' },
   { id: 'rides', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>', label: 'ИнваТакси' },
   { id: 'links', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>', label: lang.value==='kaz' ? 'Байланыстар' : 'Связи' },
-  { id: 'mynews', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>', label: lang.value==='kaz' ? 'Менің жаңалықтарым' : 'Мои новости' }
+  { id: 'mynews', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>', label: lang.value==='kaz' ? 'Менің жаңалықтарым' : 'Мои новости' },
+  { id: 'requests', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>', label: lang.value==='kaz' ? 'Өтінімдер' : 'Обращения' }
 ])
 
 // ── Saved orgs ────────────────────────────────────────────────────────────────
@@ -606,6 +833,9 @@ const likedNewsIds = ref([])
 const likedNewsList = computed(() =>
   allNews.value.filter(n => likedNewsIds.value.includes(n.id))
 )
+
+// ── Liked guides ──────────────────────────────────────────────────────────────
+const likedGuidesList = ref([])
 
 // ── Relative links ────────────────────────────────────────────────────────────
 const relativeLinks = ref([])
@@ -656,18 +886,22 @@ const taxiBookings = ref([])
 
 onMounted(async () => {
   if (authStore.isAuthenticated) {
-    const [fullProfile, news, bookings, likedIds] = await Promise.all([
+    const [fullProfile, news, bookings, likedIds, likedGuides] = await Promise.all([
       getMyProfile(authStore.accessToken).catch(() => authStore.user),
       getNews(),
       getMyBookings().catch(() => []),
-      getLikedNews(authStore.accessToken).catch(() => [])
+      getLikedNews(authStore.accessToken).catch(() => []),
+      getLikedGuides().catch(() => [])
     ])
     profile.value = fullProfile || authStore.user
     allNews.value = (news?.items ?? news) || []
     taxiBookings.value = Array.isArray(bookings) ? bookings : []
     likedNewsIds.value = Array.isArray(likedIds) ? likedIds : []
+    likedGuidesList.value = Array.isArray(likedGuides) ? likedGuides : (likedGuides?.items ?? [])
+    twoFaEnabled.value = !!fullProfile?.twoFaEnabled
     loadLinks()
     loadSavedOrgs()
+    loadMyRequests()
   }
 })
 
@@ -676,23 +910,130 @@ const showChangePass = ref(false)
 const passForm = ref({ current: '', newPass: '', confirm: '' })
 const passError = ref('')
 const passSuccess = ref(false)
+const passLoading = ref(false)
 
-function handleChangePass() {
+async function handleChangePass() {
   passError.value = ''
   if (!passForm.value.current) { passError.value = lang.value==='kaz' ? 'Ағымдағы құпия сөзді енгізіңіз' : 'Введите текущий пароль'; return }
   if (passForm.value.newPass.length < 8) { passError.value = lang.value==='kaz' ? 'Кем дегенде 8 символ' : 'Минимум 8 символов'; return }
   if (passForm.value.newPass !== passForm.value.confirm) { passError.value = lang.value==='kaz' ? 'Құпия сөздер сәйкес емес' : 'Пароли не совпадают'; return }
-  passSuccess.value = true
-  passForm.value = { current: '', newPass: '', confirm: '' }
-  setTimeout(() => { passSuccess.value = false; showChangePass.value = false }, 2000)
+  passLoading.value = true
+  try {
+    await changePassword(passForm.value.current, passForm.value.newPass)
+    passSuccess.value = true
+    passForm.value = { current: '', newPass: '', confirm: '' }
+    setTimeout(() => { passSuccess.value = false; showChangePass.value = false }, 2000)
+  } catch (e) {
+    passError.value = e.message || (lang.value==='kaz' ? 'Қате болды' : 'Ошибка смены пароля')
+  } finally {
+    passLoading.value = false
+  }
 }
 
 // ── Deactivate ────────────────────────────────────────────────────────────────
-function confirmDeactivate() {
-  const msg = lang.value==='kaz' ? 'Аккаунтты шынымен деактивациялайсыз ба?' : 'Вы уверены, что хотите деактивировать аккаунт?'
-  if (confirm(msg)) {
-    authStore.logout()
+async function confirmDeactivate() {
+  const msg = lang.value==='kaz'
+    ? 'Аккаунтты шынымен деактивациялайсыз ба? Бұл қайтарылмайды.'
+    : 'Вы уверены? Аккаунт будет деактивирован и восстановить его будет невозможно.'
+  if (!confirm(msg)) return
+  try {
+    await deactivateAccount()
+  } catch {}
+  authStore.logout()
+}
+
+// ── 2FA ───────────────────────────────────────────────────────────────────────
+const twoFaEnabled = ref(false)
+const show2FASetup = ref(false)
+const show2FADisable = ref(false)
+const twoFaQr = ref('')
+const twoFaSecret = ref('')
+const twoFaCode = ref('')
+const twoFaError = ref('')
+const twoFaLoading = ref(false)
+
+async function toggle2FA() {
+  twoFaError.value = ''
+  twoFaCode.value = ''
+  if (twoFaEnabled.value) {
+    show2FASetup.value = false
+    show2FADisable.value = true
+  } else {
+    show2FADisable.value = false
+    twoFaLoading.value = true
+    try {
+      const res = await setup2FA()
+      twoFaQr.value = res.qrCode || ''
+      twoFaSecret.value = res.secret || ''
+      show2FASetup.value = true
+    } catch (e) {
+      twoFaError.value = e.message || (lang.value==='kaz'?'Қате':'Ошибка')
+    } finally { twoFaLoading.value = false }
   }
+}
+
+async function confirm2FA() {
+  if (twoFaCode.value.length < 6) return
+  twoFaLoading.value = true
+  twoFaError.value = ''
+  try {
+    await verify2FA(twoFaCode.value)
+    twoFaEnabled.value = true
+    show2FASetup.value = false
+    twoFaCode.value = ''
+  } catch (e) {
+    twoFaError.value = e.message || (lang.value==='kaz'?'Қате код':'Неверный код')
+  } finally { twoFaLoading.value = false }
+}
+
+async function confirmDisable2FA() {
+  if (twoFaCode.value.length < 6) return
+  twoFaLoading.value = true
+  twoFaError.value = ''
+  try {
+    await disable2FA(twoFaCode.value)
+    twoFaEnabled.value = false
+    show2FADisable.value = false
+    twoFaCode.value = ''
+  } catch (e) {
+    twoFaError.value = e.message || (lang.value==='kaz'?'Қате код':'Неверный код')
+  } finally { twoFaLoading.value = false }
+}
+
+// ── My requests (tickets + complaints) ───────────────────────────────────────
+const reqTab = ref('tickets')
+const myTickets = ref([])
+const myComplaints = ref([])
+const reqLoading = ref(false)
+
+async function loadMyRequests() {
+  reqLoading.value = true
+  try {
+    const [tickets, complaints] = await Promise.all([
+      getMyTickets().catch(() => []),
+      getMyComplaints().catch(() => [])
+    ])
+    myTickets.value = Array.isArray(tickets) ? tickets : (tickets?.items ?? [])
+    myComplaints.value = Array.isArray(complaints) ? complaints : (complaints?.items ?? [])
+  } finally { reqLoading.value = false }
+}
+
+function ticketStatusLabel(s) {
+  const m = { OPEN: lang.value==='kaz'?'Ашық':'Открыто', IN_PROGRESS: lang.value==='kaz'?'Қаралуда':'В работе', RESOLVED: '✓ '+(lang.value==='kaz'?'Шешілді':'Решено'), CLOSED: lang.value==='kaz'?'Жабылды':'Закрыто' }
+  return m[s] || s
+}
+function ticketStatusClass(s) {
+  return { OPEN: 'badge-open', IN_PROGRESS: 'badge-inprogress', RESOLVED: 'badge-resolved', CLOSED: 'badge-closed' }[s] || ''
+}
+function complaintStatusLabel(s) {
+  const m = { OPEN: lang.value==='kaz'?'Ашық':'Открыта', UNDER_REVIEW: lang.value==='kaz'?'Қаралуда':'На рассмотрении', RESOLVED: '✓ '+(lang.value==='kaz'?'Шешілді':'Решена'), DISMISSED: lang.value==='kaz'?'Қабылданбады':'Отклонена' }
+  return m[s] || s
+}
+function complaintStatusClass(s) {
+  return { OPEN: 'badge-open', UNDER_REVIEW: 'badge-inprogress', RESOLVED: 'badge-resolved', DISMISSED: 'badge-closed' }[s] || ''
+}
+function complaintTargetLabel(t) {
+  return { Organization: '🏢', News: '📰', User: '👤' }[t] || t
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -769,6 +1110,107 @@ async function loadMyNews() {
     myNewsList.value = res.items || []
   } catch {}
   finally { myNewsLoading.value = false }
+}
+
+const deletingNewsId = ref(null)
+
+async function deleteMyNewsItem(n) {
+  if (!confirm(lang.value==='kaz' ? 'Жаңалықты жою керек пе?' : 'Удалить эту новость?')) return
+  deletingNewsId.value = n.id
+  try {
+    await deleteNews(authStore.accessToken, n.id)
+    myNewsList.value = myNewsList.value.filter(x => x.id !== n.id)
+  } catch (e) {
+    alert(e.message || 'Ошибка удаления')
+  } finally {
+    deletingNewsId.value = null
+  }
+}
+
+// ── News create / edit ────────────────────────────────────────────────────────
+const showNewsForm = ref(false)
+const editingNews = ref(null) // null = create mode, object = edit mode
+const newsFormLoading = ref(false)
+const newsFormError = ref('')
+const newsFormSuccess = ref(false)
+const newsImageFile = ref(null)
+
+function emptyNewsForm() {
+  return { titleRu: '', titleKk: '', contentRu: '', contentKk: '', category: '', imagePreview: '' }
+}
+const newsForm = ref(emptyNewsForm())
+
+function openCreateNews() {
+  editingNews.value = null
+  newsForm.value = emptyNewsForm()
+  newsImageFile.value = null
+  newsFormError.value = ''
+  newsFormSuccess.value = false
+  showNewsForm.value = true
+}
+
+function openEditNews(n) {
+  editingNews.value = n
+  newsForm.value = {
+    titleRu: n.titleRu || '',
+    titleKk: n.titleKk || '',
+    contentRu: n.contentRu || n.content || '',
+    contentKk: n.contentKk || '',
+    category: n.category || '',
+    imagePreview: n.imageUrl ? newsImageUrl(n.imageUrl) : ''
+  }
+  newsImageFile.value = null
+  newsFormError.value = ''
+  newsFormSuccess.value = false
+  showNewsForm.value = true
+}
+
+function closeNewsForm() {
+  showNewsForm.value = false
+  editingNews.value = null
+  newsImageFile.value = null
+}
+
+function handleNewsImageSelect(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  newsImageFile.value = file
+  newsForm.value.imagePreview = URL.createObjectURL(file)
+}
+
+async function submitNewsForm() {
+  newsFormError.value = ''
+  if (!newsForm.value.titleRu.trim()) { newsFormError.value = lang.value==='kaz'?'Тақырыпты енгізіңіз':'Введите заголовок'; return }
+  if (!newsForm.value.contentRu.trim()) { newsFormError.value = lang.value==='kaz'?'Мәтінді енгізіңіз':'Введите текст'; return }
+  newsFormLoading.value = true
+  try {
+    const payload = {
+      titleRu: newsForm.value.titleRu.trim(),
+      titleKk: newsForm.value.titleKk.trim() || undefined,
+      contentRu: newsForm.value.contentRu.trim(),
+      contentKk: newsForm.value.contentKk.trim() || undefined,
+      category: newsForm.value.category || undefined,
+    }
+    let savedNews
+    if (editingNews.value) {
+      savedNews = await updateNews(editingNews.value.id, payload)
+    } else {
+      savedNews = await createNews(null, payload)
+    }
+    // Upload image if selected
+    if (newsImageFile.value && savedNews?.id) {
+      try { await uploadNewsImage(savedNews.id, newsImageFile.value) } catch {}
+    }
+    newsFormSuccess.value = true
+    setTimeout(() => {
+      closeNewsForm()
+      loadMyNews()
+    }, 1500)
+  } catch (e) {
+    newsFormError.value = e.message || (lang.value==='kaz'?'Қате болды':'Ошибка сохранения')
+  } finally {
+    newsFormLoading.value = false
+  }
 }
 
 // Watch tab switch to lazy-load my news
@@ -923,6 +1365,7 @@ watch(activeTab, (tab) => {
 
 /* Spinner */
 .spinner-sm { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+.spinner-sm-btn { width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; vertical-align: middle; margin-right: 4px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* Fade */
@@ -966,8 +1409,90 @@ watch(activeTab, (tab) => {
 .mynews-date { font-size: 11px; color: var(--gray-400); }
 .mynews-stat { display: flex; align-items: center; gap: 3px; font-size: 11px; color: var(--gray-500); }
 .mynews-status-badge { padding: 3px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+.mynews-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.mynews-delete-btn {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1.5px solid #fecaca; background: #fef2f2; color: #dc2626;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.15s;
+}
+.mynews-delete-btn:hover:not(:disabled) { background: #fee2e2; border-color: #dc2626; }
+.mynews-delete-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.spinner-sm-del { width: 11px; height: 11px; border: 2px solid rgba(220,38,38,0.3); border-top-color: #dc2626; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
 .mynews-status-published { background: #D1FAE5; color: #065F46; }
 .mynews-status-pending   { background: #FEF3C7; color: #92400E; }
 .mynews-status-rejected  { background: #FEE2E2; color: #991B1B; }
 .mynews-status-draft     { background: var(--gray-100); color: var(--gray-500); }
+
+/* ── 2FA ── */
+.twofa-setup { background: var(--gray-50); border-radius: var(--radius-md); padding: 16px; margin: 10px 0; display: flex; flex-direction: column; gap: 10px; }
+.twofa-hint { font-size: var(--fs-sm); color: var(--gray-600); }
+.twofa-qr { width: 150px; height: 150px; border-radius: var(--radius-sm); }
+.twofa-secret { font-family: monospace; font-size: 12px; background: white; border: 1.5px solid var(--gray-200); padding: 6px 10px; border-radius: var(--radius-sm); color: var(--gray-700); word-break: break-all; }
+.twofa-input { max-width: 180px; letter-spacing: 4px; text-align: center; font-size: var(--fs-lg); font-weight: 700; }
+.twofa-actions { display: flex; gap: 8px; }
+.btn-danger-outline { border: 1.5px solid #DC2626 !important; color: #DC2626 !important; background: none !important; }
+.btn-danger-outline:hover { background: #FEF2F2 !important; }
+
+/* ── Requests tab ── */
+.admin-tabs { display: flex; gap: 4px; background: white; padding: 6px; border-radius: 11px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); width: fit-content; }
+.admin-tab { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; color: #64748b; background: transparent; transition: all 0.15s; }
+.admin-tab:hover { background: #f1f5f9; color: #1e293b; }
+.admin-tab.active { background: #3b82f6; color: white; }
+.tab-count-sm { background: #ef4444; color: white; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+.admin-tab.active .tab-count-sm { background: rgba(255,255,255,0.3); }
+.req-items-list { display: flex; flex-direction: column; gap: 12px; }
+.req-item-card { background: white; border-radius: var(--radius-lg); padding: 16px 18px; box-shadow: var(--shadow); }
+.req-item-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+.req-item-subject { font-size: var(--fs-sm); font-weight: 700; color: var(--black); }
+.req-item-body { font-size: var(--fs-sm); color: var(--gray-500); line-height: 1.6; margin-bottom: 10px; }
+.req-item-footer { display: flex; align-items: center; gap: 16px; font-size: var(--fs-xs); color: var(--gray-400); flex-wrap: wrap; }
+.req-item-response { color: var(--gray-600); font-style: italic; }
+.req-target-badge { font-size: 16px; }
+.req-item-badge { font-size: 11px; padding: 3px 10px; border-radius: var(--radius-full); font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+.badge-open       { background: #fefce8; color: #ca8a04; }
+.badge-inprogress { background: #eff6ff; color: #3b82f6; }
+.badge-resolved   { background: #f0fdf4; color: #16a34a; }
+.badge-closed     { background: #f1f5f9; color: #64748b; }
+
+/* ── News edit button ── */
+.mynews-edit-btn {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1.5px solid #bfdbfe; background: #eff6ff; color: #3b82f6;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.15s;
+}
+.mynews-edit-btn:hover { background: #dbeafe; border-color: #3b82f6; }
+
+/* ── News form modal ── */
+.profile-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 16px;
+}
+.profile-modal {
+  background: white; border-radius: 14px; width: 100%; max-width: 620px;
+  max-height: 92vh; display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+}
+.profile-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px; border-bottom: 1px solid var(--gray-100);
+}
+.profile-modal-header h3 { font-size: var(--fs-lg); font-weight: 700; color: var(--black); }
+.profile-modal-close {
+  width: 30px; height: 30px; border-radius: 7px; border: none;
+  background: var(--gray-100); color: var(--gray-500); cursor: pointer; font-size: 14px;
+}
+.profile-modal-close:hover { background: var(--gray-200); }
+.profile-modal-body {
+  padding: 20px 24px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.profile-modal-footer {
+  padding: 16px 24px; border-top: 1px solid var(--gray-100);
+  display: flex; justify-content: flex-end; gap: 10px;
+}
+.news-img-preview-wrap { margin-top: 6px; }
+.news-img-preview { width: 100%; max-height: 160px; object-fit: cover; border-radius: 8px; border: 1px solid var(--gray-200); }
 </style>

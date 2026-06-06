@@ -1,20 +1,8 @@
 <template>
   <div class="org-card" :class="{ 'org-card--verified': org.status === 'VERIFIED' }">
-    <!-- Verified badge -->
-    <div class="org-card-header">
-      <div class="org-avatar">
-        <span>{{ (org.nameRu || '').charAt(0) }}</span>
-      </div>
-      <div class="org-header-info">
-        <span v-if="org.status === 'VERIFIED'" class="badge badge-verified">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-          {{ t('verified') }}
-        </span>
-        <span v-else class="badge badge-unverified">{{ t('notVerified') }}</span>
-        <span v-if="categoryLabel" class="badge badge-category" style="margin-left:4px">
-          {{ categoryLabel }}
-        </span>
-      </div>
+    <!-- Banner -->
+    <div class="org-card-banner" :style="{ background: orgColor }">
+      <span class="org-banner-letter">{{ (orgName || '').charAt(0) }}</span>
       <button
         v-if="authStore.isAuthenticated"
         class="save-btn"
@@ -26,13 +14,19 @@
           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
         </svg>
       </button>
+      <div class="org-banner-badges">
+        <span v-if="org.status === 'VERIFIED'" class="badge badge-verified badge-on-banner">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          {{ t('verified') }}
+        </span>
+        <span v-if="categoryLabel" class="badge badge-category badge-on-banner">{{ categoryLabel }}</span>
+      </div>
     </div>
 
-    <!-- Name -->
-    <h3 class="org-name">{{ lang === 'kaz' ? org.nameKk : org.nameRu }}</h3>
+    <h3 class="org-name">{{ orgName }}</h3>
 
     <!-- Description -->
-    <p class="org-desc">{{ lang === 'kaz' ? org.descriptionKk : org.description }}</p>
+    <p class="org-desc">{{ orgDesc }}</p>
 
     <!-- Meta info -->
     <div class="org-meta">
@@ -87,6 +81,17 @@ const a11y = useAccessibilityStore()
 const lang = computed(() => a11y.lang)
 const t = computed(() => useI18n(lang.value))
 
+// API returns already-localised `name`/`description` (language interceptor).
+// Fall back to bilingual fields for safety / mock data.
+const orgName = computed(() => {
+  const o = props.org || {}
+  return o.name || (lang.value === 'kaz' ? o.nameKk : o.nameRu) || o.nameRu || ''
+})
+const orgDesc = computed(() => {
+  const o = props.org || {}
+  return o.description || (lang.value === 'kaz' ? o.descriptionKk : o.descriptionRu) || ''
+})
+
 // Maps real API org.category enum → display label (RU/KK)
 const CATEGORY_LABELS = {
   MEDICAL:        { rus: 'Медицина',             kaz: 'Медицина' },
@@ -100,6 +105,22 @@ const CATEGORY_LABELS = {
   PSYCHOLOGICAL:  { rus: 'Психологическая',       kaz: 'Психологиялық' },
   OTHER:          { rus: 'Прочее',                kaz: 'Басқа' },
 }
+
+// Banner color based on org name initial
+const COLORS = [
+  'linear-gradient(135deg,#6366f1 0%,#4f46e5 100%)',
+  'linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%)',
+  'linear-gradient(135deg,#10b981 0%,#059669 100%)',
+  'linear-gradient(135deg,#f59e0b 0%,#d97706 100%)',
+  'linear-gradient(135deg,#ef4444 0%,#dc2626 100%)',
+  'linear-gradient(135deg,#8b5cf6 0%,#7c3aed 100%)',
+  'linear-gradient(135deg,#ec4899 0%,#db2777 100%)',
+  'linear-gradient(135deg,#14b8a6 0%,#0d9488 100%)',
+]
+const orgColor = computed(() => {
+  const code = (orgName.value || 'A').charCodeAt(0)
+  return COLORS[code % COLORS.length]
+})
 
 // Works with real API (org.category enum) AND mock (org.categoryLabel nested object)
 const categoryLabel = computed(() => {
@@ -119,57 +140,89 @@ const categoryLabel = computed(() => {
 .org-card {
   background: var(--white);
   border-radius: var(--radius-lg);
-  padding: 20px;
   box-shadow: var(--shadow);
   transition: all var(--transition);
   cursor: pointer;
   border: 1.5px solid transparent;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  overflow: hidden;
   position: relative;
 }
-.org-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); border-color: var(--gray-200); }
+.org-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); }
 .org-card--verified { border-color: rgba(16,185,129,0.2); }
 .org-card--verified:hover { border-color: rgba(16,185,129,0.4); }
 
-.org-card-header { display: flex; align-items: flex-start; gap: 10px; }
-.org-avatar {
-  width: 44px; height: 44px;
-  background: var(--primary-pale);
-  border-radius: var(--radius-sm);
-  display: flex; align-items: center; justify-content: center;
-  font-size: var(--fs-lg);
-  font-weight: 800;
-  color: var(--primary);
+/* Banner (like news card image) */
+.org-card-banner {
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
   flex-shrink: 0;
 }
-.org-header-info { flex: 1; display: flex; flex-wrap: wrap; gap: 4px; padding-top: 2px; }
+.org-banner-letter {
+  font-size: 56px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.35);
+  user-select: none;
+  line-height: 1;
+}
+.org-banner-badges {
+  position: absolute;
+  bottom: 10px;
+  left: 12px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.badge-on-banner {
+  background: rgba(0,0,0,0.35) !important;
+  color: white !important;
+  border: none !important;
+  backdrop-filter: blur(4px);
+}
 .save-btn {
-  color: var(--gray-400, #9CA3AF);
-  padding: 4px;
-  border-radius: 6px;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: rgba(255,255,255,0.8);
+  background: rgba(0,0,0,0.25);
+  padding: 6px;
+  border-radius: 8px;
   transition: all var(--transition);
-  flex-shrink: 0;
+  backdrop-filter: blur(4px);
 }
-.save-btn:hover, .save-btn.saved { color: #EF4444; }
+.save-btn:hover, .save-btn.saved { color: #EF4444; background: rgba(255,255,255,0.9); }
 
+/* Card body */
+.org-name,
+.org-desc,
+.org-meta,
+.org-tags,
+.org-footer {
+  padding-left: 20px;
+  padding-right: 20px;
+}
 .org-name {
+  padding-top: 16px;
   font-size: var(--fs-md);
   font-weight: 700;
   color: var(--black);
   line-height: 1.3;
 }
 .org-desc {
+  margin-top: 8px;
   font-size: var(--fs-sm);
   color: var(--gray-500);
   line-height: 1.6;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.org-meta { display: flex; flex-direction: column; gap: 6px; }
+.org-meta { display: flex; flex-direction: column; gap: 5px; margin-top: 10px; }
 .org-meta-item {
   display: flex;
   align-items: flex-start;
@@ -181,7 +234,7 @@ const categoryLabel = computed(() => {
 .org-meta-item a:hover { text-decoration: underline; }
 .org-meta-item svg { flex-shrink: 0; margin-top: 2px; }
 
-.org-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.org-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .org-tag {
   font-size: 11px;
   color: var(--primary);
@@ -195,8 +248,10 @@ const categoryLabel = computed(() => {
   align-items: center;
   justify-content: space-between;
   margin-top: auto;
-  padding-top: 8px;
+  padding-top: 12px;
+  padding-bottom: 16px;
   border-top: 1px solid var(--gray-100);
+  margin-top: 14px;
 }
 .org-rating { display: flex; align-items: center; gap: 5px; }
 .stars { display: flex; gap: 1px; }

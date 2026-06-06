@@ -70,7 +70,7 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
-          Добавить организацию
+          Организации
         </RouterLink>
         <RouterLink to="/admin/news" class="quick-action-btn">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -79,6 +79,12 @@
           </svg>
           Модерация новостей
         </RouterLink>
+        <RouterLink to="/admin/tickets" class="quick-action-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          Обращения
+        </RouterLink>
         <RouterLink to="/admin/taxi" class="quick-action-btn">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="1" y="3" width="15" height="13" rx="2"/>
@@ -86,14 +92,21 @@
             <circle cx="5.5" cy="18.5" r="2.5"/>
             <circle cx="18.5" cy="18.5" r="2.5"/>
           </svg>
-          Диспетчер такси
+          ИнваТакси
         </RouterLink>
-        <RouterLink to="/admin/users" class="quick-action-btn">
+        <RouterLink v-if="authStore.isAdmin" to="/admin/users" class="quick-action-btn">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
             <circle cx="9" cy="7" r="4"/>
           </svg>
           Пользователи
+        </RouterLink>
+        <RouterLink v-if="authStore.isAdmin" to="/admin/audit" class="quick-action-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          Журнал аудита
         </RouterLink>
       </div>
     </div>
@@ -109,30 +122,66 @@
             <div class="activity-time">{{ item.time }}</div>
           </div>
         </div>
+        <div v-if="recentActivity.length === 0" class="activity-empty">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <p>История действий пуста</p>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
+import { getUsers, getNewsStats, getAuditLogs } from '../../api/admin.js'
+import { getOrganizations } from '../../api/organizations.js'
+import { getManagerStats } from '../../api/taxi.js'
+import { useAuthStore } from '../../stores/auth.js'
 
-// Mock stats — replace with real API calls when backend is ready
-const stats = ref({
-  orgs: 24,
-  users: 138,
-  pendingNews: 3,
-  taxiActive: 5,
+const authStore = useAuthStore()
+
+// Начальные нули — заглушка, если нет прав ADMIN или бэкенд недоступен.
+// При успешной загрузке перезаписываются реальными данными.
+const stats = ref({ orgs: 0, users: 0, pendingNews: 0, taxiActive: 0 })
+const recentActivity = ref([])
+
+const total = (res) => res?.total ?? res?.items?.length ?? (Array.isArray(res) ? res.length : 0)
+
+const timeAgo = (iso) => {
+  if (!iso) return ''
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000
+  if (diff < 60) return 'только что'
+  if (diff < 3600) return `${Math.floor(diff / 60)} мин назад`
+  if (diff < 86400) return `${Math.floor(diff / 3600)} ч назад`
+  return `${Math.floor(diff / 86400)} дн назад`
+}
+
+const auditColor = (action = '') => {
+  const a = String(action).toUpperCase()
+  if (a.includes('DELETE') || a.includes('BAN') || a.includes('REJECT')) return '#ef4444'
+  if (a.includes('CREATE') || a.includes('VERIFY') || a.includes('PUBLISH')) return '#22c55e'
+  if (a.includes('UPDATE') || a.includes('ROLE')) return '#3b82f6'
+  return '#a855f7'
+}
+
+onMounted(async () => {
+  // Каждый блок грузим отдельно — частичная недоступность не ломает дашборд
+  try { stats.value.orgs = total(await getOrganizations({ limit: 1 })) } catch {}
+  try { stats.value.users = total(await getUsers({ limit: 1 })) } catch {}
+  try { const s = await getNewsStats(); stats.value.pendingNews = s?.pending ?? s?.PENDING ?? 0 } catch {}
+  try { const t = await getManagerStats(); stats.value.taxiActive = (t?.confirmed ?? 0) + (t?.inProgress ?? 0) } catch {}
+  try {
+    const res = await getAuditLogs({ limit: 6 })
+    const items = res?.items ?? res ?? []
+    recentActivity.value = items.map((l, i) => ({
+      id: l.id ?? i,
+      text: l.summary || l.description || `${l.action || 'Действие'}${l.targetType ? ' · ' + l.targetType : ''}`,
+      time: timeAgo(l.createdAt),
+      color: auditColor(l.action),
+    }))
+  } catch {}
 })
-
-const recentActivity = ref([
-  { id: 1, text: 'Новая организация "Алматы Арна" ожидает верификации', time: '5 мин назад', color: '#3b82f6' },
-  { id: 2, text: 'Новость "Новые льготы для инвалидов" опубликована', time: '20 мин назад', color: '#22c55e' },
-  { id: 3, text: 'Пользователь user@senimdi.kz оставил жалобу', time: '1 час назад', color: '#ef4444' },
-  { id: 4, text: 'Заявка ИнваТакси #142 завершена', time: '2 часа назад', color: '#a855f7' },
-  { id: 5, text: 'Комментарий к новости ожидает модерации', time: '3 часа назад', color: '#eab308' },
-])
 </script>
 
 <style scoped>
@@ -199,6 +248,7 @@ const recentActivity = ref([
 .activity-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
 .activity-text { font-size: 13.5px; color: #334155; }
 .activity-time { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+.activity-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; color: #94a3b8; font-size: 13px; gap: 4px; }
 
 @media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 480px) { .stats-grid { grid-template-columns: 1fr; } }

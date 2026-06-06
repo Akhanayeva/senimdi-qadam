@@ -27,6 +27,11 @@ export async function getMe() {
   return get('/core/auth/me')
 }
 
+/** PATCH /auth/change-password — { currentPassword, newPassword } */
+export async function changePassword(currentPassword, newPassword) {
+  return post('/core/auth/change-password', { currentPassword, newPassword })
+}
+
 /** POST /auth/forgot-password */
 export async function forgotPassword(email) {
   return post('/core/auth/forgot-password', { email }, false)
@@ -62,6 +67,11 @@ export async function disable2FA(totpCode) {
 /** GET /auth/verify?token=... — переход по ссылке из письма */
 export async function verifyEmail(token) {
   return get(buildQuery('/core/auth/verify', { token }), false)
+}
+
+/** POST /auth/verify-code — { email, code } подтверждение по 6-значному коду */
+export async function verifyEmailCode(email, code) {
+  return post('/core/auth/verify-code', { email, code }, false)
 }
 
 /** POST /auth/resend-verification — { email } */

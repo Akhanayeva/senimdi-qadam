@@ -136,6 +136,54 @@
             </div>
           </div>
 
+          <!-- ── Step 4: Email verification code ── -->
+          <div v-else-if="step === 4" class="form-step">
+            <div class="verify-intro">
+              <div class="verify-icon">📧</div>
+              <p>
+                {{ lang==='kaz'
+                  ? 'Растау коды мына поштаға жіберілді:'
+                  : 'Код подтверждения отправлен на почту:' }}
+                <strong>{{ form.email }}</strong>
+              </p>
+              <p class="verify-hint">
+                {{ lang==='kaz'
+                  ? '6 саннан тұратын кодты енгізіңіз.'
+                  : 'Введите 6-значный код из письма.' }}
+              </p>
+            </div>
+
+            <!-- DEV: показываем код прямо на экране, если бэкенд его вернул -->
+            <div v-if="devCode" class="verify-devcode">
+              {{ lang==='kaz' ? 'Тест режимі — кодыңыз:' : 'Тестовый режим — ваш код:' }}
+              <strong>{{ devCode }}</strong>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">{{ lang==='kaz' ? 'Растау коды *' : 'Код подтверждения *' }}</label>
+              <input
+                v-model="verifyCode"
+                type="text"
+                inputmode="numeric"
+                maxlength="6"
+                class="form-input verify-input"
+                placeholder="______"
+                @input="verifyCode = verifyCode.replace(/\D/g, '').slice(0, 6)"
+              />
+            </div>
+
+            <button type="button" class="resend-link" :disabled="resending" @click="handleResend">
+              {{ resending
+                ? (lang==='kaz' ? 'Жіберілуде...' : 'Отправка...')
+                : (lang==='kaz' ? 'Кодты қайта жіберу' : 'Отправить код повторно') }}
+            </button>
+            <Transition name="fade">
+              <div v-if="resendOk" class="verify-success-mini">
+                ✓ {{ lang==='kaz' ? 'Жаңа код жіберілді' : 'Новый код отправлен' }}
+              </div>
+            </Transition>
+          </div>
+
           <Transition name="fade">
             <div v-if="error" class="auth-error">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
@@ -145,15 +193,23 @@
 
           <!-- Navigation buttons -->
           <div class="step-nav">
-            <button v-if="step > 1" type="button" class="btn btn-outline" @click="step--">
+            <button v-if="step > 1 && step < 4" type="button" class="btn btn-outline" @click="step--">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
               {{ lang==='kaz' ? 'Артқа' : 'Назад' }}
             </button>
-            <button type="submit" class="btn btn-primary" :class="{ 'w-full': step === 1 }" :disabled="loading || (step===3 && form.password !== form.confirmPassword)">
+            <button type="submit" class="btn btn-primary" :class="{ 'w-full': step === 1 || step === 4 }" :disabled="loading || (step===3 && form.password !== form.confirmPassword) || (step===4 && verifyCode.length !== 6)">
               <span v-if="loading" class="spinner-sm"></span>
               <template v-else>
-                {{ step < 3 ? (lang==='kaz' ? 'Келесі →' : 'Далее →') : (lang==='kaz' ? 'Тіркелу' : 'Зарегистрироваться') }}
+                {{ step < 3 ? (lang==='kaz' ? 'Келесі →' : 'Далее →')
+                   : step === 3 ? (lang==='kaz' ? 'Тіркелу' : 'Зарегистрироваться')
+                   : (lang==='kaz' ? 'Растау' : 'Подтвердить') }}
               </template>
+            </button>
+          </div>
+
+          <div v-if="step === 4" class="verify-skip">
+            <button type="button" class="skip-link" @click="router.push('/profile')">
+              {{ lang==='kaz' ? 'Кейінірек растау' : 'Подтвердить позже' }}
             </button>
           </div>
         </form>
@@ -172,6 +228,7 @@ import { ref, computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
 import { useAccessibilityStore } from '../stores/accessibility.js'
+import { verifyEmailCode, resendVerification } from '../api/auth.js'
 
 const authStore = useAuthStore()
 const a11y = useAccessibilityStore()
@@ -182,6 +239,12 @@ const step = ref(1)
 const showPass = ref(false)
 const error = ref('')
 const loading = ref(false)
+
+// Email verification (step 4)
+const verifyCode = ref('')
+const devCode = ref('')        // показывается только если бэкенд вернул код (DEV-режим)
+const resending = ref(false)
+const resendOk = ref(false)
 
 const form = ref({
   firstName: '', lastName: '', email: '', phone: '',
@@ -225,14 +288,17 @@ const handleNext = async () => {
   error.value = ''
   if (step.value < 3) { step.value++; return }
 
-  // Final submit
+  // Step 4: подтверждение email по коду
+  if (step.value === 4) { await handleVerify(); return }
+
+  // Step 3 → регистрация
   if (form.value.password !== form.value.confirmPassword) {
     error.value = lang.value === 'kaz' ? 'Құпия сөздер сәйкес емес' : 'Пароли не совпадают'
     return
   }
   loading.value = true
   try {
-    await authStore.register({
+    const res = await authStore.register({
       email: form.value.email,
       password: form.value.password,
       firstName: form.value.firstName,
@@ -241,12 +307,46 @@ const handleNext = async () => {
       role: form.value.role,
       disabilityType: form.value.disabilityType || undefined
     })
-    router.push('/profile')
+    // DEV-режим: бэкенд вернул код прямо в ответе — показываем на экране
+    if (res?.devCode) devCode.value = res.devCode
+    step.value = 4   // переходим к вводу кода подтверждения
   } catch (e) {
     error.value = e.message
     step.value = e.message.includes('email') ? 1 : step.value
   } finally {
     loading.value = false
+  }
+}
+
+const handleVerify = async () => {
+  error.value = ''
+  if (verifyCode.value.length !== 6) {
+    error.value = lang.value === 'kaz' ? '6 саннан тұратын кодты енгізіңіз' : 'Введите 6-значный код'
+    return
+  }
+  loading.value = true
+  try {
+    await verifyEmailCode(form.value.email, verifyCode.value)
+    router.push('/profile')
+  } catch (e) {
+    error.value = e.message || (lang.value === 'kaz' ? 'Қате код' : 'Неверный код')
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleResend = async () => {
+  error.value = ''; resendOk.value = false
+  resending.value = true
+  try {
+    const res = await resendVerification(form.value.email)
+    if (res?.devCode) devCode.value = res.devCode
+    resendOk.value = true
+    setTimeout(() => { resendOk.value = false }, 3000)
+  } catch (e) {
+    error.value = e.message
+  } finally {
+    resending.value = false
   }
 }
 </script>
@@ -327,4 +427,20 @@ const handleNext = async () => {
 .auth-link:hover { text-decoration: underline; }
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/* Step 4: verification */
+.verify-intro { text-align: center; margin-bottom: 8px; }
+.verify-icon { font-size: 40px; margin-bottom: 8px; }
+.verify-intro p { font-size: var(--fs-sm); color: var(--gray-700); margin-bottom: 4px; }
+.verify-hint { color: var(--gray-500) !important; }
+.verify-devcode { background: #FEF9C3; border: 1px solid #FACC15; color: #854D0E; padding: 10px 14px; border-radius: var(--radius-md); font-size: var(--fs-sm); text-align: center; margin-bottom: 6px; }
+.verify-devcode strong { font-size: var(--fs-lg); letter-spacing: 4px; }
+.verify-input { text-align: center; font-size: var(--fs-2xl); font-weight: 800; letter-spacing: 12px; }
+.resend-link { background: none; border: none; color: var(--primary); font-size: var(--fs-sm); font-weight: 600; cursor: pointer; padding: 4px 0; align-self: flex-start; }
+.resend-link:hover:not(:disabled) { text-decoration: underline; }
+.resend-link:disabled { color: var(--gray-400); cursor: default; }
+.verify-success-mini { color: #16A34A; font-size: var(--fs-xs); font-weight: 600; }
+.verify-skip { text-align: center; margin-top: 12px; }
+.skip-link { background: none; border: none; color: var(--gray-400); font-size: var(--fs-xs); cursor: pointer; }
+.skip-link:hover { color: var(--gray-600); text-decoration: underline; }
 </style>

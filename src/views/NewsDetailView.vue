@@ -3,7 +3,7 @@
     <div class="container news-detail-content">
       <RouterLink to="/news" class="back-btn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-        {{ a11y.lang === 'kaz' ? 'Барлық жаңалықтар' : 'Все новости' }}
+        {{ t('allNews') }}
       </RouterLink>
 
       <!-- Skeleton -->
@@ -17,23 +17,23 @@
       <!-- Not found -->
       <div v-else-if="!article" class="empty-state">
         <div class="empty-state-icon">📰</div>
-        <p>{{ a11y.lang === 'kaz' ? 'Жаңалық табылмады' : 'Новость не найдена' }}</p>
-        <RouterLink to="/news" class="btn btn-primary mt-4">{{ a11y.lang === 'kaz' ? 'Барлық жаңалықтар' : 'Все новости' }}</RouterLink>
+        <p>{{ t('newsNotFound') }}</p>
+        <RouterLink to="/news" class="btn btn-primary mt-4">{{ t('allNews') }}</RouterLink>
       </div>
 
       <!-- Article -->
       <article v-else class="news-article">
         <div class="news-article-meta">
           <span class="news-article-cat">
-            {{ article.category === 'event' ? '📅 ' + (a11y.lang==='kaz'?'Оқиға':'Событие')
-             : article.category === 'announcement' ? '📢 ' + (a11y.lang==='kaz'?'Хабарландыру':'Анонс')
-             : '📰 ' + (a11y.lang==='kaz'?'Жаңалық':'Новость') }}
+            {{ article.category === 'event' ? '📅 ' + t('catEvent')
+             : article.category === 'announcement' ? '📢 ' + t('catAnnouncement')
+             : '📰 ' + t('catNews') }}
           </span>
           <span class="news-article-date">{{ formatDate(article.publishedAt) }}</span>
-          <span v-if="article.status === 'PUBLISHED'" class="badge badge-verified">✓ {{ a11y.lang==='kaz'?'Тексерілді':'Проверено' }}</span>
+          <span v-if="article.status === 'PUBLISHED'" class="badge badge-verified">✓ {{ t('verified') }}</span>
         </div>
 
-        <h1 class="news-article-title">{{ a11y.lang === 'kaz' ? article.titleKk : article.titleRu }}</h1>
+        <h1 class="news-article-title">{{ articleTitle }}</h1>
 
         <div class="news-article-author">
           <div class="author-avatar">{{ (article.author?.profile?.firstName || '?').charAt(0) }}</div>
@@ -41,12 +41,15 @@
         </div>
 
         <div class="news-article-image">
-          <img v-if="article.imageUrl" :src="newsImageUrl(article.imageUrl)" :alt="article.titleRu" class="news-detail-img" />
-          <svg v-else width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <img
+            :src="article.imageUrl ? newsImageUrl(article.imageUrl) : detailFallbackImage(article)"
+            :alt="articleTitle"
+            class="news-detail-img"
+          />
         </div>
 
         <div class="news-article-body">
-          <p>{{ a11y.lang === 'kaz' ? article.bodyKk : article.bodyRu }}</p>
+          <p>{{ articleBody }}</p>
         </div>
 
         <!-- Likes + comments count -->
@@ -65,14 +68,34 @@
             {{ displayLikes }}
           </button>
           <span class="news-article-comments">
-            💬 {{ displayComments }} {{ a11y.lang==='kaz' ? 'пікір' : 'комментариев' }}
+            💬 {{ displayComments }} {{ t('commentsWord') }}
           </span>
+          <!-- Report button -->
+          <div v-if="authStore.isAuthenticated" class="news-report-wrap">
+            <button v-if="!showReportForm && !reportSent" class="report-btn" @click="showReportForm=true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+              {{ t('complaint') }}
+            </button>
+            <span v-if="reportSent" class="report-sent">✅ {{ t('sent') }}</span>
+            <div v-if="showReportForm && !reportSent" class="report-form">
+              <select v-model="reportReason" class="report-select">
+                <option value="SPAM">Спам</option>
+                <option value="FAKE">Недостоверная информация</option>
+                <option value="INAPPROPRIATE">Неуместный контент</option>
+                <option value="OTHER">Другое</option>
+              </select>
+              <button class="btn btn-sm btn-outline" @click="showReportForm=false">✕</button>
+              <button class="btn btn-sm btn-danger" :disabled="reportLoading" @click="submitReport">
+                {{ reportLoading ? '...' : t('send') }}
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- ── Comments section ── -->
         <section class="comments-section">
           <h2 class="comments-title">
-            💬 {{ a11y.lang==='kaz' ? 'Пікірлер' : 'Комментарии' }}
+            💬 {{ t('reviewsSection') }}
           </h2>
 
           <!-- Add comment (authenticated only) -->
@@ -82,35 +105,33 @@
               <textarea
                 v-model="newComment"
                 class="comment-textarea"
-                :placeholder="a11y.lang==='kaz' ? 'Пікіріңізді жазыңыз...' : 'Напишите комментарий...'"
+                :placeholder="t('writeReviewPlaceholder')"
                 rows="2"
                 @keydown.ctrl.enter="submitComment"
               />
               <div class="comment-form-row">
-                <span class="comment-hint">{{ a11y.lang==='kaz' ? 'Ctrl+Enter — жіберу' : 'Ctrl+Enter — отправить' }}</span>
+                <span class="comment-hint">{{ t('ctrlEnterHint') }}</span>
                 <button
                   class="btn btn-primary btn-sm"
                   :disabled="!newComment.trim() || commentLoading"
                   @click="submitComment"
                 >
                   <span v-if="commentLoading" class="spinner-sm"></span>
-                  {{ a11y.lang==='kaz' ? 'Жіберу' : 'Отправить' }}
+                  {{ t('send') }}
                 </button>
               </div>
             </div>
           </div>
           <div v-else class="comment-login-hint">
             <RouterLink to="/login" class="btn btn-outline btn-sm">
-              {{ a11y.lang==='kaz' ? 'Пікір қалдыру үшін кіріңіз' : 'Войдите, чтобы оставить комментарий' }}
+              {{ t('loginToReview') }}
             </RouterLink>
           </div>
 
           <!-- Pending notice after submit -->
           <Transition name="fade">
             <div v-if="commentSuccess" class="comment-pending-notice">
-              ⏳ {{ a11y.lang==='kaz'
-                ? 'Пікіріңіз модерация күтуде. Бекітілгеннен кейін пайда болады.'
-                : 'Ваш комментарий ожидает модерации. Он появится после одобрения.' }}
+              ⏳ {{ t('commentPending') }}
             </div>
           </Transition>
 
@@ -132,9 +153,9 @@
               </div>
               <div class="comment-body">
                 <div class="comment-meta">
-                  <span class="comment-author">{{ c.author?.profile?.firstName || (a11y.lang==='kaz'?'Пайдаланушы':'Пользователь') }}</span>
+                  <span class="comment-author">{{ c.author?.profile?.firstName || t('userLabel') }}</span>
                   <span class="comment-date">{{ formatDate(c.createdAt) }}</span>
-                  <span v-if="c.status === 'PENDING'" class="comment-status-badge">⏳ {{ a11y.lang==='kaz'?'Күтуде':'Ожидает' }}</span>
+                  <span v-if="c.status === 'PENDING'" class="comment-status-badge">⏳ {{ t('pendingStatus') }}</span>
                 </div>
                 <p class="comment-text">{{ c.text }}</p>
               </div>
@@ -142,7 +163,7 @@
           </div>
 
           <div v-else class="comments-empty">
-            <p>{{ a11y.lang==='kaz' ? 'Пікірлер жоқ. Бірінші болыңыз!' : 'Комментариев пока нет. Будьте первым!' }}</p>
+            <p>{{ t('noReviewsYet') }}</p>
           </div>
         </section>
       </article>
@@ -155,12 +176,16 @@ import { ref, computed, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useAccessibilityStore } from '../stores/accessibility.js'
 import { useAuthStore } from '../stores/auth.js'
+import { useI18n } from '../i18n.js'
 import { getNewsById, likeNews, getNewsComments, addNewsComment } from '../api/news.js'
 import { newsImageUrl, avatarUrl } from '../api/apiClient.js'
+import { createComplaint } from '../api/complaints.js'
 
 const a11y = useAccessibilityStore()
 const authStore = useAuthStore()
 const route = useRoute()
+const lang = computed(() => a11y.lang)
+const t = computed(() => useI18n(lang.value))
 
 const article = ref(null)
 const loading = ref(true)
@@ -175,6 +200,39 @@ const commentsLoading = ref(false)
 const newComment = ref('')
 const commentLoading = ref(false)
 const commentSuccess = ref(false)
+
+// Report/complaint
+const showReportForm = ref(false)
+const reportSent = ref(false)
+const reportLoading = ref(false)
+const reportReason = ref('SPAM')
+
+async function submitReport() {
+  reportLoading.value = true
+  try {
+    await createComplaint(null, {
+      targetType: 'News',
+      targetId: route.params.id,
+      reason: reportReason.value,
+    })
+    reportSent.value = true
+    showReportForm.value = false
+  } catch (e) { console.error(e) }
+  finally { reportLoading.value = false }
+}
+
+// API returns already-localised `title`/`body` (language interceptor).
+// Fall back to bilingual fields for safety.
+const articleTitle = computed(() => {
+  const a = article.value
+  if (!a) return ''
+  return a.title || (a11y.lang === 'kaz' ? a.titleKk : a.titleRu) || a.titleRu || ''
+})
+const articleBody = computed(() => {
+  const a = article.value
+  if (!a) return ''
+  return a.body || (a11y.lang === 'kaz' ? a.bodyKk : a.bodyRu) || a.bodyRu || ''
+})
 
 const commentAuthorInitial = computed(() => {
   const u = authStore.user
@@ -232,6 +290,13 @@ async function submitComment() {
 const formatDate = (d) => d
   ? new Date(d).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' })
   : ''
+
+const CAT_SEED = { event: 10, announcement: 200, news: 400 }
+const detailFallbackImage = (a) => {
+  const base = CAT_SEED[a?.category] ?? 100
+  const seed = base + ((route.params.id || 1) % 100)
+  return `https://picsum.photos/seed/${seed}/800/400`
+}
 </script>
 
 <style scoped>
@@ -286,6 +351,17 @@ const formatDate = (d) => d
 .comment-status-badge { font-size: 0.72rem; background: #fef3c7; color: #92400e; padding: 1px 6px; border-radius: 50px; }
 .comment-text { font-size: var(--fs-sm); color: var(--gray-700); line-height: 1.55; margin: 0; }
 .comments-empty { color: var(--gray-400); font-size: var(--fs-sm); padding: 16px 0; }
+
+/* ── Report ── */
+.news-report-wrap { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.report-btn { display: inline-flex; align-items: center; gap: 5px; background: none; border: 1.5px solid #DC2626; color: #DC2626; padding: 4px 10px; border-radius: var(--radius-full); font-size: var(--fs-xs); font-weight: 700; cursor: pointer; transition: all var(--transition); }
+.report-btn:hover { background: #FEF2F2; }
+.report-sent { font-size: var(--fs-xs); color: #16A34A; font-weight: 700; }
+.report-form { display: flex; align-items: center; gap: 6px; }
+.report-select { padding: 4px 8px; border: 1.5px solid var(--gray-200); border-radius: var(--radius); font-size: var(--fs-xs); outline: none; background: white; }
+.btn-danger { background: #DC2626 !important; color: white !important; border-color: #DC2626 !important; }
+.btn-danger:hover { background: #B91C1C !important; }
+.btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* fade transition */
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }

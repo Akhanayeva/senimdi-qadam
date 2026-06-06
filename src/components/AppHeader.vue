@@ -45,7 +45,7 @@
             >
               <span class="search-result-icon">🏢</span>
               <div>
-                <div class="search-result-name">{{ lang === 'kaz' ? result.nameKaz : result.nameRus }}</div>
+                <div class="search-result-name">{{ lang === 'kaz' ? result.nameKaz : result.nameRus }}</div><!-- eng falls back to rus -->
                 <div class="search-result-type">{{ t('orgList') }}</div>
               </div>
               <span v-if="result.verified" class="badge badge-verified" style="margin-left:auto;font-size:0.65rem">✓</span>
@@ -103,6 +103,36 @@
           </svg>
         </button>
 
+        <!-- Быстрый доступ: Панель управления (admin/moderator/taxi_manager) -->
+        <RouterLink
+          v-if="authStore.isAuthenticated && (authStore.isAdmin || authStore.isModerator || authStore.isTaxiManager)"
+          to="/admin"
+          class="header-admin-btn"
+          title="Панель управления"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <span class="header-admin-label">{{ lang === 'eng' ? 'Admin' : 'Управление' }}</span>
+        </RouterLink>
+
+        <!-- Быстрый доступ: Кабинет организации (org_manager) -->
+        <RouterLink
+          v-if="authStore.isAuthenticated && authStore.isOrgManager"
+          to="/org-cabinet"
+          class="header-admin-btn header-orgcab-btn"
+          title="Кабинет организации"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="20" height="14" rx="2"/>
+            <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+          </svg>
+          <span class="header-admin-label">{{ lang === 'eng' ? 'My Office' : 'Мой кабинет' }}</span>
+        </RouterLink>
+
+        <!-- Notifications (только для авторизованных) -->
+        <NotificationBell v-if="authStore.isAuthenticated" />
+
         <!-- Auth / Profile -->
         <div v-if="!authStore.isAuthenticated" class="header-auth">
           <RouterLink to="/login" class="btn btn-outline btn-sm">{{ t('login') }}</RouterLink>
@@ -137,7 +167,21 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
               </svg>
-              Панель управления
+              {{ lang === 'eng' ? 'Admin Panel' : 'Панель управления' }}
+            </RouterLink>
+            <!-- Org cabinet link — only for ORG_MANAGER -->
+            <RouterLink
+              v-if="authStore.isOrgManager"
+              to="/org-cabinet"
+              class="dropdown-item dropdown-item--org"
+              @click="profileOpen=false"
+              role="menuitem"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="7" width="20" height="14" rx="2"/>
+                <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+              </svg>
+              {{ lang === 'eng' ? 'Organization Office' : 'Кабинет организации' }}
             </RouterLink>
             <RouterLink to="/profile" class="dropdown-item" @click="profileOpen=false" role="menuitem">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -175,6 +219,7 @@ import { useAuthStore } from '../stores/auth.js'
 import { useSearchStore } from '../stores/search.js'
 import { useAccessibilityStore } from '../stores/accessibility.js'
 import { useI18n } from '../i18n.js'
+import NotificationBell from './NotificationBell.vue'
 
 const emit = defineEmits(['toggle-accessibility', 'toggle-mobile-menu'])
 
@@ -358,6 +403,32 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   font-weight: 700;
 }
 .dropdown-item--admin:hover { background: #eff6ff; }
+.dropdown-item--org {
+  color: #059669 !important;
+  font-weight: 700;
+}
+.dropdown-item--org:hover { background: #ecfdf5; }
+
+/* Quick-access header buttons */
+.header-admin-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(255,255,255,0.15);
+  color: white;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-decoration: none;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.header-admin-btn:hover { background: rgba(255,255,255,0.28); }
+.header-orgcab-btn { background: rgba(5,150,105,0.25); }
+.header-orgcab-btn:hover { background: rgba(5,150,105,0.4); }
+.header-admin-label { display: none; }
+@media (min-width: 1024px) { .header-admin-label { display: inline; } }
 
 /* Burger */
 .burger-btn {
@@ -373,10 +444,12 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   .header-help-label { display: none; }
   .header-auth .btn-outline { display: none; }
 }
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .header-search { display: none; }
   .header-help-btn { display: none; }
-  .header-actions { display: none; }
   .burger-btn { display: flex; }
+}
+@media (max-width: 640px) {
+  .header-actions { display: none; }
 }
 </style>

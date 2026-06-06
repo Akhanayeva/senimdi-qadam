@@ -151,7 +151,7 @@ export const resumeRecurringRide = async (id) => patch(`/taxi/bookings/recurring
 export const deleteRecurringRide = async (id) => del(`/taxi/bookings/recurring/${id}`)
 
 export const leaveDriverReview  = (bookingId, rating, comment) => reviewDriver(bookingId, rating, comment)
-export const getAvailableDrivers = () => getDrivers()
+export const getAvailableDrivers = () => getManagerAvailableDrivers()
 
 /** POST /taxi/drivers — admin: add a new driver */
 export const addDriver = async (payload) => post('/taxi/drivers', payload)

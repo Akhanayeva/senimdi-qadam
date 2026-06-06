@@ -88,6 +88,31 @@
           {{ lang==='kaz' ? 'Аккаунтыңыз жоқ па?' : 'Нет аккаунта?' }}
           <RouterLink to="/register" class="auth-link">{{ lang==='kaz' ? 'Тіркелу' : 'Зарегистрироваться' }}</RouterLink>
         </div>
+
+        <!-- Demo accounts -->
+        <div class="auth-demo-hints">
+          <div class="demo-hint-title">{{ lang==='kaz' ? 'Демо аккаунттар (Demo@123456)' : 'Демо аккаунты (Demo@123456)' }}</div>
+          <div class="demo-hints-grid">
+            <button class="demo-hint" @click="fillDemo('aigerim.demo@senimdi.kz','Demo@123456')">
+              👤 {{ lang==='kaz' ? 'Пайдаланушы' : 'Пользователь' }}
+            </button>
+            <button class="demo-hint" @click="fillDemo('marat.demo@senimdi.kz','Demo@123456')">
+              🤝 {{ lang==='kaz' ? 'Опекун' : 'Опекун' }}
+            </button>
+            <button class="demo-hint" @click="fillDemo('org.manager.demo@senimdi.kz','Demo@123456')">
+              🏢 {{ lang==='kaz' ? 'Орг. менеджер' : 'Орг. менеджер' }}
+            </button>
+            <button class="demo-hint" @click="fillDemo('taxi.demo@senimdi.kz','Demo@123456')">
+              🚕 {{ lang==='kaz' ? 'Такси менеджер' : 'Такси менеджер' }}
+            </button>
+            <button class="demo-hint" @click="fillDemo('moderator.demo@senimdi.kz','Demo@123456')">
+              🛡️ {{ lang==='kaz' ? 'Модератор' : 'Модератор' }}
+            </button>
+            <button class="demo-hint" @click="fillDemo('admin.demo@senimdi.kz','Demo@123456')">
+              ⚙️ {{ lang==='kaz' ? 'Администратор' : 'Администратор' }}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </main>
