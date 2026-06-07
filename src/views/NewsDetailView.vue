@@ -79,10 +79,10 @@
             <span v-if="reportSent" class="report-sent">✅ {{ t('sent') }}</span>
             <div v-if="showReportForm && !reportSent" class="report-form">
               <select v-model="reportReason" class="report-select">
-                <option value="SPAM">Спам</option>
-                <option value="FAKE">Недостоверная информация</option>
-                <option value="INAPPROPRIATE">Неуместный контент</option>
-                <option value="OTHER">Другое</option>
+                <option value="SPAM">{{ t('complaintSpam') }}</option>
+                <option value="FAKE">{{ t('complaintFake') }}</option>
+                <option value="INAPPROPRIATE">{{ t('complaintInappropriate') }}</option>
+                <option value="OTHER">{{ t('complaintOther') }}</option>
               </select>
               <button class="btn btn-sm btn-outline" @click="showReportForm=false">✕</button>
               <button class="btn btn-sm btn-danger" :disabled="reportLoading" @click="submitReport">

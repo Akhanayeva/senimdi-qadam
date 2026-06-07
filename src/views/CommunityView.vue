@@ -3,7 +3,7 @@
     <div class="community-page-header">
       <div class="container">
         <h1 class="page-h1">{{ t('community') }}</h1>
-        <p class="page-desc">Социальные сети и группы Алматы — поддержка и общение для людей с инвалидностью</p>
+        <p class="page-desc">{{ t('communitySubtitle') }}</p>
       </div>
     </div>
     <div class="container community-content">

@@ -4,16 +4,23 @@
       <div class="placeholder-content">
         <div class="placeholder-icon">{{ icon }}</div>
         <h1 class="placeholder-title">{{ title }}</h1>
-        <p class="placeholder-desc">Раздел находится в разработке. Скоро здесь появится полный функционал.</p>
-        <div class="placeholder-badge">🚧 В разработке</div>
-        <RouterLink to="/" class="btn btn-primary mt-8">← На главную</RouterLink>
+        <p class="placeholder-desc">{{ t('underDev') }}</p>
+        <div class="placeholder-badge">{{ t('inDev') }}</div>
+        <RouterLink to="/" class="btn btn-primary mt-8">{{ t('backHome') }}</RouterLink>
       </div>
     </div>
   </main>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useAccessibilityStore } from '../stores/accessibility.js'
+import { useI18n } from '../i18n.js'
+
+const a11y = useAccessibilityStore()
+const t = computed(() => useI18n(a11y.lang))
+
 defineProps({
   title: { type: String, default: 'Раздел' },
   icon: { type: String, default: '📄' }

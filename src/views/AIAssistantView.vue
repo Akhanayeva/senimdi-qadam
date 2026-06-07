@@ -4,7 +4,7 @@
       <!-- Sidebar: Chat Sessions -->
       <aside class="ai-sidebar" v-if="authStore.isAuthenticated">
         <div class="ai-sidebar-header">
-          <h3>История чатов</h3>
+          <h3>{{ t('chatHistory') }}</h3>
           <button class="btn btn-primary btn-sm" @click="startNewChat">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             {{ t('newChat') }}
@@ -15,7 +15,7 @@
         </div>
         <div v-else-if="sessions.length === 0" class="sidebar-empty">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          <p>Нет сохранённых чатов</p>
+          <p>{{ t('noSavedChats') }}</p>
         </div>
         <div v-else class="sidebar-chats">
           <div
@@ -25,7 +25,7 @@
             :class="{ 'sidebar-chat-active': currentSessionId === sess.id }"
             @click="loadSession(sess.id)"
           >
-            <div class="sidebar-chat-q">{{ sess.title || 'Чат' }}</div>
+            <div class="sidebar-chat-q">{{ sess.title || t('chat') }}</div>
             <div class="sidebar-chat-meta">
               <span class="sidebar-chat-date">{{ formatDate(sess.updated_at) }}</span>
               <button class="sidebar-chat-del" @click="deleteSession(sess.id, $event)" title="Удалить">
@@ -52,7 +52,7 @@
           <div class="ai-header-actions">
             <span v-if="authStore.isAuthenticated && currentSessionId" class="session-indicator">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-              {{ lang==='kaz' ? 'Сессия сақталды' : 'Сессия сохраняется' }}
+              {{ t('sessionSaved') }}
             </span>
             <button class="btn btn-ghost btn-sm" @click="startNewChat">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.39"/></svg>
@@ -66,8 +66,8 @@
           <!-- Welcome state -->
           <div v-if="messages.length === 0" class="ai-welcome">
             <div class="ai-welcome-icon">🤖</div>
-            <h2 class="ai-welcome-title">Привет! Я Senim</h2>
-            <p class="ai-welcome-desc">Опишите вашу ситуацию — я дам конкретный пошаговый план на основе проверенной базы данных Алматы</p>
+            <h2 class="ai-welcome-title">{{ t('aiGreeting') }}</h2>
+            <p class="ai-welcome-desc">{{ t('aiWelcomeDesc') }}</p>
             <div class="ai-suggestions">
               <button
                 v-for="s in suggestions"
@@ -229,10 +229,10 @@ const sessions = ref([])          // list from getMySessions()
 const sessionsLoading = ref(false)
 
 const suggestions = computed(() => [
-  'Реабилитация для ребёнка с ДЦП',
-  'Как оформить инвалидность?',
-  'Юридическая помощь бесплатно',
-  'Аутизм — куда обратиться?',
+  t.value('aiSugg1'),
+  t.value('aiSugg2'),
+  t.value('aiSugg3'),
+  t.value('aiSugg4'),
 ])
 
 const scrollToBottom = async () => {

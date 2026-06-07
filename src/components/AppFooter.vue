@@ -45,7 +45,7 @@
 
         <!-- Platform links -->
         <div class="footer-col">
-          <h4 class="footer-col-title">Платформа</h4>
+          <h4 class="footer-col-title">{{ t('platform') }}</h4>
           <ul class="footer-links">
             <li><RouterLink to="/news">{{ t('news') }}</RouterLink></li>
             <li><RouterLink to="/projects/community">{{ t('community') }}</RouterLink></li>
@@ -57,7 +57,7 @@
 
         <!-- Contacts -->
         <div class="footer-col">
-          <h4 class="footer-col-title">Контакты</h4>
+          <h4 class="footer-col-title">{{ t('contacts') }}</h4>
           <ul class="footer-contacts">
             <li>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -78,7 +78,7 @@
       <div class="footer-bottom">
         <span>{{ t('footerRights') }}</span>
         <div class="footer-bottom-links">
-          <RouterLink to="/help">Помощь по сайту</RouterLink>
+          <RouterLink to="/help">{{ t('helpSiteLink') }}</RouterLink>
           <RouterLink to="/login">{{ t('login') }}</RouterLink>
         </div>
       </div>

@@ -94,16 +94,17 @@ const orgDesc = computed(() => {
 
 // Maps real API org.category enum → display label (RU/KK)
 const CATEGORY_LABELS = {
-  MEDICAL:        { rus: 'Медицина',             kaz: 'Медицина' },
-  LEGAL:          { rus: 'Юридическая помощь',   kaz: 'Заңдық көмек' },
-  SOCIAL:         { rus: 'Социальная поддержка', kaz: 'Әлеуметтік қолдау' },
-  REHABILITATION: { rus: 'Реабилитация',          kaz: 'Оңалту' },
-  EDUCATION:      { rus: 'Образование',           kaz: 'Білім' },
-  EMPLOYMENT:     { rus: 'Трудоустройство',       kaz: 'Жұмысқа орналасу' },
-  SPORT:          { rus: 'Спорт',                 kaz: 'Спорт' },
-  CULTURE:        { rus: 'Культура',              kaz: 'Мәдениет' },
-  PSYCHOLOGICAL:  { rus: 'Психологическая',       kaz: 'Психологиялық' },
-  OTHER:          { rus: 'Прочее',                kaz: 'Басқа' },
+  MEDICAL:        { rus: 'Медицина',             kaz: 'Медицина',            eng: 'Medical' },
+  LEGAL:          { rus: 'Юридическая помощь',   kaz: 'Заңдық көмек',        eng: 'Legal Aid' },
+  SOCIAL:         { rus: 'Социальная поддержка', kaz: 'Әлеуметтік қолдау',   eng: 'Social Support' },
+  REHABILITATION: { rus: 'Реабилитация',          kaz: 'Оңалту',              eng: 'Rehabilitation' },
+  EDUCATION:      { rus: 'Образование',           kaz: 'Білім',               eng: 'Education' },
+  EMPLOYMENT:     { rus: 'Трудоустройство',       kaz: 'Жұмысқа орналасу',    eng: 'Employment' },
+  SPORT:          { rus: 'Спорт',                 kaz: 'Спорт',               eng: 'Sport' },
+  CULTURE:        { rus: 'Культура',              kaz: 'Мәдениет',            eng: 'Culture' },
+  PSYCHOLOGICAL:  { rus: 'Психологическая',       kaz: 'Психологиялық',       eng: 'Psychological' },
+  OTHER:          { rus: 'Прочее',                kaz: 'Басқа',               eng: 'Other' },
+  NGO:            { rus: 'НКО / Фонд',            kaz: 'ҮЕҰ / Қор',           eng: 'NGO / Foundation' },
 }
 
 // Banner color based on org name initial
@@ -127,12 +128,16 @@ const categoryLabel = computed(() => {
   if (!props.org) return ''
   const cat = props.org.category
   if (cat && CATEGORY_LABELS[cat]) {
-    return lang.value === 'kaz' ? CATEGORY_LABELS[cat].kaz : CATEGORY_LABELS[cat].rus
+    const l = lang.value
+    return l === 'kaz' ? CATEGORY_LABELS[cat].kaz : l === 'eng' ? CATEGORY_LABELS[cat].eng : CATEGORY_LABELS[cat].rus
   }
   // Fallback to mock nested format
-  return lang.value === 'kaz'
+  const l = lang.value
+  return l === 'kaz'
     ? props.org.categoryLabel?.kaz
-    : props.org.categoryLabel?.rus
+    : l === 'eng'
+      ? (props.org.categoryLabel?.eng || props.org.categoryLabel?.rus)
+      : props.org.categoryLabel?.rus
 })
 </script>
 

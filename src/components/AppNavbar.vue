@@ -96,7 +96,7 @@
   <div v-if="mobileOpen" class="mobile-menu-overlay" @click="mobileOpen = false"></div>
   <div class="mobile-menu" :class="{ open: mobileOpen }">
     <div class="mobile-menu-header">
-      <span class="fw-bold">Меню</span>
+      <span class="fw-bold">{{ t('menu') }}</span>
       <button @click="mobileOpen = false" class="btn btn-ghost btn-icon">✕</button>
     </div>
     <nav class="mobile-nav">

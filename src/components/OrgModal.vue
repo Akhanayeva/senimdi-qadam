@@ -317,10 +317,10 @@
                   <div class="sf-group" style="margin-bottom:10px">
                     <label class="sf-label-sm">{{ t('complaintReason') }}</label>
                     <select v-model="complaintForm.reason" class="sf-input-sm">
-                      <option value="SPAM">Спам</option>
-                      <option value="FAKE">Недостоверная информация</option>
-                      <option value="INAPPROPRIATE">Неуместный контент</option>
-                      <option value="OTHER">Другое</option>
+                      <option value="SPAM">{{ t('complaintSpam') }}</option>
+                      <option value="FAKE">{{ t('complaintFake') }}</option>
+                      <option value="INAPPROPRIATE">{{ t('complaintInappropriate') }}</option>
+                      <option value="OTHER">{{ t('complaintOther') }}</option>
                     </select>
                   </div>
                   <div class="sf-group" style="margin-bottom:10px">

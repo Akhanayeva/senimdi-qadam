@@ -113,7 +113,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>
-          <span class="header-admin-label">{{ lang === 'eng' ? 'Admin' : 'Управление' }}</span>
+          <span class="header-admin-label">{{ t('adminPanel') }}</span>
         </RouterLink>
 
         <!-- Быстрый доступ: Кабинет организации (org_manager) -->
@@ -127,7 +127,7 @@
             <rect x="2" y="7" width="20" height="14" rx="2"/>
             <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
           </svg>
-          <span class="header-admin-label">{{ lang === 'eng' ? 'My Office' : 'Мой кабинет' }}</span>
+          <span class="header-admin-label">{{ t('myOffice') }}</span>
         </RouterLink>
 
         <!-- Notifications (только для авторизованных) -->
@@ -167,7 +167,7 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
               </svg>
-              {{ lang === 'eng' ? 'Admin Panel' : 'Панель управления' }}
+              {{ t('adminPanel') }}
             </RouterLink>
             <!-- Org cabinet link — only for ORG_MANAGER -->
             <RouterLink
@@ -181,7 +181,7 @@
                 <rect x="2" y="7" width="20" height="14" rx="2"/>
                 <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
               </svg>
-              {{ lang === 'eng' ? 'Organization Office' : 'Кабинет организации' }}
+              {{ t('orgOffice') }}
             </RouterLink>
             <RouterLink to="/profile" class="dropdown-item" @click="profileOpen=false" role="menuitem">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>

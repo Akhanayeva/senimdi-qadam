@@ -5,7 +5,7 @@
       <div class="orgs-page-header">
         <div class="container">
           <h1 class="orgs-page-title">{{ t('allOrgs') }}</h1>
-          <p class="orgs-page-subtitle">Каталог организаций, центров и фондов Алматы для людей с инвалидностью</p>
+          <p class="orgs-page-subtitle">{{ t('orgsSubtitle') }}</p>
         </div>
       </div>
 
@@ -41,15 +41,15 @@
           <!-- Second row: district + verified + count -->
           <div class="filter-row">
             <select class="form-input filter-select" v-model="activeDistrict" @change="applyFilters">
-              <option value="all">Все районы</option>
+              <option value="all">{{ t('allDistricts') }}</option>
               <option v-for="d in districts" :key="d" :value="d">{{ d }}</option>
             </select>
             <label class="filter-verified">
               <input type="checkbox" v-model="onlyVerified" @change="applyFilters" />
-              <span>Только проверенные ✓</span>
+              <span>{{ t('verifiedOnly') }}</span>
             </label>
             <span class="orgs-count-inline" v-if="!loading">
-              Найдено: <strong>{{ filteredOrgs.length }}</strong>
+              {{ t('foundCount') }} <strong>{{ filteredOrgs.length }}</strong>
             </span>
           </div>
         </div>
@@ -68,15 +68,15 @@
         <div v-else-if="error" class="empty-state">
           <div class="empty-state-icon">⚠️</div>
           <p>{{ t('errorLoad') }}</p>
-          <button class="btn btn-primary mt-4" @click="loadOrgs">Повторить</button>
+          <button class="btn btn-primary mt-4" @click="loadOrgs">{{ t('retryBtn') }}</button>
         </div>
 
         <!-- Empty state -->
         <div v-else-if="filteredOrgs.length === 0" class="empty-state">
           <div class="empty-state-icon">🔍</div>
           <h3>{{ t('noResults') }}</h3>
-          <p style="margin-top:8px;color:var(--gray-500)">Попробуйте изменить поисковый запрос или сбросить фильтры</p>
-          <button class="btn btn-outline mt-4" @click="resetFilters">Сбросить фильтры</button>
+          <p style="margin-top:8px;color:var(--gray-500)">{{ t('tryChangeQuery') }}</p>
+          <button class="btn btn-outline mt-4" @click="resetFilters">{{ t('resetFilters') }}</button>
         </div>
 
         <!-- Orgs grid -->
