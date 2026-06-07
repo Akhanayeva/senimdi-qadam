@@ -117,8 +117,10 @@ const tabs = computed(() => [
 ])
 
 const filtered = computed(() => {
-  if (activeTab.value === 'ALL') return tickets.value
-  return tickets.value.filter(t => t.status === activeTab.value)
+  const data = activeTab.value === 'ALL'
+    ? [...tickets.value]
+    : tickets.value.filter(t => t.status === activeTab.value)
+  return data.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
 })
 
 const load = async () => {

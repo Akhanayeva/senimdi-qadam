@@ -34,7 +34,7 @@
 
     <!-- Tabs -->
     <div class="admin-tabs">
-      <button class="admin-tab" :class="{ active: activeTab === 'bookings' }" @click="activeTab = 'bookings'">
+      <button class="admin-tab" :class="{ active: activeTab === 'bookings' }" @click="switchAdminTab('bookings')">
         Заявки
         <span v-if="pendingCount" class="tab-count">{{ pendingCount }}</span>
         <span v-if="unreadChatCount > 0" class="tab-count tab-count--chat" title="Непрочитанных сообщений">💬 {{ unreadChatCount }}</span>
@@ -267,7 +267,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
   getManagerBookings, getDrivers, addDriver,
   assignDriver as apiAssignDriver, setManagerBookingStatus, setDriverStatus,
@@ -279,6 +280,8 @@ import { getManagerUnreadMessages } from '../../api/taxi.js'
 import { useToast } from '../../stores/toast.js'
 
 const toast = useToast()
+const route = useRoute()
+const router = useRouter()
 const activeTab = ref('bookings')
 
 // Демо-данные — показываются, если нет прав TAXI_MANAGER или бэкенд недоступен
@@ -343,35 +346,92 @@ async function loadAll() {
 }
 
 let unreadPollTimer = null
-let lastManagerUnread = 0
+let lastManagerUnread = -1  // -1 = первый запрос, не показывать уведомление
 const unreadChatCount = ref(0)
 
-onMounted(() => {
-  loadAll()
+// startPolls вызывается из единого onMounted ниже
+function startPolls() {
   pollTimer = setInterval(loadAll, 15000)
   if (Notification && Notification.permission === 'default') Notification.requestPermission()
   unreadPollTimer = setInterval(async () => {
     try {
-      const count = await getManagerUnreadMessages()
-      const n = typeof count === 'number' ? count : (count?.count ?? 0)
+      const raw = await getManagerUnreadMessages()
+      const n = typeof raw === 'number' ? raw : (raw?.count ?? 0)
       unreadChatCount.value = n
-      if (n > lastManagerUnread && lastManagerUnread >= 0) {
-        const msg = `💬 Новое сообщение от клиента`
-        toast.success(msg, 8000, '/admin/taxi')
+      if (lastManagerUnread >= 0 && n > lastManagerUnread) {
+        const items = Array.isArray(raw) ? raw : (raw?.items ?? raw?.bookings ?? [])
+        const bk = items[0]
+        const bookingId = bk?.bookingId ?? bk?.id ?? null
+        const bookingInfo = bk?.fromAddress
+          ? ` — заявка: ${bk.fromAddress}`
+          : bookingId ? ` — заявка #${bookingId}` : ''
+        const msg = `💬 Новое сообщение от клиента${bookingInfo}`
+        const link = bookingId ? `/admin/taxi?openChat=${bookingId}` : '/admin/taxi'
+        toast.info(msg, 10000, link)
         if (Notification?.permission === 'granted') {
-          const notif = new Notification('SenimdiQAdam — ИнваТакси', { body: msg, icon: '/favicon.ico' })
-          notif.onclick = () => { window.focus(); window.location.hash = '/admin/taxi' }
+          const notif = new Notification('SenimdiQadam — ИнваТакси Чат', { body: msg, icon: '/favicon.ico' })
+          notif.onclick = () => {
+            window.focus()
+            if (bookingId) localStorage.setItem('sqPendingChat', String(bookingId))
+            window.location.href = window.location.origin + '/#/admin/taxi'
+          }
         }
       }
       lastManagerUnread = n
     } catch {}
   }, 5000)
+}
+
+// ─── Авто-открытие чата по уведомлению ───────────────────────────────────────
+// Сохраняем ID заявки пока bookings ещё не загрузились
+let pendingChatBookingId = null
+
+function tryOpenPendingChat() {
+  const id = pendingChatBookingId
+  if (!id || !bookings.value.length) return
+  const booking = bookings.value.find(b => String(b.id) === String(id))
+  if (booking) {
+    pendingChatBookingId = null
+    activeTab.value = 'bookings'
+    nextTick(() => openChat(booking))
+  }
+}
+
+// Когда заявки загрузились — проверяем есть ли отложенный чат
+watch(bookings, () => tryOpenPendingChat())
+
+function checkAndOpenChat() {
+  // Из браузерного уведомления (localStorage)
+  const lsId = localStorage.getItem('sqPendingChat')
+  if (lsId) {
+    localStorage.removeItem('sqPendingChat')
+    pendingChatBookingId = lsId
+    activeTab.value = 'bookings'
+    tryOpenPendingChat()
+    return
+  }
+  // Из тост-уведомления (query param)
+  const qId = route.query.openChat
+  if (qId) {
+    router.replace({ query: {} })
+    pendingChatBookingId = String(qId)
+    activeTab.value = 'bookings'
+    tryOpenPendingChat()
+  }
+}
+
+onMounted(async () => {
+  await loadAll()
+  startPolls()
+  checkAndOpenChat()
+  window.addEventListener('focus', checkAndOpenChat)
 })
 
 onUnmounted(() => {
   if (pollTimer) clearInterval(pollTimer)
   if (unreadPollTimer) clearInterval(unreadPollTimer)
   stopChatPoll()
+  window.removeEventListener('focus', checkAndOpenChat)
 })
 
 const bookingSearch = ref('')
@@ -494,10 +554,20 @@ const startChatPoll = () => {
 
 const stopChatPoll = () => { if (chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null } }
 
+function switchAdminTab(id) {
+  activeTab.value = id
+  if (id === 'bookings') {
+    lastManagerUnread = unreadChatCount.value  // запомнить сколько видели
+    unreadChatCount.value = 0
+  }
+}
+
 const closeChat = () => { chatBooking.value = null; stopChatPoll() }
 
 const openChat = async (booking) => {
   chatBooking.value = booking
+  lastManagerUnread = unreadChatCount.value  // запомнить сколько видели
+  unreadChatCount.value = 0
   chatMessages.value = []
   chatLoading.value = true
   try {

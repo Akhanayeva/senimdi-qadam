@@ -74,8 +74,10 @@ const tabs = computed(() => [
 ])
 
 const filtered = computed(() => {
-  if (activeTab.value === 'ALL') return complaints.value
-  return complaints.value.filter(c => c.status === activeTab.value)
+  const data = activeTab.value === 'ALL'
+    ? [...complaints.value]
+    : complaints.value.filter(c => c.status === activeTab.value)
+  return data.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
 })
 
 const load = async () => {

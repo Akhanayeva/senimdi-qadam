@@ -19,9 +19,9 @@
 
 // ── Configuration ──────────────────────────────────────────────────────────────
 
-export const GATEWAY_URL = import.meta.env.VITE_API_URL || 'http://49.12.34.124:3000/api'
-export const STATIC_URL  = import.meta.env.VITE_STATIC_URL || 'http://49.12.34.124:3000'
-export const WS_URL      = import.meta.env.VITE_WS_URL || 'http://49.12.34.124:3000'
+export const GATEWAY_URL = import.meta.env.VITE_API_URL || 'https://dream-asset-trying-meanwhile.trycloudflare.com/api'
+export const STATIC_URL  = import.meta.env.VITE_STATIC_URL || 'https://dream-asset-trying-meanwhile.trycloudflare.com'
+export const WS_URL      = import.meta.env.VITE_WS_URL || 'https://dream-asset-trying-meanwhile.trycloudflare.com'
 
 /** Get current language for Accept-Language header */
 function getLang() {

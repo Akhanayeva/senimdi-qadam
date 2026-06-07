@@ -120,6 +120,7 @@ const applyFilters = () => {
     )
   }
   if (filterRole.value !== 'all') data = data.filter(u => u.role === filterRole.value)
+  data.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
   filteredUsers.value = data
 }
 

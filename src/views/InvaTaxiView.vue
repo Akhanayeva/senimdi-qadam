@@ -711,7 +711,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAccessibilityStore } from '../stores/accessibility.js'
 import { useAuthStore } from '../stores/auth.js'
 import { useI18n } from '../i18n.js'
@@ -735,6 +735,8 @@ import { useToast } from '../stores/toast.js'
 const a11y = useAccessibilityStore()
 const authStore = useAuthStore()
 const toast = useToast()
+const route = useRoute()
+const router = useRouter()
 const lang = computed(() => a11y.lang)
 const t = computed(() => useI18n(lang.value))
 
@@ -852,6 +854,7 @@ onMounted(async () => {
     Notification.requestPermission()
   }
   startUnreadChatPoll()
+  checkAndOpenBooking()
 })
 
 async function handleCancelBooking(booking) {
@@ -974,8 +977,8 @@ function stopTracking() {
 function switchTab(id) {
   activeTab.value = id
   if (id === 'bookings') {
+    lastUnreadCount = unreadChatBadge.value  // запомнить сколько видели
     unreadChatBadge.value = 0
-    lastUnreadCount = 0
   }
 }
 
@@ -983,8 +986,8 @@ async function openBookingDetail(booking) {
   selectedBooking.value = booking
   reviewRating.value = 0
   reviewComment.value = ''
+  lastUnreadCount = unreadChatBadge.value  // запомнить сколько видели
   unreadChatBadge.value = 0
-  lastUnreadCount = 0
   chatMessages.value = await getChatMessages(booking.id)
   await nextTick()
   scrollChatToBottom()
@@ -1006,25 +1009,69 @@ function startUnreadChatPoll() {
   unreadChatPoll = setInterval(async () => {
     if (selectedBooking.value) return
     try {
-      const count = await getUnreadMessages()
-      const n = typeof count === 'number' ? count : (count?.count ?? 0)
+      const raw = await getUnreadMessages()
+      const n = typeof raw === 'number' ? raw : (raw?.count ?? 0)
       unreadChatBadge.value = n
       if (lastUnreadCount >= 0 && n > lastUnreadCount) {
         const diff = n - lastUnreadCount
+        // Пробуем достать адрес из ответа
+        const items = Array.isArray(raw) ? raw : (raw?.items ?? raw?.bookings ?? [])
+        const bk = items[0]
+        const bookingId = bk?.bookingId ?? bk?.id ?? null
+        const bookingInfo = bk?.fromAddress ? ` (${bk.fromAddress})` : bookingId ? ` #${bookingId}` : ''
         const msg = lang.value === 'kaz'
-          ? `💬 ${diff} жаңа хабарлама диспетчерден`
+          ? `💬 ${diff} жаңа хабарлама диспетчерден${bookingInfo}`
           : lang.value === 'eng'
-          ? `💬 ${diff} new message(s) from dispatcher`
-          : `💬 ${diff} новое сообщение от диспетчера`
-        toast.info(msg, 8000, '/inva-taxi')
+          ? `💬 ${diff} new message(s) from dispatcher${bookingInfo}`
+          : `💬 ${diff} новое сообщение от диспетчера${bookingInfo}`
+        const link = bookingId ? `/inva-taxi?openBooking=${bookingId}` : '/inva-taxi'
+        toast.info(msg, 10000, link)
         if (Notification?.permission === 'granted') {
-          const notif = new Notification('SenimdiQAdam — ИнваТакси', { body: msg, icon: '/favicon.ico' })
-          notif.onclick = () => { window.focus(); window.location.hash = '/inva-taxi' }
+          const notif = new Notification('SenimdiQadam — ИнваТакси Чат', { body: msg, icon: '/favicon.ico' })
+          notif.onclick = () => {
+            window.focus()
+            if (bookingId) localStorage.setItem('sqPendingBooking', String(bookingId))
+            window.location.href = window.location.origin + '/#/inva-taxi'
+          }
         }
       }
       lastUnreadCount = n
     } catch {}
   }, 5000)
+}
+
+// ─── Авто-открытие заявки/чата по уведомлению ────────────────────────────────
+let pendingBookingId = null
+
+function tryOpenPendingBooking() {
+  const id = pendingBookingId
+  if (!id || !myBookings.value.length) return
+  const booking = myBookings.value.find(b => String(b.id) === String(id))
+  if (booking) {
+    pendingBookingId = null
+    activeTab.value = 'bookings'
+    nextTick(() => openBookingDetail(booking))
+  }
+}
+
+watch(myBookings, () => tryOpenPendingBooking())
+
+function checkAndOpenBooking() {
+  const lsId = localStorage.getItem('sqPendingBooking')
+  if (lsId) {
+    localStorage.removeItem('sqPendingBooking')
+    pendingBookingId = lsId
+    activeTab.value = 'bookings'
+    tryOpenPendingBooking()
+    return
+  }
+  const qId = route.query.openBooking
+  if (qId) {
+    router.replace({ query: {} })
+    pendingBookingId = String(qId)
+    activeTab.value = 'bookings'
+    tryOpenPendingBooking()
+  }
 }
 
 onUnmounted(() => { stopTracking(); disconnectTaxiSocket(); stopUserChatPoll(); if (unreadChatPoll) clearInterval(unreadChatPoll) })

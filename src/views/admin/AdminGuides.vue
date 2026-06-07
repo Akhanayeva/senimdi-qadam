@@ -139,9 +139,11 @@ const tabs = computed(() => [
 ])
 
 const filteredGuides = computed(() => {
-  if (activeTab.value === 'ALL') return allGuides.value
-  if (activeTab.value === 'PUBLISHED') return allGuides.value.filter(g => !!g.publishedAt)
-  return allGuides.value.filter(g => !g.publishedAt)
+  let data
+  if (activeTab.value === 'ALL') data = [...allGuides.value]
+  else if (activeTab.value === 'PUBLISHED') data = allGuides.value.filter(g => !!g.publishedAt)
+  else data = allGuides.value.filter(g => !g.publishedAt)
+  return data.sort((a, b) => new Date(b.createdAt || b.publishedAt || 0) - new Date(a.createdAt || a.publishedAt || 0))
 })
 
 const load = async () => {

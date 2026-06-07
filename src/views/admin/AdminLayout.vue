@@ -106,6 +106,7 @@
           to="/admin/taxi"
           class="admin-nav-item"
           :class="{ active: route.path.startsWith('/admin/taxi') }"
+          @click="resetTaxiUnread"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="1" y="3" width="15" height="13" rx="2"/>
@@ -114,6 +115,7 @@
             <circle cx="18.5" cy="18.5" r="2.5"/>
           </svg>
           ИнваТакси
+          <span v-if="taxiUnread > 0" class="nav-badge">{{ taxiUnread }}</span>
         </RouterLink>
 
         <!-- Guides — ADMIN + MODERATOR -->
@@ -173,11 +175,66 @@
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth.js'
+import { useToast } from '../../stores/toast.js'
+import { getManagerUnreadMessages } from '../../api/taxi.js'
 
 const authStore = useAuthStore()
 const route = useRoute()
+const toast = useToast()
+
+const taxiUnread = ref(0)
+let lastUnread = -1
+let pollTimer = null
+
+function resetTaxiUnread() {
+  // Ставим lastUnread = текущий счётчик, а не 0.
+  // Иначе бэкенд всё ещё вернёт то же число → уведомление сработает снова.
+  lastUnread = taxiUnread.value
+  taxiUnread.value = 0
+}
+
+// Сбрасываем бейдж, когда пользователь уже находится на /admin/taxi
+watch(() => route.path, (p) => {
+  if (p.startsWith('/admin/taxi')) resetTaxiUnread()
+})
+
+onMounted(() => {
+  if (!authStore.isAdmin && !authStore.isTaxiManager) return
+  if (Notification && Notification.permission === 'default') Notification.requestPermission()
+
+  pollTimer = setInterval(async () => {
+    // Не опрашиваем если уже открыта страница AdminTaxi (там своя логика)
+    if (route.path.startsWith('/admin/taxi')) return
+    try {
+      const raw = await getManagerUnreadMessages()
+      const n = typeof raw === 'number' ? raw : (raw?.count ?? 0)
+      taxiUnread.value = n
+      if (lastUnread >= 0 && n > lastUnread) {
+        // Пробуем достать инфо о заявке из ответа (если бэкенд отдаёт)
+        const items = Array.isArray(raw) ? raw : (raw?.items ?? raw?.bookings ?? [])
+        const booking = items[0]
+        const bookingInfo = booking?.fromAddress
+          ? ` — заявка: ${booking.fromAddress}`
+          : booking?.bookingId ? ` — заявка #${booking.bookingId}` : ''
+        const msg = `💬 Новое сообщение от клиента${bookingInfo}`
+        toast.info(msg, 10000, '/admin/taxi')
+        if (Notification?.permission === 'granted') {
+          const notif = new Notification('SenimdiQadam — ИнваТакси Чат', { body: msg, icon: '/favicon.ico' })
+          notif.onclick = () => {
+            window.focus()
+            window.location.href = window.location.origin + '/#/admin/taxi'
+          }
+        }
+      }
+      lastUnread = n
+    } catch {}
+  }, 5000)
+})
+
+onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 </script>
 
 <style scoped>
@@ -244,6 +301,26 @@ const route = useRoute()
 .admin-nav-item.active { background: #3b82f6; color: white; }
 .admin-nav-item svg { flex-shrink: 0; opacity: 0.8; }
 .admin-nav-item.active svg { opacity: 1; }
+
+.nav-badge {
+  margin-left: auto;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  animation: navPulse 2s ease-in-out infinite;
+}
+@keyframes navPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
 
 .admin-sidebar-footer {
   padding: 14px 16px;
