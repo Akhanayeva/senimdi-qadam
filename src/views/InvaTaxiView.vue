@@ -41,7 +41,7 @@
           :key="tab.id"
           class="taxi-tab"
           :class="{ active: activeTab === tab.id }"
-          @click="activeTab = tab.id"
+          @click="switchTab(tab.id)"
         >
           <span v-html="tab.icon"></span>
           {{ tab.label }}
@@ -971,10 +971,20 @@ function stopTracking() {
   liveConnected.value = false
 }
 
+function switchTab(id) {
+  activeTab.value = id
+  if (id === 'bookings') {
+    unreadChatBadge.value = 0
+    lastUnreadCount = 0
+  }
+}
+
 async function openBookingDetail(booking) {
   selectedBooking.value = booking
   reviewRating.value = 0
   reviewComment.value = ''
+  unreadChatBadge.value = 0
+  lastUnreadCount = 0
   chatMessages.value = await getChatMessages(booking.id)
   await nextTick()
   scrollChatToBottom()
