@@ -354,18 +354,6 @@ All list endpoints use offset-based pagination:
 - Accessibility panel — contrast, font size, language, TTS
 - Admin panel — organizations, news, users, taxi management
 
-### Upcoming / Stub
-
-| Feature | Path |
-|---|---|
-| Accessibility map | `/services/accessibility-map` |
-| Job listings | `/services/jobs` |
-| Document processing | `/services/documents` |
-| Forums | `/projects/forums` |
-| STT via Whisper | AI assistant microphone button |
-| TTS via real API | Currently uses browser SpeechSynthesis |
-| Push notifications | — |
-
 ---
 
 ## Scripts
