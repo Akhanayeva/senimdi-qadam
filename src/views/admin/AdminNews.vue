@@ -159,8 +159,8 @@ const tabs = computed(() => [
 ])
 
 const filteredNews = computed(() => {
-  if (activeTab.value === 'ALL') return allNews.value
-  return allNews.value.filter(n => n.status === activeTab.value)
+  const data = activeTab.value === 'ALL' ? [...allNews.value] : allNews.value.filter(n => n.status === activeTab.value)
+  return data.sort((a, b) => new Date(b.createdAt || b.publishedAt || 0) - new Date(a.createdAt || a.publishedAt || 0))
 })
 
 const loadNews = async () => {

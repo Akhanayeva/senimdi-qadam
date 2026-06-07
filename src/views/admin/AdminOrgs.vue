@@ -212,6 +212,7 @@ const applyFilters = () => {
   }
   if (filterStatus.value !== 'all') data = data.filter(o => o.status === filterStatus.value)
   if (filterCategory.value !== 'all') data = data.filter(o => o.category === filterCategory.value)
+  data.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
   filteredOrgs.value = data
 }
 

@@ -5,7 +5,12 @@
         <h1 class="admin-page-title">ИнваТакси — Панель диспетчера</h1>
         <p class="admin-page-sub">Управление заявками и водителями</p>
       </div>
+      <button class="btn btn-secondary" :disabled="loadingAll" @click="loadAll" style="display:flex;align-items:center;gap:6px">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :style="loadingAll ? 'animation:spin 1s linear infinite' : ''"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+        {{ loadingAll ? 'Загрузка...' : 'Обновить' }}
+      </button>
     </div>
+    <div v-if="usingMock" class="mock-notice">⚠️ Нет подключения к серверу — показаны демо-данные</div>
 
     <!-- Stats row -->
     <div class="taxi-stats">
@@ -41,12 +46,24 @@
     </div>
 
     <!-- Bookings tab -->
-    <div v-if="activeTab === 'bookings'" class="bookings-list">
-      <div v-if="bookings.length === 0" class="empty-state">
+    <div v-if="activeTab === 'bookings'">
+      <div class="taxi-filters">
+        <input v-model="bookingSearch" class="admin-search" placeholder="Поиск по пассажиру, адресу..." @input="null" />
+        <select v-model="bookingStatusFilter" class="admin-select">
+          <option value="all">Все статусы</option>
+          <option value="PENDING">Ожидают водителя</option>
+          <option value="CONFIRMED">Подтверждены</option>
+          <option value="IN_PROGRESS">В пути</option>
+          <option value="COMPLETED">Завершены</option>
+          <option value="CANCELLED">Отменены</option>
+        </select>
+      </div>
+      <div class="bookings-list">
+      <div v-if="filteredBookings.length === 0" class="empty-state">
         <div style="font-size:36px">🚖</div>
         <p>Нет заявок</p>
       </div>
-      <div class="booking-card" v-for="b in bookings" :key="b.id">
+      <div class="booking-card" v-for="b in filteredBookings" :key="b.id">
         <div class="booking-header">
           <div class="booking-id">#{{ b.id }}</div>
           <span class="booking-status" :class="bookingStatusClass(b.status)">{{ bookingStatusLabel(b.status) }}</span>
@@ -99,6 +116,7 @@
           <button v-if="['PENDING','CONFIRMED','IN_PROGRESS'].includes(b.status)" class="admin-action-btn btn-reject" @click="cancelBooking(b)">✕ Отменить</button>
           <button class="admin-action-btn btn-chat" @click="openChat(b)">💬 Чат</button>
         </div>
+      </div>
       </div>
     </div>
 
@@ -237,7 +255,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import {
   getManagerBookings, getDrivers, addDriver,
   assignDriver as apiAssignDriver, setManagerBookingStatus, setDriverStatus,
@@ -264,6 +282,8 @@ const mockDrivers = [
 const bookings = ref([])
 const drivers = ref([])
 const usingMock = ref(false)
+const loadingAll = ref(false)
+let pollTimer = null
 
 // Приводим заявку с бэкенда к виду, который ждёт шаблон
 const mapBooking = (b) => ({
@@ -292,6 +312,7 @@ function disabilityLabel(type) {
 }
 
 async function loadAll() {
+  loadingAll.value = true
   try {
     const [bk, drv] = await Promise.all([getManagerBookings(), getDrivers()])
     bookings.value = (bk || []).map(mapBooking)
@@ -302,10 +323,36 @@ async function loadAll() {
     bookings.value = [...mockBookings]
     drivers.value = [...mockDrivers]
     usingMock.value = true
+  } finally {
+    loadingAll.value = false
   }
 }
 
-onMounted(loadAll)
+onMounted(() => {
+  loadAll()
+  pollTimer = setInterval(loadAll, 15000)
+})
+
+onUnmounted(() => {
+  if (pollTimer) clearInterval(pollTimer)
+})
+
+const bookingSearch = ref('')
+const bookingStatusFilter = ref('all')
+
+const filteredBookings = computed(() => {
+  let data = [...bookings.value].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  if (bookingStatusFilter.value !== 'all') data = data.filter(b => b.status === bookingStatusFilter.value)
+  if (bookingSearch.value.trim()) {
+    const q = bookingSearch.value.toLowerCase()
+    data = data.filter(b =>
+      (b.passengerName || '').toLowerCase().includes(q) ||
+      (b.fromAddress || '').toLowerCase().includes(q) ||
+      (b.toAddress || '').toLowerCase().includes(q)
+    )
+  }
+  return data
+})
 
 const pendingCount = computed(() => bookings.value.filter(b => b.status === 'PENDING').length)
 const activeCount = computed(() => bookings.value.filter(b => ['CONFIRMED', 'IN_PROGRESS'].includes(b.status)).length)
@@ -500,6 +547,10 @@ const copyCode = (code) => {
 .admin-page-title { font-size: 22px; font-weight: 800; color: #1e293b; }
 .admin-page-sub { font-size: 13px; color: #64748b; margin-top: 3px; }
 
+.taxi-filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.admin-search { flex: 1; min-width: 200px; padding: 8px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; outline: none; }
+.admin-search:focus { border-color: #3b82f6; }
+.admin-select { padding: 8px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; background: white; cursor: pointer; outline: none; }
 .taxi-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
 .taxi-stat-card {
   background: white; border-radius: 10px; padding: 16px 18px;
@@ -640,6 +691,8 @@ const copyCode = (code) => {
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+.mock-notice { background: #FEF3C7; color: #92400E; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 16px; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 @media (max-width: 640px) {
   .taxi-stats { grid-template-columns: repeat(2, 1fr); }

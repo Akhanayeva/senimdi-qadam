@@ -113,30 +113,13 @@
                 <label class="form-label">{{ t('driverNoteLabel') }}</label>
                 <textarea v-model="form.note" class="form-input form-textarea" :placeholder="t('driverNotePlaceholder')" rows="2"></textarea>
               </div>
-              <!-- Price estimate block -->
-              <div v-if="form.fromAddress && form.toAddress" class="price-estimate-block">
-                <div class="price-estimate-header">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                  {{ t('estimateCostBtn') }}
-                </div>
-                <div v-if="priceEstimate !== null" class="price-estimate-value">
-                  ~{{ priceEstimate }} ₸
-                </div>
-                <div v-else-if="priceEstimateError" class="price-estimate-hint">{{ priceEstimateError }}</div>
-                <div v-else class="price-estimate-hint">
-                  {{ t('costDisclaimer') }}
-                </div>
-                <button type="button" class="price-estimate-btn" :disabled="estimating" @click="calcPriceEstimate">
-                  <span v-if="estimating" class="spinner-sm"></span>
-                  {{ estimating ? t('submitting') : t('estimateCostBtn') }}
-                </button>
-              </div>
 
               <div v-if="!authStore.isAuthenticated" class="form-auth-notice">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 {{ t('loginToOrder') }}
                 <RouterLink to="/login" class="auth-link">{{ t('login') }}</RouterLink>
               </div>
+              <div v-if="bookingError" class="field-error-sm">⚠️ {{ bookingError }}</div>
               <button type="submit" class="btn btn-primary btn-lg book-submit" :disabled="bookingLoading || !authStore.isAuthenticated">
                 <span v-if="bookingLoading" class="spinner-sm"></span>
                 <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
@@ -814,16 +797,23 @@ async function calcPriceEstimate() {
   }
 }
 
+const bookingError = ref('')
+
 async function handleCreateBooking() {
   if (!authStore.isAuthenticated) return
   bookingLoading.value = true
+  bookingError.value = ''
   try {
-    await createBooking({ ...form.value })
+    const { dependentId, ...payload } = form.value
+    if (dependentId) payload.dependentId = dependentId
+    await createBooking(payload)
     form.value = { fromAddress: '', toAddress: '', scheduledAt: '', disabilityType: '', note: '', dependentId: '' }
-  priceEstimate.value = null
+    priceEstimate.value = null
     bookingSuccess.value = true
     setTimeout(() => { bookingSuccess.value = false }, 4000)
     myBookings.value = await getMyBookings()
+  } catch (e) {
+    bookingError.value = e?.message || (lang.value === 'kaz' ? 'Қате кетті, қайта көріңіз' : lang.value === 'eng' ? 'Error submitting. Please try again.' : 'Ошибка при подаче заявки. Попробуйте снова.')
   } finally {
     bookingLoading.value = false
   }
