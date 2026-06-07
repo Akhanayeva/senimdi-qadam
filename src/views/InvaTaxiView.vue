@@ -46,6 +46,7 @@
           <span v-html="tab.icon"></span>
           {{ tab.label }}
           <span v-if="tab.id === 'bookings' && myBookings.length" class="tab-count">{{ myBookings.length }}</span>
+          <span v-if="tab.id === 'bookings' && unreadChatBadge > 0" class="tab-count tab-count--chat" title="Непрочитанных сообщений от диспетчера">💬{{ unreadChatBadge }}</span>
           <span v-if="tab.id === 'manager' && managerStats.pending" class="tab-count tab-count--red">{{ managerStats.pending }}</span>
         </button>
       </div>
@@ -515,9 +516,13 @@
       <div v-if="selectedBooking" class="modal-overlay" @click.self="selectedBooking = null">
         <div class="modal-box booking-modal">
           <div class="modal-header">
-            <h3>{{ t('bookingDetails') }}</h3>
-            <span class="booking-status-badge" :class="'badge-' + selectedBooking.status.toLowerCase()">{{ statusLabel(selectedBooking.status, lang) }}</span>
-            <button class="modal-close" @click="selectedBooking = null">✕</button>
+            <div class="modal-header-left">
+              <h3>{{ t('bookingDetails') }}</h3>
+              <span class="booking-status-badge" :class="'badge-' + selectedBooking.status.toLowerCase()">{{ statusLabel(selectedBooking.status, lang) }}</span>
+            </div>
+            <button class="modal-close" @click="selectedBooking = null">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
           <div class="modal-body">
             <!-- Route -->
@@ -620,9 +625,9 @@
                   v-for="msg in chatMessages"
                   :key="msg.id"
                   class="chat-msg"
-                  :class="{ 'chat-msg--user': msg.role === 'user', 'chat-msg--manager': msg.role === 'manager' }"
+                  :class="msg.senderType === 'USER' ? 'chat-msg--mine' : 'chat-msg--theirs'"
                 >
-                  <div class="chat-msg-sender">{{ msg.senderName }}</div>
+                  <div class="chat-msg-label">{{ msg.senderType === 'USER' ? t('youLabel') : t('managerLabel') }}</div>
                   <div class="chat-msg-text">{{ msg.text }}</div>
                   <div class="chat-msg-time">{{ formatTime(msg.createdAt) }}</div>
                 </div>
@@ -724,9 +729,12 @@ import {
   sendSocketMessage, disconnectTaxiSocket
 } from '../api/taxiSocket.js'
 import { getMyLinks } from '../api/profile.js'
+import { getUnreadMessages } from '../api/taxi.js'
+import { useToast } from '../stores/toast.js'
 
 const a11y = useAccessibilityStore()
 const authStore = useAuthStore()
+const toast = useToast()
 const lang = computed(() => a11y.lang)
 const t = computed(() => useI18n(lang.value))
 
@@ -839,6 +847,11 @@ onMounted(async () => {
     availableDriversList.value = avail
     queueLoading.value = false
   }
+  // Запрос разрешения на browser-уведомления
+  if (Notification && Notification.permission === 'default') {
+    Notification.requestPermission()
+  }
+  startUnreadChatPoll()
 })
 
 async function handleCancelBooking(booking) {
@@ -863,6 +876,18 @@ const chatMessages = ref([])
 const chatInput = ref('')
 const chatSending = ref(false)
 const chatBoxRef = ref(null)
+let userChatPollTimer = null
+
+function startUserChatPoll(bookingId) {
+  stopUserChatPoll()
+  userChatPollTimer = setInterval(async () => {
+    try {
+      const msgs = await getChatMessages(bookingId)
+      if (msgs.length !== chatMessages.value.length) chatMessages.value = msgs
+    } catch {}
+  }, 4000)
+}
+function stopUserChatPoll() { if (userChatPollTimer) { clearInterval(userChatPollTimer); userChatPollTimer = null } }
 const reviewRating = ref(0)
 const reviewComment = ref('')
 const reviewSubmitting = ref(false)
@@ -954,11 +979,45 @@ async function openBookingDetail(booking) {
   await nextTick()
   scrollChatToBottom()
   startTracking(booking)
+  startUserChatPoll(booking.id)
 }
 
 // Чистим отслеживание при закрытии модалки
-watch(selectedBooking, (val) => { if (!val) stopTracking() })
-onUnmounted(() => { stopTracking(); disconnectTaxiSocket() })
+watch(selectedBooking, (val) => { if (!val) { stopTracking(); stopUserChatPoll() } })
+
+// ─── Фоновые уведомления о новых сообщениях в чате ───────────────────────────
+let unreadChatPoll = null
+let lastUnreadCount = -1  // -1 = первый запрос, не показывать уведомление
+const unreadChatBadge = ref(0)
+
+function startUnreadChatPoll() {
+  if (!authStore.isAuthenticated) return
+  if (unreadChatPoll) clearInterval(unreadChatPoll)
+  unreadChatPoll = setInterval(async () => {
+    if (selectedBooking.value) return
+    try {
+      const count = await getUnreadMessages()
+      const n = typeof count === 'number' ? count : (count?.count ?? 0)
+      unreadChatBadge.value = n
+      if (lastUnreadCount >= 0 && n > lastUnreadCount) {
+        const diff = n - lastUnreadCount
+        const msg = lang.value === 'kaz'
+          ? `💬 ${diff} жаңа хабарлама диспетчерден`
+          : lang.value === 'eng'
+          ? `💬 ${diff} new message(s) from dispatcher`
+          : `💬 ${diff} новое сообщение от диспетчера`
+        toast.info(msg, 8000, '/inva-taxi')
+        if (Notification?.permission === 'granted') {
+          const notif = new Notification('SenimdiQAdam — ИнваТакси', { body: msg, icon: '/favicon.ico' })
+          notif.onclick = () => { window.focus(); window.location.hash = '/inva-taxi' }
+        }
+      }
+      lastUnreadCount = n
+    } catch {}
+  }, 5000)
+}
+
+onUnmounted(() => { stopTracking(); disconnectTaxiSocket(); stopUserChatPoll(); if (unreadChatPoll) clearInterval(unreadChatPoll) })
 
 function scrollChatToBottom() {
   if (chatBoxRef.value) chatBoxRef.value.scrollTop = chatBoxRef.value.scrollHeight
@@ -971,14 +1030,9 @@ async function handleSendChat() {
   chatSending.value = true
   const text = chatInput.value.trim()
   chatInput.value = ''
-  // Если сокет на связи — менеджер увидит сообщение мгновенно (message:received).
-  // REST-запрос всё равно делаем, чтобы сообщение сохранилось в БД.
-  sendSocketMessage(selectedBooking.value.id, text)
+  // Только REST — сохраняет в БД. Сокет не используем для отправки, т.к. это дублирует запись.
   await sendChatMessage(selectedBooking.value.id, text)
-  // Если живых событий нет — подтянем историю запросом
-  if (!liveConnected.value) {
-    chatMessages.value = await getChatMessages(selectedBooking.value.id)
-  }
+  chatMessages.value = await getChatMessages(selectedBooking.value.id)
   chatSending.value = false
 }
 
@@ -1243,6 +1297,8 @@ async function submitDriverReview() {
 .taxi-tab.active { background: white; color: var(--primary); box-shadow: var(--shadow); }
 .tab-count { background: var(--primary); color: white; font-size: 10px; font-weight: 800; border-radius: 10px; padding: 1px 6px; min-width: 18px; text-align: center; }
 .tab-count--red { background: #EF4444; }
+.tab-count--chat { background: #2563eb; animation: chatPulse 2s ease-in-out infinite; }
+@keyframes chatPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
 .taxi-tab-content { animation: fadeSlideUp 0.25s ease; }
 @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -1400,10 +1456,11 @@ async function submitDriverReview() {
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }
 .modal-box { background: white; border-radius: var(--radius-xl); width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 80px rgba(0,0,0,0.3); }
 .booking-modal {}
-.modal-header { display: flex; align-items: center; gap: 12px; padding: 20px 24px; border-bottom: 1px solid var(--gray-100); position: sticky; top: 0; background: white; z-index: 1; }
-.modal-header h3 { font-size: var(--fs-lg); font-weight: 800; color: var(--black); flex: 1; }
-.modal-close { color: var(--gray-400); font-size: 18px; cursor: pointer; transition: color var(--transition); }
-.modal-close:hover { color: var(--black); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid var(--gray-100); position: sticky; top: 0; background: white; z-index: 1; }
+.modal-header-left { display: flex; align-items: center; gap: 12px; }
+.modal-header h3 { font-size: var(--fs-lg); font-weight: 800; color: var(--black); }
+.modal-close { width: 32px; height: 32px; border-radius: 50%; background: var(--gray-100); border: none; color: var(--gray-500); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+.modal-close:hover { background: var(--gray-200); color: var(--black); }
 .modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 20px; }
 .modal-section { }
 .modal-section-title { font-size: var(--fs-sm); font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
@@ -1429,16 +1486,16 @@ async function submitDriverReview() {
 .star-picker { display: flex; gap: 6px; }
 .star-btn { font-size: 24px; color: var(--gray-300); cursor: pointer; transition: color 0.15s; }
 .star-btn.active { color: #F59E0B; }
-.chat-box { background: var(--gray-50); border-radius: var(--radius-md); padding: 14px; min-height: 140px; max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.chat-box { background: #f8fafc; border-radius: var(--radius-md); padding: 14px; min-height: 140px; max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--gray-100); }
 .chat-empty { text-align: center; color: var(--gray-400); font-size: var(--fs-sm); margin: auto; }
-.chat-msg { max-width: 80%; display: flex; flex-direction: column; gap: 2px; }
-.chat-msg--user { align-self: flex-end; align-items: flex-end; }
-.chat-msg--manager { align-self: flex-start; }
-.chat-msg-sender { font-size: 10px; color: var(--gray-400); font-weight: 600; }
-.chat-msg-text { padding: 8px 12px; border-radius: var(--radius-md); font-size: var(--fs-sm); line-height: 1.5; }
-.chat-msg--user .chat-msg-text { background: var(--primary); color: white; border-bottom-right-radius: 4px; }
-.chat-msg--manager .chat-msg-text { background: white; color: var(--black); border: 1px solid var(--gray-200); border-bottom-left-radius: 4px; }
-.chat-msg-time { font-size: 10px; color: var(--gray-400); }
+.chat-msg { max-width: 78%; display: flex; flex-direction: column; gap: 3px; }
+.chat-msg--mine { align-self: flex-end; align-items: flex-end; }
+.chat-msg--theirs { align-self: flex-start; align-items: flex-start; }
+.chat-msg-label { font-size: 10px; color: var(--gray-400); font-weight: 700; padding: 0 6px; }
+.chat-msg-text { padding: 10px 14px; border-radius: 18px; font-size: var(--fs-sm); line-height: 1.5; word-break: break-word; }
+.chat-msg--mine .chat-msg-text { background: linear-gradient(135deg, var(--primary), #2563eb); color: white; border-bottom-right-radius: 5px; box-shadow: 0 2px 8px rgba(59,130,246,0.25); }
+.chat-msg--theirs .chat-msg-text { background: white; color: var(--black); border: 1px solid var(--gray-200); border-bottom-left-radius: 5px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.chat-msg-time { font-size: 10px; color: var(--gray-400); padding: 0 6px; }
 .chat-input-row { display: flex; gap: 8px; margin-top: 10px; }
 .chat-input { flex: 1; padding: 9px 14px; }
 .chat-send-btn { padding: 9px 14px; flex-shrink: 0; }

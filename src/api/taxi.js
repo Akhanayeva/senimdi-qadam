@@ -62,8 +62,11 @@ export const getChatMessages = async (bookingId) => {
 export const sendChatMessage = async (bookingId, text) =>
   post(`/taxi/chat/bookings/${bookingId}/messages`, { text })
 
-/** GET /taxi/chat/unread */
+/** GET /taxi/chat/unread — для пользователя */
 export const getUnreadMessages = async () => get('/taxi/chat/unread')
+
+/** GET /taxi/chat/manager/unread — для менеджера/админа */
+export const getManagerUnreadMessages = async () => get('/taxi/chat/manager/unread')
 
 // ─── Drivers ─────────────────────────────────────────────────────────────────
 

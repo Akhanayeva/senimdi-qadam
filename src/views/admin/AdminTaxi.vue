@@ -37,6 +37,7 @@
       <button class="admin-tab" :class="{ active: activeTab === 'bookings' }" @click="activeTab = 'bookings'">
         Заявки
         <span v-if="pendingCount" class="tab-count">{{ pendingCount }}</span>
+        <span v-if="unreadChatCount > 0" class="tab-count tab-count--chat" title="Непрочитанных сообщений">💬 {{ unreadChatCount }}</span>
       </button>
       <button class="admin-tab" :class="{ active: activeTab === 'drivers' }" @click="activeTab = 'drivers'">Водители</button>
       <button class="admin-tab" :class="{ active: activeTab === 'invites' }" @click="activeTab = 'invites'; loadInvites()">
@@ -215,24 +216,35 @@
 
   <!-- Chat modal -->
   <Transition name="fade">
-    <div v-if="chatBooking" class="chat-overlay" @click.self="chatBooking=null">
+    <div v-if="chatBooking" class="chat-overlay" @click.self="closeChat()">
       <div class="chat-panel">
         <div class="chat-header">
-          <div>
-            <div class="chat-title">Чат с клиентом</div>
-            <div class="chat-sub">Заявка #{{ chatBooking.id }}</div>
+          <div class="chat-header-left">
+            <div class="chat-avatar">{{ (chatBooking.passengerName || '?').charAt(0) }}</div>
+            <div>
+              <div class="chat-title">{{ chatBooking.passengerName || 'Клиент' }}</div>
+              <div class="chat-sub">Заявка · {{ chatBooking.fromAddress }} → {{ chatBooking.toAddress }}</div>
+            </div>
           </div>
-          <button class="chat-close" @click="chatBooking=null">✕</button>
+          <button class="chat-close" @click="closeChat()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
         <div class="chat-messages" ref="chatScroll">
-          <div v-if="chatLoading" class="chat-loading">Загрузка...</div>
-          <div v-else-if="chatMessages.length === 0" class="chat-empty">Сообщений пока нет</div>
+          <div v-if="chatLoading" class="chat-loading">
+            <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
+          </div>
+          <div v-else-if="chatMessages.length === 0" class="chat-empty">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:.3"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <p>Сообщений пока нет</p>
+          </div>
           <div
             v-for="m in chatMessages" :key="m.id"
             class="chat-msg"
-            :class="m.isFromManager ? 'msg-manager' : 'msg-user'"
+            :class="m.senderType === 'MANAGER' ? 'msg-mine' : 'msg-theirs'"
           >
-            <div class="msg-text">{{ m.text }}</div>
+            <div class="msg-label">{{ m.senderType === 'MANAGER' ? 'Вы' : (chatBooking.passengerName || 'Клиент') }}</div>
+            <div class="msg-bubble">{{ m.text }}</div>
             <div class="msg-time">{{ formatTime(m.createdAt) }}</div>
           </div>
         </div>
@@ -244,7 +256,7 @@
             @keydown.enter="sendManagerMessage"
           />
           <button class="chat-send-btn" :disabled="!chatInput.trim()" @click="sendManagerMessage">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
             </svg>
           </button>
@@ -262,6 +274,8 @@ import {
   getChatMessages, sendChatMessage,
   createManagerInvite, getManagerInvites
 } from '../../api/taxi.js'
+import { GATEWAY_URL, getAccessToken } from '../../api/apiClient.js'
+import { getManagerUnreadMessages } from '../../api/taxi.js'
 import { useToast } from '../../stores/toast.js'
 
 const toast = useToast()
@@ -328,13 +342,36 @@ async function loadAll() {
   }
 }
 
+let unreadPollTimer = null
+let lastManagerUnread = 0
+const unreadChatCount = ref(0)
+
 onMounted(() => {
   loadAll()
   pollTimer = setInterval(loadAll, 15000)
+  if (Notification && Notification.permission === 'default') Notification.requestPermission()
+  unreadPollTimer = setInterval(async () => {
+    try {
+      const count = await getManagerUnreadMessages()
+      const n = typeof count === 'number' ? count : (count?.count ?? 0)
+      unreadChatCount.value = n
+      if (n > lastManagerUnread && lastManagerUnread >= 0) {
+        const msg = `💬 Новое сообщение от клиента`
+        toast.success(msg, 8000, '/admin/taxi')
+        if (Notification?.permission === 'granted') {
+          const notif = new Notification('SenimdiQAdam — ИнваТакси', { body: msg, icon: '/favicon.ico' })
+          notif.onclick = () => { window.focus(); window.location.hash = '/admin/taxi' }
+        }
+      }
+      lastManagerUnread = n
+    } catch {}
+  }, 5000)
 })
 
 onUnmounted(() => {
   if (pollTimer) clearInterval(pollTimer)
+  if (unreadPollTimer) clearInterval(unreadPollTimer)
+  stopChatPoll()
 })
 
 const bookingSearch = ref('')
@@ -436,16 +473,37 @@ const chatMessages = ref([])
 const chatLoading = ref(false)
 const chatInput = ref('')
 const chatScroll = ref(null)
+let chatPollTimer = null
+
+const startChatPoll = () => {
+  stopChatPoll()
+  chatPollTimer = setInterval(async () => {
+    if (!chatBooking.value) return
+    try {
+      const res = await fetch(`${GATEWAY_URL}/taxi/chat/manager/bookings/${chatBooking.value.id}/messages`, { headers: { Authorization: `Bearer ${getAccessToken()}` } })
+      const data = await res.json()
+      const msgs = Array.isArray(data) ? data : (data.items ?? [])
+      if (msgs.length !== chatMessages.value.length) {
+        chatMessages.value = msgs
+        await nextTick()
+        if (chatScroll.value) chatScroll.value.scrollTop = chatScroll.value.scrollHeight
+      }
+    } catch {}
+  }, 4000)
+}
+
+const stopChatPoll = () => { if (chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null } }
+
+const closeChat = () => { chatBooking.value = null; stopChatPoll() }
 
 const openChat = async (booking) => {
   chatBooking.value = booking
   chatMessages.value = []
   chatLoading.value = true
   try {
-    // Manager endpoint: /taxi/chat/manager/bookings/:id/messages
     const res = await fetch(
-      `${window.location.origin}/api/taxi/chat/manager/bookings/${booking.id}/messages`,
-      { headers: { Authorization: `Bearer ${localStorage.getItem('sqAccessToken')}` } }
+      `${GATEWAY_URL}/taxi/chat/manager/bookings/${booking.id}/messages`,
+      { headers: { Authorization: `Bearer ${getAccessToken()}` } }
     )
     const data = await res.json()
     chatMessages.value = Array.isArray(data) ? data : (data.items ?? [])
@@ -455,6 +513,7 @@ const openChat = async (booking) => {
     chatLoading.value = false
     await nextTick()
     if (chatScroll.value) chatScroll.value.scrollTop = chatScroll.value.scrollHeight
+    startChatPoll()
   }
 }
 
@@ -464,12 +523,12 @@ const sendManagerMessage = async () => {
   chatInput.value = ''
   try {
     const res = await fetch(
-      `${window.location.origin}/api/taxi/chat/manager/bookings/${chatBooking.value.id}/messages`,
+      `${GATEWAY_URL}/taxi/chat/manager/bookings/${chatBooking.value.id}/messages`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('sqAccessToken')}`
+          Authorization: `Bearer ${getAccessToken()}`
         },
         body: JSON.stringify({ text })
       }
@@ -568,6 +627,7 @@ const copyCode = (code) => {
 .admin-tab:hover { background: #f1f5f9; color: #1e293b; }
 .admin-tab.active { background: #3b82f6; color: white; }
 .tab-count { background: #ef4444; color: white; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+.tab-count--chat { background: #2563eb; }
 .admin-tab.active .tab-count { background: rgba(255,255,255,0.3); }
 
 .bookings-list { display: flex; flex-direction: column; gap: 14px; }
@@ -643,27 +703,35 @@ const copyCode = (code) => {
 .btn-inprogress:hover { background: #dbeafe; }
 
 /* Chat modal */
-.chat-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; display: flex; align-items: flex-end; justify-content: flex-end; padding: 20px; }
-.chat-panel { background: white; border-radius: 16px; width: 380px; max-width: 100%; height: 560px; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.25); }
-.chat-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid #f1f5f9; }
-.chat-title { font-size: 15px; font-weight: 700; color: #1e293b; }
-.chat-sub { font-size: 12px; color: #94a3b8; margin-top: 2px; }
-.chat-close { background: none; border: none; font-size: 16px; color: #94a3b8; cursor: pointer; padding: 4px; }
-.chat-messages { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
-.chat-loading, .chat-empty { text-align: center; color: #94a3b8; font-size: 13px; padding: 20px 0; }
-.chat-msg { max-width: 80%; display: flex; flex-direction: column; gap: 3px; }
-.msg-user { align-self: flex-start; }
-.msg-manager { align-self: flex-end; }
-.msg-text { padding: 9px 13px; border-radius: 12px; font-size: 13.5px; line-height: 1.5; }
-.msg-user .msg-text { background: #f1f5f9; color: #1e293b; border-bottom-left-radius: 4px; }
-.msg-manager .msg-text { background: #3b82f6; color: white; border-bottom-right-radius: 4px; }
-.msg-time { font-size: 11px; color: #94a3b8; }
-.msg-manager .msg-time { text-align: right; }
-.chat-input-row { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid #f1f5f9; }
-.chat-input { flex: 1; padding: 9px 14px; border: 1.5px solid #e2e8f0; border-radius: 22px; font-size: 13.5px; outline: none; }
+.chat-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.55); backdrop-filter: blur(4px); z-index: 999; display: flex; align-items: flex-end; justify-content: flex-end; padding: 20px; }
+.chat-panel { background: white; border-radius: 20px; width: 400px; max-width: 100%; height: 580px; display: flex; flex-direction: column; box-shadow: 0 24px 80px rgba(0,0,0,0.22); overflow: hidden; }
+.chat-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); }
+.chat-header-left { display: flex; align-items: center; gap: 12px; }
+.chat-avatar { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.2); color: white; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.chat-title { font-weight: 700; color: white; font-size: 14px; }
+.chat-sub { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 1px; max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chat-close { background: rgba(255,255,255,0.15); border: none; color: white; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+.chat-close:hover { background: rgba(255,255,255,0.3); }
+.chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; background: #f8fafc; }
+.chat-loading { display: flex; gap: 5px; justify-content: center; align-items: center; padding: 30px 0; }
+.typing-dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; animation: typingBounce 1.2s infinite; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingBounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+.chat-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #94a3b8; font-size: 13px; padding: 40px 0; }
+.chat-msg { max-width: 78%; display: flex; flex-direction: column; gap: 3px; }
+.msg-mine { align-self: flex-end; align-items: flex-end; }
+.msg-theirs { align-self: flex-start; align-items: flex-start; }
+.msg-label { font-size: 10px; font-weight: 700; color: #94a3b8; padding: 0 6px; }
+.msg-bubble { padding: 10px 14px; border-radius: 18px; font-size: 13.5px; line-height: 1.5; word-break: break-word; }
+.msg-mine .msg-bubble { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border-bottom-right-radius: 5px; box-shadow: 0 2px 8px rgba(59,130,246,0.3); }
+.msg-theirs .msg-bubble { background: white; color: #1e293b; border-bottom-left-radius: 5px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+.msg-time { font-size: 10px; color: #94a3b8; padding: 0 6px; }
+.chat-input-row { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid #f1f5f9; background: white; }
+.chat-input { flex: 1; padding: 10px 16px; border: 1.5px solid #e2e8f0; border-radius: 24px; font-size: 13.5px; outline: none; transition: border-color 0.15s; }
 .chat-input:focus { border-color: #3b82f6; }
-.chat-send-btn { width: 38px; height: 38px; border-radius: 50%; background: #3b82f6; color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s; }
-.chat-send-btn:hover:not(:disabled) { background: #2563eb; }
+.chat-send-btn { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; box-shadow: 0 2px 8px rgba(59,130,246,0.35); border: none; cursor: pointer; }
+.chat-send-btn:hover:not(:disabled) { transform: scale(1.05); box-shadow: 0 4px 12px rgba(59,130,246,0.45); }
 .chat-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* Invites */

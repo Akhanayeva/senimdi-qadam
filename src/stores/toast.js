@@ -17,17 +17,17 @@ export const useToast = defineStore('toast', () => {
     items.value = items.value.filter(t => t.id !== id)
   }
 
-  const show = (message, type = 'info', timeout = 4000) => {
+  const show = (message, type = 'info', timeout = 4000, link = null) => {
     const id = ++seq
-    items.value.push({ id, message, type })
+    items.value.push({ id, message, type, link })
     if (timeout > 0) setTimeout(() => dismiss(id), timeout)
     return id
   }
 
-  const success = (msg, timeout) => show(msg, 'success', timeout)
-  const error   = (msg, timeout) => show(msg, 'error', timeout ?? 6000)
-  const info    = (msg, timeout) => show(msg, 'info', timeout)
-  const warning = (msg, timeout) => show(msg, 'warning', timeout)
+  const success = (msg, timeout, link) => show(msg, 'success', timeout, link)
+  const error   = (msg, timeout, link) => show(msg, 'error', timeout ?? 6000, link)
+  const info    = (msg, timeout, link) => show(msg, 'info', timeout, link)
+  const warning = (msg, timeout, link) => show(msg, 'warning', timeout, link)
 
   return { items, show, success, error, info, warning, dismiss }
 })

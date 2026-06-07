@@ -5,8 +5,8 @@
         v-for="t in toast.items"
         :key="t.id"
         class="toast"
-        :class="`toast--${t.type}`"
-        @click="toast.dismiss(t.id)"
+        :class="[`toast--${t.type}`, t.link ? 'toast--clickable' : '']"
+        @click="onToastClick(t)"
       >
         <span class="toast-icon" aria-hidden="true">
           <template v-if="t.type === 'success'">✓</template>
@@ -14,7 +14,10 @@
           <template v-else-if="t.type === 'warning'">!</template>
           <template v-else>i</template>
         </span>
-        <span class="toast-msg">{{ t.message }}</span>
+        <div class="toast-content">
+          <span class="toast-msg">{{ t.message }}</span>
+          <span v-if="t.link" class="toast-action">Перейти →</span>
+        </div>
         <button class="toast-close" @click.stop="toast.dismiss(t.id)" aria-label="Закрыть">✕</button>
       </div>
     </TransitionGroup>
@@ -22,8 +25,19 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
 import { useToast } from '../stores/toast.js'
 const toast = useToast()
+const router = useRouter()
+
+function onToastClick(t) {
+  if (t.link) {
+    toast.dismiss(t.id)
+    router.push(t.link)
+  } else {
+    toast.dismiss(t.id)
+  }
+}
 </script>
 
 <style scoped>
@@ -70,7 +84,10 @@ const toast = useToast()
 .toast--warning .toast-icon { background: #d97706; }
 .toast--info    .toast-icon { background: #2563eb; }
 
-.toast-msg { flex: 1; line-height: 1.35; }
+.toast-content { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.toast-msg { line-height: 1.35; }
+.toast-action { font-size: 12px; font-weight: 700; color: #2563eb; }
+.toast--clickable:hover { box-shadow: 0 10px 32px rgba(0,0,0,0.22); transform: translateY(-1px); transition: all 0.15s; }
 .toast-close {
   background: none; border: none; cursor: pointer;
   color: #94a3b8; font-size: 14px; padding: 2px 4px;
